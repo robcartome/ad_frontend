@@ -12,10 +12,10 @@ export default function ProductsPage() {
 
   return (
     <main className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Productos</h1>
+      <h1 className="text-2xl font-semibold mb-4">Productos</h1>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
     </main>

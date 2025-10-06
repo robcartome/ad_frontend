@@ -4,12 +4,12 @@ import { usePathname } from "next/navigation";
 import { Package, Store, Warehouse, Tag, Layers } from "lucide-react";
 
 const menuItems = [
-  { href: "/", label: "Dashboard", icon: Layers },
-  { href: "/products", label: "Productos", icon: Package },
-  { href: "/categories", label: "Categorías", icon: Tag },
-  { href: "/brands", label: "Marcas", icon: Layers },
-  { href: "/warehouses", label: "Almacenes", icon: Warehouse },
-  { href: "/stores", label: "Tiendas", icon: Store },
+  { href: "/admin", label: "Dashboard", icon: Layers },
+  { href: "/admin/products", label: "Productos", icon: Package },
+  { href: "/admin/categories", label: "Categorías", icon: Tag },
+  { href: "/admin/brands", label: "Marcas", icon: Layers },
+  { href: "/admin/warehouses", label: "Almacenes", icon: Warehouse },
+  { href: "/admin/stores", label: "Tiendas", icon: Store },
 ];
 
 export default function Sidebar() {

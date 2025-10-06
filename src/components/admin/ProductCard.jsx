@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ProductCard({ product }) {
+  console.log(product);
   return (
     <Card className="hover:shadow-md transition">
       <CardHeader>
