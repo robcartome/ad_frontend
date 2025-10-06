@@ -1,5 +1,5 @@
 import { apiFetch } from "./api";
-import { fakeProducts } from "../mocks/products";
+import { fakeProducts } from "../data/fake/products";
 
 const USE_FAKE_DATA = true;
 
