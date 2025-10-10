@@ -1,10 +1,11 @@
 export default function Index() {
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Home</h1>
+      <h1 className="text-2xl font-bold mb-4">Bienvenido a la tienda</h1>
       <p className="text-gray-600">
         Bienvenido al sistema de inventario y facturación.
       </p>
+      <p>Aquí verás los productos disponibles.</p>
     </div>
   );
 }
