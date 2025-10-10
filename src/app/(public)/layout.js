@@ -5,8 +5,8 @@ export default function PublicLayout({ children }) {
         <nav className="container mx-auto flex justify-between items-center p-4">
           <a href="/" className="text-xl font-bold text-blue-600">ApuDig</a>
           <div className="space-x-6 text-gray-700">
-            <a href="/(public)/products" className="hover:text-blue-600">Productos</a>
-            <a href="/(admin)" className="hover:text-blue-600">Panel</a>
+            <a href="/products" className="hover:text-blue-600">Productos</a>
+            <a href="/admin" className="hover:text-blue-600">Panel</a>
           </div>
         </nav>
       </header>

@@ -12,11 +12,11 @@ export default function HomePage() {
 
       <div className="space-x-4">
         <Button asChild>
-          <a href="/(public)/products">Ver productos</a>
+          <a href="/products">Ver productos</a>
         </Button>
 
         <Button variant="outline" asChild>
-          <a href="/(admin)">Entrar al Panel Admin</a>
+          <a href="/admin">Entrar al Panel Admin</a>
         </Button>
       </div>
     </section>
