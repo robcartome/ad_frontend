@@ -2,64 +2,132 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Package, Layers, Warehouse, Store, Settings, NotebookText } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-const menuItems = [
-  { name: "Dashboard", href: "/admin", icon: Home },
-  { name: "Productos", href: "/admin/products", icon: Package },
-  { name: "Categorías", href: "/admin/categories", icon: Layers },
-  { name: "Marcas", href: "/admin/brands", icon: Settings },
-  { name: "Almacenes", href: "/admin/warehouses", icon: Warehouse },
-  { name: "Tiendas", href: "/admin/stores", icon: Store },
-  { name: "Catalogo", href: "/admin/catalog", icon: NotebookText },
-];
+import {
+  LayoutDashboard,
+  Package,
+  Tags,
+  Warehouse,
+  Boxes,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+import { useState } from "react";
 
 export default function Sidebar({ open, setOpen }) {
   const pathname = usePathname();
+  const [inventoryOpen, setInventoryOpen] = useState(
+    pathname.startsWith("/admin/inventory")
+  );
+
+  const menuItems = [
+    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Productos", href: "/admin/products", icon: Package },
+    { name: "Categorías", href: "/admin/categories", icon: Tags },
+    { name: "Marcas", href: "/admin/brands", icon: Tags },
+    { name: "Almacenes", href: "/admin/warehouses", icon: Warehouse },
+  ];
 
   return (
-    <>
-      {/* Overlay móvil */}
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+    <aside
+      className={`${
+        open ? "translate-x-0" : "-translate-x-full"
+      } fixed lg:static lg:translate-x-0 z-40 w-64 bg-white border-r shadow-sm transition-transform duration-300`}
+    >
+      {/* 🔹 Header */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <h1 className="text-lg font-semibold text-gray-800">Panel Admin</h1>
+        <button
           onClick={() => setOpen(false)}
-        />
-      )}
+          className="block lg:hidden text-gray-500 hover:text-gray-700"
+        >
+          ✕
+        </button>
+      </div>
 
-      <aside
-        className={cn(
-          "fixed lg:static z-50 w-64 bg-white border-r border-gray-200 h-full transform transition-transform duration-200 ease-in-out",
-          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        )}
-      >
-        <div className="h-16 flex items-center justify-center border-b border-gray-200">
-          <h1 className="text-xl font-bold text-blue-600">ApuDig Admin</h1>
-        </div>
-        <nav className="flex flex-col p-4 space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href;
-            return (
+      {/* 🔹 Menú */}
+      <nav className="p-4 space-y-1 text-sm">
+        {menuItems.map(({ name, href, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+              pathname === href
+                ? "bg-primary text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <Icon size={18} />
+            {name}
+          </Link>
+        ))}
+
+        {/* 📦 Inventario con submenús */}
+        <div>
+          <button
+            onClick={() => setInventoryOpen(!inventoryOpen)}
+            className={`flex w-full items-center justify-between px-3 py-2 rounded-md transition ${
+              pathname.startsWith("/admin/inventory")
+                ? "bg-primary text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Boxes size={18} />
+              Inventario
+            </span>
+            {inventoryOpen ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+
+          {inventoryOpen && (
+            <div className="ml-6 mt-1 space-y-1">
               <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                  active
-                    ? "bg-blue-100 text-blue-700"
+                href="/admin/inventory/movements"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/movements"
+                    ? "bg-primary/20 text-primary font-medium"
                     : "text-gray-700 hover:bg-gray-100"
-                )}
+                }`}
               >
-                <Icon size={18} />
-                {item.name}
+                Movimientos
               </Link>
-            );
-          })}
-        </nav>
-      </aside>
-    </>
+              <Link
+                href="/admin/inventory/entries"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/entries"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Entradas
+              </Link>
+              <Link
+                href="/admin/inventory/exits"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/exits"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Salidas
+              </Link>
+              <Link
+                href="/admin/inventory/transfers"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/transfers"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Transferencias
+              </Link>
+            </div>
+          )}
+        </div>
+      </nav>
+    </aside>
   );
 }
