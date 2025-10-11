@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { fakeProducts as initialProducts } from "@/data/fake/products";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +14,11 @@ import {
 import ProductModal from "./ProductModal";
 import { v4 as uuidv4 } from "uuid";
 
-export default function ProductsTable() {
+export default function ProductsTable({ products, setProducts}) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [page, setPage] = useState(1);
-  const [products, setProducts] = useState(initialProducts);
+  // const [products, setProducts] = useState(initialProducts);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const pageSize = 5;
@@ -27,32 +26,32 @@ export default function ProductsTable() {
   // 🔎 Filtro + búsqueda
   const filtered = useMemo(() => {
     return products
-      .filter((p) => {
+      .filter((product) => {
         const matchesSearch =
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          p.sku.toLowerCase().includes(search.toLowerCase());
+          product.name.toLowerCase().includes(search.toLowerCase()) ||
+          product.sku.toLowerCase().includes(search.toLowerCase());
         const matchesStatus =
           filterStatus === "all"
             ? true
             : filterStatus === "active"
-            ? p.active
-            : !p.active;
+            ? product.active
+            : !product.active;
         return matchesSearch && matchesStatus;
       })
       .slice((page - 1) * pageSize, page * pageSize);
   }, [search, filterStatus, page, products]);
 
   const totalPages = Math.ceil(
-    products.filter((p) => {
+    products.filter((product) => {
       const matchesSearch =
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku.toLowerCase().includes(search.toLowerCase());
+        product.name.toLowerCase().includes(search.toLowerCase()) ||
+        product.sku.toLowerCase().includes(search.toLowerCase());
       const matchesStatus =
         filterStatus === "all"
           ? true
           : filterStatus === "active"
-          ? p.active
-          : !p.active;
+          ? product.active
+          : !product.active;
       return matchesSearch && matchesStatus;
     }).length / pageSize
   );
@@ -72,7 +71,7 @@ export default function ProductsTable() {
     if (editingProduct) {
       // editar existente
       setProducts((prev) =>
-        prev.map((p) => (p.id === editingProduct.id ? { ...p, ...data } : p))
+        prev.map((product) => (product.id === editingProduct.id ? { ...product, ...data } : product))
       );
     } else {
       // nuevo producto
@@ -85,7 +84,7 @@ export default function ProductsTable() {
 
   const handleDelete = (id) => {
     if (confirm("¿Eliminar este producto?")) {
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+      setProducts((prev) => prev.filter((product) => product.id !== id));
     }
   };
 
@@ -131,23 +130,30 @@ export default function ProductsTable() {
           <table className="min-w-full border text-sm">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-4 py-2 text-left">Nombre</th>
+                <th className="px-4 py-2 text-left">Id</th>
                 <th className="px-4 py-2 text-left">SKU</th>
+                <th className="px-4 py-2 text-left">Nombre</th>
                 <th className="px-4 py-2 text-left">Unidad</th>
+                <th className="px-4 py-2 text-left">Marca</th>
+                <th className="px-4 py-2 text-left">Categoria</th>
                 <th className="px-4 py-2 text-left">Precio Compra</th>
                 <th className="px-4 py-2 text-left">Activo</th>
+                <th className="px-4 py-2 text-left">Creado</th>
                 <th className="px-4 py-2 text-left">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2">{p.name}</td>
-                  <td className="px-4 py-2">{p.sku}</td>
-                  <td className="px-4 py-2">{p.unit}</td>
-                  <td className="px-4 py-2">S/ {p.price_purchase}</td>
+              {filtered.map((product) => (
+                <tr key={product.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-2">{product.id}</td>
+                  <td className="px-4 py-2">{product.sku}</td>
+                  <td className="px-4 py-2">{product.name}</td>
+                  <td className="px-4 py-2">{product.unit}</td>
+                  <td className="px-4 py-2">{product.brand}</td>
+                  <td className="px-4 py-2">{product.category}</td>
+                  <td className="px-4 py-2">S/ {product.price_purchase}</td>
                   <td className="px-4 py-2">
-                    {p.active ? (
+                    {product.active ? (
                       <span className="text-green-600 font-medium">Activo</span>
                     ) : (
                       <span className="text-red-600 font-medium">
@@ -155,19 +161,20 @@ export default function ProductsTable() {
                       </span>
                     )}
                   </td>
+                  <td className="px-4 py-2">{product.created_at}</td>
                   <td className="px-4 py-2">
                     <Button
                       size="sm"
                       variant="outline"
                       className="mr-2"
-                      onClick={() => handleEdit(p)}
+                      onClick={() => handleEdit(product)}
                     >
                       Editar
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleDelete(p.id)}
+                      onClick={() => handleDelete(product.id)}
                     >
                       Eliminar
                     </Button>

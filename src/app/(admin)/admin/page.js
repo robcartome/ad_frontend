@@ -1,4 +1,5 @@
 import ProductsTable from "@/components/admin/ProductsTable";
+// Dashboard page for the admin panel
 
 export default function DashboardPage() {
   return (
@@ -21,8 +22,6 @@ export default function DashboardPage() {
           <p className="text-gray-600">Resumen de movimientos y ventas.</p>
         </div>
       </div>
-
-      <ProductsTable />
     </div>
   );
 }
