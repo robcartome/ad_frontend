@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Package, Layers, Warehouse, Store, Settings } from "lucide-react";
+import { Home, Package, Layers, Warehouse, Store, Settings, NotebookText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -12,6 +12,7 @@ const menuItems = [
   { name: "Marcas", href: "/admin/brands", icon: Settings },
   { name: "Almacenes", href: "/admin/warehouses", icon: Warehouse },
   { name: "Tiendas", href: "/admin/stores", icon: Store },
+  { name: "Catalogo", href: "/admin/catalog", icon: NotebookText },
 ];
 
 export default function Sidebar({ open, setOpen }) {
