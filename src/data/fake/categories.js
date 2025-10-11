@@ -1,5 +1,5 @@
 export const fakeCategories = [
-  { id: "1", name: "Tubos HDPE", description: "Tuberías de polietileno" },
-  { id: "2", name: "Conexiones", description: "Codos, tees, uniones, etc." },
-  { id: "3", name: "Accesorios", description: "Teflón, válvulas, empaques" },
+  { id: "1", code:"RI", name: "Tubos HDPE", active: true,  created_at: "2023-10-10" },
+  { id: "2", code:"CO", name: "Conexiones", active: true,  created_at: "2023-10-10" },
+  { id: "3", code:"AC", name: "Accesorios", active: true,  created_at: "2023-10-10" },
 ];

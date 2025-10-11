@@ -1,5 +1,7 @@
+import { act } from "react";
+
 export const fakeBrands = [
-  { id: "1", name: "Poelsan", description: "Marca de tuberías y accesorios HDPE" },
-  { id: "2", name: "IUSA", description: "Marca de productos eléctricos y accesorios" },
-  { id: "3", name: "Cemex", description: "Marca de materiales para construcción" },
+  { id: "1", name: "Poelsan", active: true, created_at: "2023-10-01" },
+  { id: "2", name: "IUSA", active: true, created_at: "2023-10-01" },
+  { id: "3", name: "Cemex", active: false, created_at: "2023-10-10" },
 ];

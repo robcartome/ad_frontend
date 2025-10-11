@@ -7,17 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CategoryModal from "./CategoryModal";
 
-export default function CategoriesTable() {
-  const [categories, setCategories] = useState([
-    { id: uuidv4(), name: "Ferretería", description: "Artículos varios", active: true },
-    { id: uuidv4(), name: "Construcción", description: "Materiales pesados", active: true },
-  ]);
-
+export default function CategoriesTable({ categories, setCategories}) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const pageSize = 5;
+  const pageSize = 10;
 
   const filtered = useMemo(() => {
     return categories
@@ -42,7 +37,7 @@ export default function CategoriesTable() {
   const handleSave = (data) => {
     if (editingCategory) {
       setCategories((prev) =>
-        prev.map((c) => (c.id === editingCategory.id ? { ...c, ...data } : c))
+        prev.map((category) => (category.id === editingCategory.id ? { ...category, ...data } : category))
       );
     } else {
       setCategories((prev) => [...prev, { ...data, id: uuidv4(), active: true }]);
@@ -51,7 +46,7 @@ export default function CategoriesTable() {
 
   const handleDelete = (id) => {
     if (confirm("¿Eliminar esta categoría?")) {
-      setCategories((prev) => prev.filter((c) => c.id !== id));
+      setCategories((prev) => prev.filter((category) => category.id !== id));
     }
   };
 
@@ -75,29 +70,33 @@ export default function CategoriesTable() {
           <table className="min-w-full border text-sm">
             <thead className="bg-gray-100">
               <tr>
+                <th className="px-4 py-2 text-left">Id</th>
+                <th className="px-4 py-2 text-left">Código</th>
                 <th className="px-4 py-2 text-left">Nombre</th>
-                <th className="px-4 py-2 text-left">Descripción</th>
                 <th className="px-4 py-2 text-left">Activo</th>
+                <th className="px-4 py-2 text-left">Creado</th>
                 <th className="px-4 py-2 text-left">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c) => (
-                <tr key={c.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2">{c.name}</td>
-                  <td className="px-4 py-2">{c.description}</td>
+              {filtered.map((category) => (
+                <tr key={category.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-2">{category.id}</td>
+                  <td className="px-4 py-2">{category.code}</td>
+                  <td className="px-4 py-2">{category.name}</td>
                   <td className="px-4 py-2">
-                    {c.active ? (
+                    {category.active ? (
                       <span className="text-green-600 font-medium">Activo</span>
                     ) : (
                       <span className="text-red-600 font-medium">Inactivo</span>
                     )}
                   </td>
+                  <td className="px-4 py-2">{category.created_at}</td>
                   <td className="px-4 py-2">
-                    <Button size="sm" variant="outline" className="mr-2" onClick={() => handleEdit(c)}>
+                    <Button size="sm" variant="outline" className="mr-2" onClick={() => handleEdit(category)}>
                       Editar
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(c.id)}>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(category.id)}>
                       Eliminar
                     </Button>
                   </td>
