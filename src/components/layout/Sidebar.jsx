@@ -10,6 +10,7 @@ import {
   Boxes,
   ChevronDown,
   ChevronRight,
+  Notebook,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -20,11 +21,12 @@ export default function Sidebar({ open, setOpen }) {
   );
 
   const menuItems = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Productos", href: "/admin/products", icon: Package },
     { name: "Categorías", href: "/admin/categories", icon: Tags },
     { name: "Marcas", href: "/admin/brands", icon: Tags },
     { name: "Almacenes", href: "/admin/warehouses", icon: Warehouse },
+    { name: "Catalogo", href: "/admin/catalog", icon: Notebook },
   ];
 
   return (
