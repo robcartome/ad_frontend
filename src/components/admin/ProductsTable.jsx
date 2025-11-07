@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/select";
 import ProductModal from "./ProductModal";
 import { v4 as uuidv4 } from "uuid";
+import {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "@/services/productsService";
+
 
 export default function ProductsTable({
   products,
@@ -49,22 +55,33 @@ export default function ProductsTable({
     setModalOpen(true);
   };
 
-  const handleSave = (data) => {
-    if (editingProduct) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editingProduct.id ? { ...p, ...data } : p))
-      );
-    } else {
-      setProducts((prev) => [
-        ...prev,
-        { ...data, id: uuidv4(), active: true },
-      ]);
+  const handleSave = async (data) => {
+    try {
+      if (editingProduct) {
+        const updated = await updateProduct(editingProduct.id, data);
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? updated : p))
+        );
+      } else {
+        const created = await createProduct(data);
+        setProducts((prev) => [...prev, created]);
+      }
+      setModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error al guardar producto: " + err.message);
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm("¿Eliminar este producto?")) {
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+      try {
+        await deleteProduct(id);
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+      } catch (err) {
+        console.error(err);
+        alert("Error al eliminar producto: " + err.message);
+      }
     }
   };
 

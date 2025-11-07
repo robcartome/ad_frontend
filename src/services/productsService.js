@@ -19,3 +19,41 @@ export async function getCatalogProducts() {
   }
   return apiFetch("/catalog_products/");
 }
+
+// 🔹 Crear producto
+export async function createProduct(data) {
+  if (USE_FAKE_DATA) {
+    const newProduct = { id: crypto.randomUUID(), ...data };
+    fakeProducts.push(newProduct);
+    return newProduct;
+  }
+  return apiFetch("/products/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+// 🔹 Actualizar producto
+export async function updateProduct(id, data) {
+  if (USE_FAKE_DATA) {
+    const idx = fakeProducts.findIndex((p) => p.id === id);
+    if (idx !== -1) fakeProducts[idx] = { ...fakeProducts[idx], ...data };
+    return fakeProducts[idx];
+  }
+  return apiFetch(`/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+// 🔹 Eliminar producto
+export async function deleteProduct(id) {
+  if (USE_FAKE_DATA) {
+    const idx = fakeProducts.findIndex((p) => p.id === id);
+    if (idx !== -1) fakeProducts.splice(idx, 1);
+    return true;
+  }
+  return apiFetch(`/products/${id}`, {
+    method: "DELETE",
+  });
+}
