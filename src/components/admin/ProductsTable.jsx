@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ProductModal from "./ProductModal";
-import { v4 as uuidv4 } from "uuid";
 import {
   createProduct,
   updateProduct,
@@ -59,12 +58,18 @@ export default function ProductsTable({
     try {
       if (editingProduct) {
         const updated = await updateProduct(editingProduct.id, data);
-        setProducts((prev) =>
-          prev.map((p) => (p.id === editingProduct.id ? updated : p))
-        );
+        setProducts((prev) => ({
+          ...prev,
+          results: prev.results.map((p) =>
+            p.id === editingProduct.id ? updated : p
+          ),
+        }));
       } else {
         const created = await createProduct(data);
-        setProducts((prev) => [...prev, created]);
+        setProducts((prev) => ({
+          ...prev,
+          results: [created, ...prev.results],
+        }));
       }
       setModalOpen(false);
     } catch (err) {
@@ -77,7 +82,10 @@ export default function ProductsTable({
     if (confirm("¿Eliminar este producto?")) {
       try {
         await deleteProduct(id);
-        setProducts((prev) => prev.filter((p) => p.id !== id));
+        setProducts((prev) => ({
+          ...prev,
+          results: prev.results.filter((p) => p.id !== id),
+        }));
       } catch (err) {
         console.error(err);
         alert("Error al eliminar producto: " + err.message);

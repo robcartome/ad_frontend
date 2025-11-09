@@ -1,6 +1,7 @@
+import { apiFetch } from "./api";
 import { fakeBrands } from "@/data/fake/brands";
 
-const USE_FAKE_DATA = true;
+const USE_FAKE_DATA = false;
 
 export async function getBrands() {
   if (USE_FAKE_DATA) {

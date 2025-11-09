@@ -7,7 +7,7 @@ export default function ProductsPage() {
   const [productsData, setProductsData] = useState({
     total: 0,
     count: 0,
-    limit: 1,
+    limit: 5,
     offset: 0,
     results: [],
   });
@@ -31,6 +31,7 @@ export default function ProductsPage() {
         limit={productsData.limit}
         search={search}
         setSearch={setSearch}
+        setProducts={setProductsData}
       />
     </div>
   );
