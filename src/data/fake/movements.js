@@ -1,0 +1,26 @@
+export const fakeMovements = [
+    {
+      id: "1",
+      date: "2025-10-10T12:09:23",
+      operation: "VENTA NACIONAL",
+      operation_number: "SA2025100000000087",
+      warehouse: "Tienda Raymondi",
+      document: "Factura Electrónica F001-6771",
+      partner: "20408033196 EMPRESA MULTISERVICIOS FASA S.R.L.",
+      pdf: "",
+      type: "SALIDA",
+      op: "OP-001",
+    },
+    {
+      id: "2",
+      date: "2025-10-09T16:45:00",
+      operation: "COMPRA LOCAL",
+      operation_number: "EN2025100000000045",
+      warehouse: "Almacén Central",
+      document: "Factura F002-1287",
+      partner: "20123456789 FERRETERÍA LOS ANDES S.A.",
+      pdf: "",
+      type: "ENTRADA",
+      op: "OP-002",
+    },
+  ];
