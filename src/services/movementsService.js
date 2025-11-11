@@ -1,11 +1,20 @@
-import { fakeMovements } from "@/data/fake/movements";
+import { apiFetch } from "./api";
 
-const USE_FAKE_DATA = true;
+export async function getMovements({
+  limit = 10,
+  offset = 0,
+  type = "",
+  warehouse_id = "",
+  date = "",
+} = {}) {
+  const params = new URLSearchParams();
 
-export async function getMovements() {
-  if (USE_FAKE_DATA) {
-    console.log("🧪 Usando Movimientos fake");
-    return fakeMovements;
-  }
-  return apiFetch("/movements/");
+  if (limit) params.append("limit", limit);
+  if (offset) params.append("offset", offset);
+  if (type && type !== "all" ) params.append("type", type);
+  if (warehouse_id && warehouse_id !== "all") params.append("warehouse_id", warehouse_id);
+  if (date) params.append("date", date);
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch(`/movements/${query}`);
 }
