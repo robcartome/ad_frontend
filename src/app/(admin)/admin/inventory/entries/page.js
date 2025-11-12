@@ -18,7 +18,7 @@ export default function EntryPage() {
     series: "0001",
     number: "1",
     currency: "PEN",
-    operation: "COMPRA LOCAL",
+    operation: "COMPRA", // 👈 valor inicial por defecto
     cost_center: "",
     warehouse_id: "",
     reason: "",
@@ -145,9 +145,11 @@ export default function EntryPage() {
                   value={form.operation}
                   onChange={(e) => handleChange("operation", e.target.value)}
                 >
-                  <option value="COMPRA LOCAL">Compra Local</option>
+                  <option value="COMPRA">Compra</option>
                   <option value="DEVOLUCIÓN">Devolución</option>
-                  <option value="AJUSTE">Ajuste</option>
+                  <option value="PRESTAMO">Entrada por Prestamo</option>
+                  <option value="AJUSTE">Ajuste Stock</option>
+                  <option value="INICIAL">Saldo Inicial</option>
                 </select>
               </div>
 
@@ -244,10 +246,11 @@ export default function EntryPage() {
                 variant="secondary"
                 type="button"
                 onClick={() => toast.info("Operación cancelada")}
+                className="cursor-pointer"
               >
                 Cancelar
               </Button>
-              <Button type="submit">Guardar</Button>
+              <Button type="submit" className="cursor-pointer">Guardar</Button>
             </div>
           </form>
         </CardContent>

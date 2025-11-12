@@ -1,29 +1,39 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getProducts } from "@/services/productsService";
 
 export default function MovementDetailTable({ details, setDetails }) {
+  const router = useRouter();
+
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeRow, setActiveRow] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [noResults, setNoResults] = useState(false);
 
   // 🔍 Buscar productos al escribir
   useEffect(() => {
     const delay = setTimeout(async () => {
       if (!searchTerm || searchTerm.length < 2) {
         setSearchResults([]);
+        setNoResults(false);
         return;
       }
+
       try {
         setLoading(true);
-        const res = await getProducts(1, 100, searchTerm);
-        setSearchResults(res.results || []);
+        setNoResults(false);
+        const res = await getProducts(1, 10, searchTerm);
+        const results = res.results || [];
+        setSearchResults(results);
+        setNoResults(results.length === 0);
       } catch (err) {
         console.error("Error al buscar productos:", err);
+        setNoResults(true);
       } finally {
         setLoading(false);
       }
@@ -77,7 +87,7 @@ export default function MovementDetailTable({ details, setDetails }) {
 
         return (
           <div key={i} className="grid grid-cols-12 gap-2 items-center border-b py-2 relative">
-            {/* 🔹 Producto buscador */}
+            {/* 🔹 Campo de búsqueda de producto */}
             <div className="col-span-4 relative">
               <Input
                 placeholder="Buscar producto..."
@@ -89,12 +99,30 @@ export default function MovementDetailTable({ details, setDetails }) {
                 onFocus={() => setActiveRow(i)}
               />
 
-              {/* Lista de resultados */}
-              {activeRow === i && searchResults.length > 0 && (
+              {/* 🔹 Resultados de búsqueda */}
+              {activeRow === i && (
                 <ul className="absolute z-50 bg-white border w-full max-h-48 overflow-y-auto shadow-md rounded-md">
-                  {loading ? (
+                  {loading && (
                     <li className="p-2 text-sm text-gray-500">Buscando...</li>
-                  ) : (
+                  )}
+
+                  {!loading && noResults && (
+                    <li className="p-3 text-sm text-gray-600">
+                      No se encontró el producto
+                      <div className="mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open("/admin/products", "_blank")}
+                        >
+                          ➕ Crear producto
+                        </Button>
+                      </div>
+                    </li>
+                  )}
+
+                  {!loading &&
+                    !noResults &&
                     searchResults.map((p) => (
                       <li
                         key={p.id}
@@ -109,19 +137,14 @@ export default function MovementDetailTable({ details, setDetails }) {
                           Precio: S/ {p.price_purchase}
                         </div>
                       </li>
-                    ))
-                  )}
+                    ))}
                 </ul>
               )}
             </div>
 
             {/* Unidad */}
             <div className="col-span-2">
-              <Input
-                value={row.unit || ""}
-                readOnly
-                className="bg-gray-100"
-              />
+              <Input value={row.unit || ""} readOnly className="bg-gray-100" />
             </div>
 
             {/* Cantidad */}
@@ -142,7 +165,6 @@ export default function MovementDetailTable({ details, setDetails }) {
                 type="number"
                 value={row.unit_price}
                 min="0"
-                step="0.001" // ✅ permite hasta 3 decimales
                 onChange={(e) =>
                   handleChange(i, "unit_price", parseFloat(e.target.value))
                 }
