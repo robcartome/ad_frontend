@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 export default function MovementsPage() {
   const [movements, setMovements] = useState([]);
   const [total, setTotal] = useState(0);
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState(10);
   const [offset, setOffset] = useState(0);
 
   // filtros
@@ -44,7 +44,7 @@ export default function MovementsPage() {
   const handlePrev = () => {
     if (offset > 0) setOffset(offset - limit);
   };
-              console.log(warehouses);
+
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-2xl font-semibold">Movimientos</h1>
