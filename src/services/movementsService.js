@@ -18,3 +18,10 @@ export async function getMovements({
   const query = params.toString() ? `?${params.toString()}` : "";
   return apiFetch(`/movements/${query}`);
 }
+
+export async function createMovement(payload) {
+  return apiFetch("/movements/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

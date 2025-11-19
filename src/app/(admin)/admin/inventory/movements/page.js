@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getMovements } from "@/services/movementsService";
-import { getWarehouses } from "@/services/warehousesServices";
+import { getWarehouses } from "@/services/warehousesService";
 
 import MovementsTable from "@/components/admin/MovementsTable";
 import { Input } from "@/components/ui/input";
