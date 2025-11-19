@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Toaster } from "sonner";
 
 export const metadata = {
   title: "ApuDig",
@@ -10,6 +11,7 @@ export default function RootLayout({ children }) {
     <html lang="es">
       <body className="min-h-screen bg-gray-50 text-gray-900">
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

@@ -5,7 +5,6 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import MovementDetailTable from "@/components/admin/MovementDetailTable";
 
@@ -13,30 +12,61 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function EntryPage() {
   const [form, setForm] = useState({
-    supplier_id: "",
-    document_type: "",
-    series: "0001",
-    number: "1",
-    currency: "PEN",
-    operation: "COMPRA", // 👈 valor inicial por defecto
-    cost_center: "",
-    warehouse_id: "",
-    reason: "",
-    reference: "",
-    notes: "",
-    exchange_rate: 3.80,
+    // notes: "",
+    // exchange_rate: 3.80,
     date: new Date().toISOString().slice(0, 16),
+    reason: "",
+    warehouse_id: "a72fe3de-f945-43b1-afa8-ae1f0c808b9d",
+    supplier_id: "",
+    document_type_id: "cefe1323-9454-4052-b52b-eb62bca8c43a",
+    series: "0000",
+    number: "0",
+    reference: "",
   });
 
   const [warehouses, setWarehouses] = useState([]);
-  // const [suppliers, setSuppliers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [document_type, setDocumentType] = useState("");
   const [details, setDetails] = useState([
     { product_id: "", quantity: 1, unit_price: 0 },
   ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/warehouses/`).then((r) => r.json()).then(setWarehouses);
-    // fetch(`${API_URL}/suppliers/`).then((r) => r.json()).then(setSuppliers).catch(() => setSuppliers([]));
+    async function loadData() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [wRes, sRes, dRes] = await Promise.all([
+          fetch(`${API_URL}/warehouses/`),
+          fetch(`${API_URL}/suppliers/`),
+          fetch(`${API_URL}/document-types/`)
+        ]);
+
+        if (!wRes.ok) throw new Error("No se pudo cargar los almacenes");
+        if (!sRes.ok) throw new Error("No se pudo cargar los proveedores");
+        if (!dRes.ok) throw new Error("No se pudo cargar los tipos de documento");
+
+        const warehouses = await wRes.json();
+        const suppliers = await sRes.json();
+        const documentTypes = await dRes.json();
+
+        setWarehouses(warehouses);
+        setSuppliers(suppliers);
+        setDocumentType(documentTypes);
+
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+        toast.error(err.message); // Mostrar error
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
   }, []);
 
   const handleChange = (field, value) => {
@@ -51,6 +81,11 @@ export default function EntryPage() {
       date: new Date(form.date).toISOString(),
       reason: form.reason,
       warehouse_id: form.warehouse_id,
+      supplier_id: form.supplier_id,
+      document_type_id: form.document_type_id,
+      series: form.series,
+      number: form.number,
+      reference_doc: form.reference,
       details,
     };
 
@@ -62,19 +97,107 @@ export default function EntryPage() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Error al registrar ingreso");
+        let errorData;
+
+        try {
+          errorData = await res.json();
+        } catch {
+          throw new Error("Error desconocido del servidor");
+        }
+        // Procesar errores FastAPI
+        const message = parseFastApiError(errorData);
+        throw new Error(message);
       }
 
-      toast.success("Ingreso registrado correctamente ✅");
+      toast.success("Ingreso registrado correctamente");
       setDetails([{ product_id: "", quantity: 1, unit_price: 0 }]);
+
     } catch (err) {
+      console.warn(err);
       toast.error(err.message);
     }
   };
 
+  const fieldNames = {
+    supplier_id: "Proveedor",
+    warehouse_id: "Almacén",
+    document_type_id: "Tipo de documento",
+    product_id: "Producto",
+    details: "Detalles",
+  };
+
+  function parseFastApiError(errorData) {
+    // Si FastAPI envía array de errores
+    if (Array.isArray(errorData?.detail)) {
+      const messages = errorData.detail.map((err) => {
+
+        const loc = err.loc || [];
+
+        // quitar la palabra "body"
+        const cleanLoc = loc.slice(1);
+
+        // traducir cada parte del campo
+        const translatedPath = cleanLoc
+          .map((part) => {
+            if (typeof part === "number") {
+              return `ítem ${part + 1}`; // details[0] → ítem 1
+            }
+            return fieldNames[part] || part;
+          })
+          .join(" → ");
+
+        // traducir mensaje UUID
+        const translatedMsg = translateErrorMsg(err.msg);
+
+        return `${translatedPath}: ${translatedMsg}`;
+      });
+
+      return messages.join("\n");
+    }
+
+    // Si FastAPI envía un string simple
+    if (typeof errorData.detail === "string") {
+      return cleanServerError(errorData.detail);
+    }
+
+    return "Error inesperado en el servidor";
+  }
+
+  function translateErrorMsg(msg) {
+    if (msg.includes("valid UUID")) {
+      return "Debe ser un UUID válido (dato requerido).";
+    }
+
+    if (msg.includes("field required")) {
+      return "Este campo es obligatorio.";
+    }
+
+    return msg;
+  }
+
+  function cleanServerError(message) {
+    // mensajes tipo "llave duplicada"
+    if (message.includes("llave duplicada")) {
+      return "Ya existe un registro con datos duplicados.";
+    }
+
+    if (message.includes("uuid")) {
+      return "El ID enviado no es un UUID válido.";
+    }
+
+    if (message.includes("foreign key")) {
+      return "No se encontró la referencia requerida.";
+    }
+
+    return message;
+  }
+
+  if (loading) {
+    return <p>Cargando datos...</p>;
+  }
   return (
     <div className="p-6">
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
           <CardTitle>Movimientos de Almacén / Ingreso / Crear</CardTitle>
@@ -85,7 +208,7 @@ export default function EntryPage() {
             {/* Encabezado principal */}
             <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
               {/* Proveedor */}
-              {/* <div>
+              <div>
                 <Label>Proveedor</Label>
                 <select
                   className="w-full border rounded-md p-2"
@@ -99,20 +222,21 @@ export default function EntryPage() {
                     </option>
                   ))}
                 </select>
-              </div> */}
+              </div>
 
               {/* Documento */}
               <div>
                 <Label>Documento</Label>
                 <select
                   className="w-full border rounded-md p-2"
-                  value={form.document_type}
-                  onChange={(e) => handleChange("document_type", e.target.value)}
+                  value={form.document_type_id}
+                  onChange={(e) => handleChange("document_type_id", e.target.value)}
                 >
-                  <option value="">Elegir</option>
-                  <option value="FACTURA">Factura</option>
-                  <option value="BOLETA">Boleta</option>
-                  <option value="GUIA">Guía de remisión</option>
+                  {document_type && document_type.map((dt) => (
+                    <option key={dt.id} value={dt.id}>
+                      {dt.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -142,8 +266,8 @@ export default function EntryPage() {
                 <Label>Operación</Label>
                 <select
                   className="w-full border rounded-md p-2"
-                  value={form.operation}
-                  onChange={(e) => handleChange("operation", e.target.value)}
+                  value={form.reason}
+                  onChange={(e) => handleChange("reason", e.target.value)}
                 >
                   <option value="COMPRA">Compra</option>
                   <option value="DEVOLUCIÓN">Devolución</option>
@@ -166,16 +290,6 @@ export default function EntryPage() {
                 </select>
               </div>
 
-              {/* Centro de costo */}
-              <div>
-                <Label>Centro de Costo</Label>
-                <Input
-                  placeholder="Ej: Proyecto A"
-                  value={form.cost_center}
-                  onChange={(e) => handleChange("cost_center", e.target.value)}
-                />
-              </div>
-
               {/* Almacén */}
               <div>
                 <Label>Almacén</Label>
@@ -184,7 +298,6 @@ export default function EntryPage() {
                   value={form.warehouse_id}
                   onChange={(e) => handleChange("warehouse_id", e.target.value)}
                 >
-                  <option value="">Elegir</option>
                   {warehouses.map((w) => (
                     <option key={w.id} value={w.id}>
                       {w.name}
@@ -205,7 +318,7 @@ export default function EntryPage() {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <Label>T/C</Label>
                 <Input
                   type="number"
@@ -215,7 +328,7 @@ export default function EntryPage() {
                     handleChange("exchange_rate", parseFloat(e.target.value))
                   }
                 />
-              </div>
+              </div> */}
 
               <div>
                 <Label>Doc. Referencia</Label>
@@ -231,14 +344,14 @@ export default function EntryPage() {
             <MovementDetailTable details={details} setDetails={setDetails} />
 
             {/* Notas */}
-            <div>
+            {/* <div>
               <Label>Notas</Label>
               <Textarea
                 placeholder="Información adicional..."
                 value={form.notes}
                 onChange={(e) => handleChange("notes", e.target.value)}
               />
-            </div>
+            </div> */}
 
             {/* Botones */}
             <div className="flex justify-end gap-2">
