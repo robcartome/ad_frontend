@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-import MovementDetailTable from "@/components/admin/MovementDetailTable";
+import MovementDetailTable from "@/components/admin/movements/MovementDetailTable";
 import { createMovement } from "@/services/movementsService";
 
 export default function MovementForm({
@@ -73,7 +73,7 @@ export default function MovementForm({
 
   return (
     <Card className="max-w-6xl mx-auto">
-      <CardHeader className={`text-white p-2 border gap-0 ${type === "ENTRY" ? "bg-green-400" : "bg-red-300"}`}>
+      <CardHeader className={`text-white p-2 border gap-0 ${type === "ENTRY" ? "bg-green-400" : "bg-red-400"}`}>
         <CardTitle>
           Movimientos de Almacén / {type === "ENTRY" ? "Ingreso" : "Salida"} / Crear
         </CardTitle>

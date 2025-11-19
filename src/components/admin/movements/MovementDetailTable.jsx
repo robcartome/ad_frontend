@@ -73,24 +73,30 @@ export default function MovementDetailTable({ details, setDetails }) {
     <div className="border rounded-md p-3 space-y-3 relative">
       <h3 className="font-semibold">Detalle del Movimiento</h3>
 
-      <div className="grid grid-cols-12 gap-2 font-medium text-sm border-b pb-1">
+      {/* Encabezados */}
+      <div className="grid grid-cols-13 gap-2 text-sm font-medium border-b pb-1">
+        <div className="col-span-1 text-center">#</div>
         <div className="col-span-4">Producto</div>
         <div className="col-span-2">Unidad</div>
         <div className="col-span-2">Cantidad</div>
         <div className="col-span-2">Precio Unit.</div>
         <div className="col-span-1 text-right">Subtotal</div>
-        <div className="col-span-1 text-right"></div>
+        <div className="col-span-1"></div>
       </div>
 
       {details.map((row, i) => {
         const subtotal = (row.quantity || 0) * (row.unit_price || 0);
 
         return (
-          <div key={i} className="grid grid-cols-12 gap-2 items-center border-b py-2 relative">
+          <div key={i} className="grid grid-cols-13 gap-2 items-center border-b py-2 relative">
+            {/* Nº Ítem */}
+            <div className="text-center font-semibold">
+              {i + 1}
+            </div>
             {/* 🔹 Campo de búsqueda de producto */}
             <div className="col-span-4 relative">
               <Input
-                placeholder="Buscar producto..."
+                placeholder="Buscar por nombre o SKU..."
                 value={activeRow === i ? searchTerm : row.product_name || ""}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -131,7 +137,7 @@ export default function MovementDetailTable({ details, setDetails }) {
                       >
                         <div className="font-medium">{p.name}</div>
                         <div className="text-xs text-gray-500">
-                          {p.brand?.name || ""} • {p.category?.name || ""} • {p.unit}
+                          {p.sku || ""} • {p.brand?.name || ""} • {p.category?.name || ""} • {p.unit}
                         </div>
                         <div className="text-xs text-gray-600">
                           Precio: S/ {p.price_purchase}

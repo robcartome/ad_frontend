@@ -29,13 +29,13 @@ export default function EntryPage() {
   }, []);
 
   if (data.loading) {
-    return (
-      <div className="flex justify-center items-center h-full min-h-[400px]">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="ml-3 text-lg text-gray-600">Cargando datos...</p>
-      </div>
-    );
-  }
+    return (
+      <div className="flex justify-center items-center h-full min-h-[400px]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-3 text-lg text-gray-600">Cargando datos...</p>
+      </div>
+    );
+  }
 
   return (
     <MovementForm

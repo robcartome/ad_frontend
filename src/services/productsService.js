@@ -5,7 +5,7 @@ const USE_FAKE_DATA = false;
 
 export async function getProducts(page=1, limit=10, nameFilter="") {
   const offset = (page - 1) * limit;
-  return apiFetch(`/products/?name=${nameFilter}&limit=${limit}&offset=${offset}`);
+  return apiFetch(`/products/?search=${nameFilter}&limit=${limit}&offset=${offset}`);
 }
 
 export async function getCatalogProducts() {

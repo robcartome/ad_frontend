@@ -24,7 +24,7 @@ export default function MovementsTable({ movements }) {
                   <th className="px-4 py-2 text-left">Fecha</th>
                   <th className="px-4 py-2 text-left">Tipo</th>
                   <th className="px-4 py-2 text-left">Almacén</th>
-                  <th className="px-4 py-2 text-left">Motivo</th>
+                  <th className="px-4 py-2 text-left">Operación</th>
                   <th className="px-4 py-2 text-left">Total</th>
                   <th className="px-4 py-2 text-left">Acciones</th>
                 </tr>

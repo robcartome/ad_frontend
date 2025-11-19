@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { getMovements } from "@/services/movementsService";
 import { getWarehouses } from "@/services/warehousesService";
 
-import MovementsTable from "@/components/admin/MovementsTable";
+import MovementsTable from "@/components/admin/movements/MovementsTable";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
