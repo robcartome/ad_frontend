@@ -200,7 +200,7 @@ export default function EntryPage() {
       {error && <p style={{ color: "red" }}>{error}</p>}
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
-          <CardTitle>Movimientos de Almacén / Ingreso / Crear</CardTitle>
+          <CardTitle className="bg-green-400 text-white p-2">Movimientos de Almacén / Ingreso / Crear</CardTitle>
         </CardHeader>
 
         <CardContent>
