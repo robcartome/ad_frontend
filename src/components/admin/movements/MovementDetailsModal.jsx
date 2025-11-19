@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge"; // Asumiendo que tienes el componente Badge de shadcn/ui
+import { Badge } from "@/components/ui/badge";
 
 export default function MovementDetailsModal({ open, onClose, movement }) {
   if (!movement) return null;

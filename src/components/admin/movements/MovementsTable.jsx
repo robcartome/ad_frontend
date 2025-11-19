@@ -3,11 +3,19 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import MovementDetailsModal from "./MovementDetailsModal";
 
 export default function MovementsTable({ movements }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState(null);
+
+  // Determinar el estilo de la etiqueta de tipo de movimiento
+  const typeBadge = {
+    ENTRY: { text: "Entrada", className: "bg-green-400 hover:bg-green-500" },
+    EXIT: { text: "Salida", className: "bg-red-400 hover:bg-red-500" },
+    TRANSFER: { text: "Transferencia", className: "bg-blue-400 hover:bg-blue-500" },
+  }
 
   return (
     <>
@@ -25,27 +33,28 @@ export default function MovementsTable({ movements }) {
                   <th className="px-4 py-2 text-left">Tipo</th>
                   <th className="px-4 py-2 text-left">Almacén</th>
                   <th className="px-4 py-2 text-left">Operación</th>
-                  <th className="px-4 py-2 text-left">Total</th>
+                  <th className="px-4 py-2 text-left">Socio de Negocio</th>
+                  <th className="px-4 py-2 text-left">Documento</th>
                   <th className="px-4 py-2 text-left">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {movements.map((m) => (
                   <tr key={m.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-2">{new Date(m.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-2">{new Date(m.date).toLocaleString()}</td>
                     <td className="px-4 py-2">
-                      {m.type === "ENTRY" && <span className="text-green-600">Entrada</span>}
-                      {m.type === "EXIT" && <span className="text-red-600">Salida</span>}
-                      {m.type === "TRANSFER" && <span className="text-blue-600">Transferencia</span>}
+                      <Badge className={typeBadge[m.type].className}>{typeBadge[m.type].text}</Badge>
                     </td>
                     <td className="px-4 py-2">{m.warehouse_name}</td>
                     <td className="px-4 py-2">{m.reason || "-"}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2">{(m.type == "EXIT" ? m.customer_name : m.supplier_name) || "-"}</td>
+                    <td className="px-4 py-2">{`${m.document_type_name} ${m.series}-${m.number}`}</td>
+                    {/* <td className="px-4 py-2">
                       S/{" "}
                       {m.details
                         .reduce((acc, d) => acc + d.total_price, 0)
                         .toFixed(2)}
-                    </td>
+                    </td> */}
                     <td className="px-4 py-2">
                       <Button
                         size="sm"
