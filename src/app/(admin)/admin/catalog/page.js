@@ -27,10 +27,22 @@ export default function CatalogPage() {
   useEffect(() => {
     async function loadProducts() {
       setLoading(true);
+
       const data = await getCatalogProducts();
-      setProducts(data);
+
+      // data.results es la lista de productos
+      const normalized = data.results.map((p) => ({
+        ...p,
+        brand: p.brand || "Sin marca",
+        category: p.category || "Sin categoría",
+        sku: p.sku || "",
+        name: p.name || "",
+      }));
+
+      setProducts(normalized);
       setLoading(false);
     }
+
     loadProducts();
   }, []);
 
@@ -121,7 +133,7 @@ export default function CatalogPage() {
             <ProductCard
               key={product.id}
               product={product}
-              onClick={() => setSelectedProduct(product)}
+              onClick={() => setSelectedProduct(product.id)}
             />
           ))}
         </motion.div>
@@ -130,7 +142,7 @@ export default function CatalogPage() {
       {/* 🪟 Modal de detalle */}
       {selectedProduct && (
         <ProductDetailModal
-          product={selectedProduct}
+          productId={selectedProduct}
           onClose={() => setSelectedProduct(null)}
         />
       )}
