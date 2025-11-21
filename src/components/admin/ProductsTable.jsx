@@ -4,20 +4,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import ProductModal from "./ProductModal";
-import {
-  createProduct,
-  updateProduct,
-  deleteProduct,
-} from "@/services/productsService";
-
+import { createProduct, updateProduct, deleteProduct } from "@/services/productsService";
 
 export default function ProductsTable({
   products,
@@ -27,48 +16,54 @@ export default function ProductsTable({
   setPage,
   limit,
   search,
-  setSearch, // ← viene desde ProductsPage
-  setProducts, // opcional si haces ediciones locales
+  setSearch,
+  setProducts,
 }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
-  // Calculamos las páginas según lo que diga el backend
   const totalPages = Math.ceil(total / limit);
 
-  // Filtrado local solo por estado (ya no por búsqueda)
-  const filteredProducts = products.filter((product) => {
-    if (filterStatus === "all") return true;
-    return filterStatus === "active" ? product.active : !product.active;
-  });
+  // Filtrado local solo por estado y eliminando nulos
+  const filteredProducts = (products || [])
+    .filter((p) => p) // elimina null / undefined
+    .filter((product) => {
+      if (filterStatus === "all") return true;
+      return filterStatus === "active" ? product.active : !product.active;
+    });
 
-  // CRUD local (sólo visual)
+  // Abrir modal para crear
   const handleAdd = () => {
     setEditingProduct(null);
     setModalOpen(true);
   };
 
+  // Abrir modal para editar
   const handleEdit = (product) => {
+    if (!product) return;
     setEditingProduct(product);
     setModalOpen(true);
   };
 
+  // Guardar producto (crear o actualizar)
   const handleSave = async (data) => {
     try {
       if (editingProduct) {
         const updated = await updateProduct(editingProduct.id, data);
-        setProducts((prev) => ({
-          ...prev,
-          results: prev.results.map((p) =>
-            p.id === editingProduct.id ? updated : p
-          ),
-        }));
+        // setProducts((prev) => ({
+        //   ...prev,
+        //   results: (prev.results || []).map((p) =>
+        //     p?.id === editingProduct.id ? updated : p
+        //   ),
+        // }));
+        // recargar pagina si es necesario
+        window.location.reload(); // Deuda Tecnica: recargar para ver cambios
       } else {
         const created = await createProduct(data);
         setProducts((prev) => ({
           ...prev,
-          results: [created, ...prev.results],
+          results: [created, ...(prev.results || [])],
         }));
       }
       setModalOpen(false);
@@ -78,13 +73,15 @@ export default function ProductsTable({
     }
   };
 
+  // Eliminar producto
   const handleDelete = async (id) => {
+    if (!id) return;
     if (confirm("¿Eliminar este producto?")) {
       try {
         await deleteProduct(id);
         setProducts((prev) => ({
           ...prev,
-          results: prev.results.filter((p) => p.id !== id),
+          results: (prev.results || []).filter((p) => p?.id !== id),
         }));
       } catch (err) {
         console.error(err);
@@ -105,14 +102,14 @@ export default function ProductsTable({
       </CardHeader>
 
       <CardContent>
-        {/* 🔍 Búsqueda global + filtro local */}
+        {/* Búsqueda y filtro */}
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <Input
             placeholder="Buscar por nombre o SKU..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setPage(1); // Reiniciar a primera página cuando se busca algo nuevo
+              setPage(1);
             }}
             className="max-w-sm"
           />
@@ -132,7 +129,7 @@ export default function ProductsTable({
           </Select>
         </div>
 
-        {/* 🧾 Tabla */}
+        {/* Tabla */}
         <div className="overflow-x-auto">
           <table className="min-w-full border text-sm">
             <thead className="bg-gray-100">
@@ -142,50 +139,49 @@ export default function ProductsTable({
                 <th className="px-4 py-2 text-left">Unidad</th>
                 <th className="px-4 py-2 text-left">Marca</th>
                 <th className="px-4 py-2 text-left">Categoría</th>
-                <th className="px-4 py-2 text-left">Precio Compra</th>
+                {/* <th className="px-4 py-2 text-left">Precio Compra</th> */}
                 <th className="px-4 py-2 text-left">Activo</th>
                 <th className="px-4 py-2 text-left">Creado</th>
                 <th className="px-4 py-2 text-left">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product) => (
-                <tr key={product.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2">{product.sku}</td>
-                  <td className="px-4 py-2">{product.name}</td>
-                  <td className="px-4 py-2">{product.unit}</td>
-                  <td className="px-4 py-2">{product.brand || "-"}</td>
-                  <td className="px-4 py-2">{product.category || "-"}</td>
-                  <td className="px-4 py-2">S/ {product.price_purchase}</td>
-                  <td className="px-4 py-2">
-                    {product.active ? (
-                      <span className="text-green-600 font-medium">Activo</span>
-                    ) : (
-                      <span className="text-red-600 font-medium">Inactivo</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2">{product.created_at}</td>
-                  <td className="px-4 py-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mr-2"
-                      onClick={() => handleEdit(product)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(product.id)}
-                    >
-                      Eliminar
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredProducts.length === 0 && (
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <tr key={product?.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-2">{product?.sku || "-"}</td>
+                    <td className="px-4 py-2">{product?.name || "-"}</td>
+                    <td className="px-4 py-2">{product?.unit || "-"}</td>
+                    <td className="px-4 py-2">{product?.brand || "-"}</td>
+                    <td className="px-4 py-2">{product?.category || "-"}</td>
+                    {/* <td className="px-4 py-2">S/ {product?.price_purchase || 0}</td> */}
+                    <td className="px-4 py-2">
+                      {product?.active
+                        ? <span className="text-green-600 font-medium">Activo</span>
+                        : <span className="text-red-600 font-medium">Inactivo</span>
+                      }
+                    </td>
+                    <td className="px-4 py-2">{product?.created_at || "-"}</td>
+                    <td className="px-4 py-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mr-2"
+                        onClick={() => handleEdit(product)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(product?.id)}
+                      >
+                        Eliminar
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td colSpan="9" className="text-center py-4 text-gray-500">
                     No se encontraron productos.
@@ -196,11 +192,9 @@ export default function ProductsTable({
           </table>
         </div>
 
-        {/* 📄 Paginación controlada por backend */}
+        {/* Paginación */}
         <div className="flex justify-between items-center mt-4 text-sm">
-          <p>
-            Página {page} de {totalPages || 1}
-          </p>
+          <p>Página {page} de {totalPages || 1}</p>
           <div className="space-x-2">
             <Button
               variant="outline"
@@ -222,7 +216,7 @@ export default function ProductsTable({
         </div>
       </CardContent>
 
-      {/* 🪟 Modal crear/editar */}
+      {/* Modal */}
       <ProductModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
