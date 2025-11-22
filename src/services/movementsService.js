@@ -19,9 +19,26 @@ export async function getMovements({
   return apiFetch(`/movements/${query}`);
 }
 
+export function getMovementById(id) {
+  return apiFetch(`/movements/${id}`);
+}
+
 export async function createMovement(payload) {
   return apiFetch("/movements/", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function updateMovement(id, data) {
+  return apiFetch(`/movements/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteMovement(id) {
+  return apiFetch(`/movements/${id}`, {
+    method: "DELETE",
   });
 }

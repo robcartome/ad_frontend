@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { getMovements } from "@/services/movementsService";
 import { getWarehouses } from "@/services/warehousesService";
+import { deleteMovement } from "@/services/movementsService";
+import { toast } from "sonner";
 
 import MovementsTable from "@/components/admin/movements/MovementsTable";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,18 @@ export default function MovementsPage() {
   useEffect(() => {
     fetchMovements();
   }, [limit, offset, type, warehouseId, date]);
+
+  async function handleDelete(id) {
+    if (!confirm("¿Seguro que deseas eliminar este movimiento?")) return;
+
+    try {
+      await deleteMovement(id);
+      toast.success("Movimiento eliminado");
+      fetchMovements();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }
 
   const handleNext = () => {
     if (offset + limit < total) setOffset(offset + limit);
@@ -94,7 +108,7 @@ export default function MovementsPage() {
       </div>
 
       {/* 🧾 Tabla */}
-      <MovementsTable movements={movements} />
+      <MovementsTable movements={movements} onDelete={handleDelete} />
 
       {/* 📄 Paginación */}
       <div className="flex justify-between items-center mt-4 text-sm">

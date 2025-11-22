@@ -15,22 +15,53 @@ export default function MovementForm({
   warehouses,
   partners,
   documentTypes,
+  movement = null,         // (solo para edición)
+  mode = "create",         // ("create" | "edit")
+  onSubmitSuccess = null,  //callback
 }) {
-  const [form, setForm] = useState({
-    date: new Date().toISOString().slice(0, 16),
-    reason: "",
-    warehouse_id: warehouses[0]?.id || "",
-    document_type_id: documentTypes[0]?.id || "",
-    series: "0000",
-    number: "0",
-    reference: "",
-    supplier_id: "",
-    customer_id: "",
+
+  console.log("MovementForm movementsssss:", movement);
+  const [form, setForm] = useState(() => {
+    if (movement) {
+      return {
+        date: movement.date.slice(0, 16),
+        reason: movement.reason || "",
+        warehouse_id: movement.warehouse_id,
+        document_type_id: movement.document_type_id,
+        series: movement.series || "0000",
+        number: movement.number || "0",
+        reference: movement.reference_doc || "",
+        supplier_id: movement.supplier_id || "",
+        customer_id: movement.customer_id || "",
+      };
+    }
+
+    return {
+      date: new Date().toISOString().slice(0, 16),
+      reason: "",
+      warehouse_id: warehouses[0]?.id || "",
+      document_type_id: documentTypes[0]?.id || "",
+      series: "0000",
+      number: "0",
+      reference: "",
+      supplier_id: "",
+      customer_id: "",
+    };
   });
 
-  const [details, setDetails] = useState([
-    { product_id: "", quantity: 1, unit_price: 0 },
-  ]);
+  const [details, setDetails] = useState(() => {
+    if (movement) {
+      return movement.details.map(d => ({
+        product_id: d.product_id,
+        product_name: d.product_name,
+        quantity: d.quantity,
+        unit_price: d.unit_price,
+        unit: d.unit || "",
+      }));
+    }
+
+    return [{ product_id: "", quantity: 1, unit_price: 0 }];
+  });
 
   const handleChange = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -54,20 +85,28 @@ export default function MovementForm({
     else payload.customer_id = form.customer_id;
 
     try {
-      await createMovement(payload);
+      if (mode === "edit") {
+        await updateMovement(movement.id, payload);
 
-      toast.success(
-        type === "ENTRY"
-          ? "Ingreso registrado correctamente"
-          : "Salida registrada correctamente"
-      );
+        toast.success(
+          type === "ENTRY"
+            ? "Ingreso actualizado correctamente"
+            : "Salida actualizada correctamente"
+        );
+      } else {
+        await createMovement(payload);
 
+        toast.success(
+          type === "ENTRY"
+            ? "Ingreso registrado correctamente"
+            : "Salida registrada correctamente"
+        );
+      }
       // Reset detail
-      setDetails([{ product_id: "", quantity: 1, unit_price: 0 }]);
-
+      // setDetails([{ product_id: "", quantity: 1, unit_price: 0 }]);
+      if (onSubmitSuccess) onSubmitSuccess();
     } catch (err) {
       toast.error(err.message);
-      console.error("Movement error:", err);
     }
   }
 
