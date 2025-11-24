@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 import MovementDetailTable from "@/components/admin/movements/MovementDetailTable";
-import { createMovement } from "@/services/movementsService";
+import { createMovement, updateMovement } from "@/services/movementsService";
 
 export default function MovementForm({
   type,
@@ -56,7 +56,7 @@ export default function MovementForm({
         product_name: d.product_name,
         quantity: d.quantity,
         unit_price: d.unit_price,
-        unit: d.unit || "",
+        unit: d.unit_code || "",
       }));
     }
 
@@ -104,7 +104,7 @@ export default function MovementForm({
       }
       // Reset detail
       // setDetails([{ product_id: "", quantity: 1, unit_price: 0 }]);
-      if (onSubmitSuccess) onSubmitSuccess();
+      if (onSubmitSuccess) () => router.push("/admin/movements");
     } catch (err) {
       toast.error(err.message);
     }
@@ -114,7 +114,7 @@ export default function MovementForm({
     <Card className="max-w-6xl mx-auto">
       <CardHeader className={`text-white p-2 border gap-0 ${type === "ENTRY" ? "bg-green-400" : "bg-red-400"}`}>
         <CardTitle>
-          Movimientos de Almacén / {type === "ENTRY" ? "Ingreso" : "Salida"} / Crear
+          Movimientos de Almacén / {type === "ENTRY" ? "Ingreso" : "Salida"} / {mode === "edit" ? "EDICIÓN" : "CREAR"}
         </CardTitle>
       </CardHeader>
 

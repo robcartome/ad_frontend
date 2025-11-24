@@ -1,20 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getProducts } from "@/services/productsService";
 
 export default function MovementDetailTable({ details, setDetails }) {
-  const router = useRouter();
-
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeRow, setActiveRow] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [noResults, setNoResults] = useState(false);
 
+  console.log("MovementDetailTable details:", details);
   // 🔍 Buscar productos al escribir
   useEffect(() => {
     const delay = setTimeout(async () => {
