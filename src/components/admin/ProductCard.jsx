@@ -22,7 +22,9 @@ export default function ProductCard({ product, onClick }) {
         className="w-16 h-16 object-contain rounded-md flex-shrink-0"
       />
       <div className="flex flex-col flex-1 min-w-0">
-        <p className="font-medium text-sm leading-tight truncate">{product.name}</p>
+        <p className="font-medium text-sm leading-tight line-clamp-2 break-words">
+          {product.name}
+        </p>
         <div className="text-xs text-gray-500 flex flex-wrap gap-x-2">
           <span>Stock: {product.stock}</span>
           <span>Unidad: {product.unit}</span>

@@ -9,7 +9,7 @@ export async function getProducts(page=1, limit=10, nameFilter="") {
   return apiFetch(`/products/?search=${nameFilter}&limit=${limit}&offset=${offset}`);
 }
 
-export async function getCatalogProducts(page=1, limit=10, search="") {
+export async function getCatalogProducts(page = 1, limit = 50, search = "") {
   const offset = (page - 1) * limit;
   return apiFetch(`/catalog/products?search=${search}&limit=${limit}&offset=${offset}`);
 }
