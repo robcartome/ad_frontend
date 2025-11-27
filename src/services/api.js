@@ -1,3 +1,5 @@
+import { parseApiError } from "./errors/parseError";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export async function apiFetch(endpoint, options = {}) {
@@ -13,13 +15,24 @@ export async function apiFetch(endpoint, options = {}) {
 
   try {
     const res = await fetch(`${API_URL}${endpoint}`, config);
+
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.detail || res.statusText);
+      const errorData = await safeJson(res);
+      const msg = parseApiError(errorData);
+      throw new Error(msg);
     }
-    return await res.json();
+
+    return await safeJson(res);
   } catch (err) {
     console.error("API Error:", err);
     throw err;
+  }
+}
+
+async function safeJson(res) {
+  try {
+    return await res.json();
+  } catch {
+    return {};
   }
 }

@@ -3,30 +3,40 @@
 import { useEffect, useState } from "react";
 import MovementForm from "@/components/admin/movements/MovementForm";
 
+import { getMovementById } from "@/services/movementsService";
 import { getWarehouses } from "@/services/warehousesService";
 import { getSuppliers } from "@/services/suppliersService";
+import { getCustomers } from "@/services/customersService";
 import { getDocumentTypes } from "@/services/documentTypesService";
+
 import { Loader2 } from "lucide-react";
 
-export default function EntryPage() {
+export default function EditMovement({ id }) {
   const [data, setData] = useState({ loading: true });
 
   useEffect(() => {
     async function load() {
+      const movement = await getMovementById(id);
       const warehouses = await getWarehouses();
-      const suppliers = await getSuppliers();
       const documentTypes = await getDocumentTypes();
+
+      // ENTRY = proveedor / EXIT = cliente
+      const partners =
+        movement.type === "ENTRY"
+          ? await getSuppliers()
+          : await getCustomers();
 
       setData({
         loading: false,
+        movement,
         warehouses,
-        partners: suppliers,
         documentTypes,
+        partners,
       });
     }
 
     load();
-  }, []);
+  }, [id]);
 
   if (data.loading) {
     return (
@@ -39,10 +49,13 @@ export default function EntryPage() {
 
   return (
     <MovementForm
-      type="ENTRY"
+      type={data.movement.type}
       warehouses={data.warehouses}
       partners={data.partners}
       documentTypes={data.documentTypes}
+      movement={data.movement}  // 👈 nuevo
+      mode="edit"
+      onSubmitSuccess={() => router.push("/admin/movements")}
     />
   );
 }

@@ -1,93 +1,149 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getProductDetail } from "@/services/productsService";
+
+// MEMO CACHE (global en este módulo)
+const productDetailCache = {};
 
 function formatPrice(value) {
-  if (value === undefined || value === null) return null;
+  if (!value) return "—";
   const n = Number(value);
-  return Number.isFinite(n) ? n.toFixed(2) : null;
+  return Number.isFinite(n) ? `S/ ${n.toFixed(2)}` : "—";
 }
 
-export default function ProductDetailModal({ product, onClose }) {
-  if (!product) return null;
+export default function ProductDetailModal({ productId, onClose }) {
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const stockEntries = Object.entries(product.stock ?? {});
+  // ================================
+  //   Cargar detalle + MEMO CACHE
+  // ================================
+  const fetchDetail = useCallback(async () => {
+    if (!productId) return;
+
+    // 1️⃣ Si existe en cache → úsalo
+    if (productDetailCache[productId]) {
+      setDetail(productDetailCache[productId]);
+      return;
+    }
+
+    // 2️⃣ Sino, fetch al backend
+    setLoading(true);
+    try {
+      const data = await getProductDetail(productId);
+      productDetailCache[productId] = data; // guardar en cache
+      setDetail(data);
+    } catch (err) {
+      console.error("Error loading detail:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
+
+  if (!productId) return null;
 
   return (
-    <Dialog open={!!product} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={!!productId} onOpenChange={onClose}>
+      <DialogContent className="w-[95%] max-w-lg md:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{product.name}</DialogTitle>
+          <DialogTitle className="text-lg md:text-xl font-semibold">
+            {detail?.name || "Cargando..."}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <img
-            src={product.image || "/placeholder.png"}
-            alt={product.name}
-            className="w-full h-40 object-contain rounded-md"
-          />
-
-          <div className="text-sm text-gray-600 space-y-1">
-            <p><strong>SKU:</strong> {product.sku ?? "—"}</p>
-            <p><strong>Unidad:</strong> {product.unit ?? "—"}</p>
-            <p><strong>Categoría:</strong> {product.category ?? "—"}</p>
-            <p><strong>Marca:</strong> {product.brand ?? "—"}</p>
+        {/* ==========================
+            LOADING STATE
+        ========================== */}
+        {!detail || loading ? (
+          <div className="space-y-4">
+            <Skeleton className="w-full h-40" />
+            <Skeleton className="h-4 w-2/4" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/3" />
           </div>
+        ) : (
+          <>
+            {/* ==========================
+                IMAGE + BASIC DATA
+            ========================== */}
+            <div className="space-y-4 md:flex md:gap-4">
+              <img
+                src={detail.image || "/placeholder.png"}
+                alt={detail.name}
+                className="w-full md:w-60 h-40 md:h-48 object-contain border rounded-md bg-white"
+              />
 
-          <div className="border-t pt-2 text-sm space-y-1">
-            <p>
-              <strong>Precio de compra:</strong>{" "}
-              {formatPrice(product.purchase_price)
-                ? `S/ ${formatPrice(product.purchase_price)}`
-                : "—"}
-            </p>
-            <p>
-              <strong>Precio menor:</strong>{" "}
-              {formatPrice(product.prices?.menor)
-                ? `S/ ${formatPrice(product.prices.menor)}`
-                : "—"}
-            </p>
-            <p>
-              <strong>Precio mayor:</strong>{" "}
-              {formatPrice(product.prices?.mayor)
-                ? `S/ ${formatPrice(product.prices.mayor)}`
-                : "—"}
-            </p>
-            <p>
-              <strong>Distribución:</strong>{" "}
-              {formatPrice(product.prices?.distribucion)
-                ? `S/ ${formatPrice(product.prices.distribucion)}`
-                : "—"}
-            </p>
-          </div>
-
-          {stockEntries.length > 0 && (
-            <div className="border-t pt-3">
-              <strong>Stock por almacén:</strong>
-              <ul className="list-disc ml-5 mt-1 text-sm">
-                {stockEntries.map(([warehouse, stock]) => (
-                  <li key={warehouse}>
-                    {warehouse}: {Number(stock) || 0}
-                  </li>
-                ))}
-              </ul>
+              <div className="flex-1 space-y-2 text-sm text-gray-700">
+                <p><strong>SKU:</strong> {detail.sku}</p>
+                <p><strong>Unidad:</strong> {detail.unit}</p>
+                <p><strong>Categoría:</strong> {detail.category}</p>
+                <p><strong>Marca:</strong> {detail.brand ?? "—"}</p>
+              </div>
             </div>
-          )}
 
-          {product.description && (
-            <div className="border-t pt-3">
-              <strong>Descripción:</strong>
-              <p className="text-sm text-gray-700 mt-1">
-                {product.description}
-              </p>
+            {/* ==========================
+                PRECIOS
+            ========================== */}
+            <div className="border-t pt-3 text-sm space-y-1">
+              <strong>Precios</strong>
+              <p><strong>Compra:</strong> {formatPrice(detail.price_purchase)}</p>
+              <p><strong>Venta:</strong> {formatPrice(detail.price_sale)}</p>
+
+              {detail.price_list?.length > 0 && (
+                <div>
+                  <strong>Lista de precios:</strong>
+                  <ul className="list-disc ml-5 mt-1">
+                    {detail.price_list.map((p, i) => (
+                      <li key={i}>
+                        {p.price_list_name}: {formatPrice(p.amount)} ({p.currency})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+
+            {/* ==========================
+                STOCK POR ALMACÉN
+            ========================== */}
+            {detail.stock_by_warehouse?.length > 0 && (
+              <div className="border-t pt-3">
+                <strong>Stock por almacén</strong>
+                <ul className="list-disc ml-5 text-sm mt-1">
+                  {detail.stock_by_warehouse.map((w, i) => (
+                    <li key={i}>
+                      {w.warehouse_name}: {w.quantity}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* ==========================
+                DESCRIPCIÓN
+            ========================== */}
+            {detail.description && (
+              <div className="border-t pt-3">
+                <strong>Descripción:</strong>
+                <p className="text-sm text-gray-700 mt-1">
+                  {detail.description}
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

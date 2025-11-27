@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,40 +21,114 @@ export default function CatalogPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [brandFilter, setBrandFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+
+  // INFINITE SCROLL
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const observerRef = useRef(null);
+
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  useEffect(() => {
-    async function loadProducts() {
+  // ---------------------------
+  // 🔍 Debounced Search (para que no pegue 100 renders)
+  // ---------------------------
+  function useDebounce(value, delay = 400) {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => {
+      const t = setTimeout(() => setDebounced(value), delay);
+      return () => clearTimeout(t);
+    }, [value]);
+    return debounced;
+  }
+
+  const debouncedSearch = useDebounce(search);
+
+  // ---------------------------
+  // 📌 Cargar productos por página (API)
+  // ---------------------------
+  const loadProducts = useCallback(
+    async (reset = false) => {
       setLoading(true);
-      const data = await getCatalogProducts();
-      setProducts(data);
+
+      const currentPage = reset ? 1 : page;
+      const res = await getCatalogProducts(currentPage, 50, debouncedSearch);
+
+      const normalized = res.results.map((p) => ({
+        ...p,
+        brand: p.brand || "Sin marca",
+        category: p.category || "Sin categoría",
+        sku: p.sku || "",
+        name: p.name || "",
+      }));
+
+      if (reset) {
+        setProducts(normalized);
+      } else {
+        setProducts((prev) => [...prev, ...normalized]);
+      }
+
+      setHasMore(res.results.length > 0);
       setLoading(false);
-    }
-    loadProducts();
-  }, []);
+    },
+    [page, debouncedSearch]
+  );
+
+  // ---------------------------
+  // 🧨 Ejecutar carga cuando cambia búsqueda
+  // ---------------------------
+  useEffect(() => {
+    setPage(1);
+    loadProducts(true);
+  }, [debouncedSearch]);
+
+  // ---------------------------
+  // 🚀 Infinite Scroll Observer
+  // ---------------------------
+  const lastItemRef = useCallback(
+    (node) => {
+      if (loading) return;
+
+      if (observerRef.current) observerRef.current.disconnect();
+
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage((prev) => prev + 1);
+        }
+      });
+
+      if (node) observerRef.current.observe(node);
+    },
+    [loading, hasMore]
+  );
+
+  // ---------------------------
+  // 📌 Cargar siguiente página cuando page cambia
+  // ---------------------------
+  useEffect(() => {
+    if (page !== 1) loadProducts(false);
+  }, [page]);
+
+  // ---------------------------
+  // 🧪 Filtros locales
+  // ---------------------------
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesCategory =
+        categoryFilter === "all" || product.category === categoryFilter;
+      const matchesBrand =
+        brandFilter === "all" || product.brand === brandFilter;
+      return matchesCategory && matchesBrand;
+    });
+  }, [products, categoryFilter, brandFilter]);
 
   const categories = useMemo(
     () => ["all", ...new Set(products.map((p) => p.category))],
     [products]
   );
-
   const brands = useMemo(
     () => ["all", ...new Set(products.map((p) => p.brand))],
     [products]
   );
-
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesSearch =
-        product.name.toLowerCase().includes(search.toLowerCase()) ||
-        product.sku.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory =
-        categoryFilter === "all" || product.category === categoryFilter;
-      const matchesBrand =
-        brandFilter === "all" || product.brand === brandFilter;
-      return matchesSearch && matchesCategory && matchesBrand;
-    });
-  }, [products, search, categoryFilter, brandFilter]);
 
   return (
     <div className="px-4 sm:px-6 md:px-8 space-y-6">
@@ -65,7 +138,7 @@ export default function CatalogPage() {
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <Input
-            placeholder="Buscar productos, use el código o nombre..."
+            placeholder="Buscar productos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="sm:max-w-sm bg-white"
@@ -99,38 +172,39 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      {/* 📦 Catálogo */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="p-4">
-              <Skeleton className="w-full h-24 mb-2 rounded-lg" />
-              <Skeleton className="h-4 w-3/4 mb-2" />
-              <Skeleton className="h-4 w-1/2" />
-            </Card>
-          ))}
-        </div>
-      ) : filteredProducts.length === 0 ? (
-        <p className="text-gray-500 text-center">No se encontraron productos.</p>
-      ) : (
-        <motion.div
-          layout
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
-        >
-          {filteredProducts.map((product) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {filteredProducts.map((product, idx) => {
+          if (idx === filteredProducts.length - 1) {
+            return (
+              <div key={product.id} ref={lastItemRef}>
+                <ProductCard
+                  product={product}
+                  onClick={() => setSelectedProduct(product.id)}
+                />
+              </div>
+            );
+          }
+
+          return (
             <ProductCard
               key={product.id}
               product={product}
-              onClick={() => setSelectedProduct(product)}
+              onClick={() => setSelectedProduct(product.id)}
             />
-          ))}
-        </motion.div>
+          );
+        })}
+      </div>
+
+      {loading && (
+        <div className="flex justify-center py-6">
+          <Skeleton className="w-32 h-6 rounded-md" />
+        </div>
       )}
 
-      {/* 🪟 Modal de detalle */}
+      {/* 🪟 Modal */}
       {selectedProduct && (
         <ProductDetailModal
-          product={selectedProduct}
+          productId={selectedProduct}
           onClose={() => setSelectedProduct(null)}
         />
       )}

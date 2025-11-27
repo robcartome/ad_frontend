@@ -11,11 +11,6 @@ function formatPrice(value) {
 }
 
 export default function ProductCard({ product, onClick }) {
-  const totalStock =
-    typeof product.stock === "object"
-      ? Object.values(product.stock).reduce((a, b) => a + Number(b || 0), 0)
-      : Number(product.stock || 0);
-
   return (
     <div
       onClick={onClick}
@@ -27,15 +22,23 @@ export default function ProductCard({ product, onClick }) {
         className="w-16 h-16 object-contain rounded-md flex-shrink-0"
       />
       <div className="flex flex-col flex-1 min-w-0">
-        <p className="font-medium text-sm leading-tight truncate">{product.name}</p>
+        <p className="font-medium text-sm leading-tight line-clamp-2 break-words">
+          {product.name}
+        </p>
         <div className="text-xs text-gray-500 flex flex-wrap gap-x-2">
-          <span>Stock: {totalStock}</span>
+          <span>Stock: {product.stock}</span>
           <span>Unidad: {product.unit}</span>
           <span>SKU: {product.sku}</span>
         </div>
-        <span className="text-green-600 font-semibold text-sm mt-1">
-          {formatPrice(product.prices?.menor) ? `S/ ${formatPrice(product.prices.menor)}` : "S/ 0.00"}
-        </span>
+        <div className="flex flex-wrap gap-x-2">
+          {/* <span className="text-green-600 font-semibold text-sm mt-1">
+            P.C. {formatPrice(product.price_sale) ? `S/ ${formatPrice(product.price_sale)}` : "S/ 0.00"}
+          </span> */}
+          <span className="text-green-600 font-semibold text-sm mt-1">
+            P.V. {formatPrice(product.price_sale) ? `S/ ${formatPrice(product.price_sale)}` : "S/ 0.00"}
+          </span>
+        </div>
+
       </div>
 
       <PlusCircle className="text-green-600 w-6 h-6 flex-shrink-0" />
