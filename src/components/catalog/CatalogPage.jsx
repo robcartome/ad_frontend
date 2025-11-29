@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,10 +11,12 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCatalogProducts } from "@/services/productsService";
+import { ArrowUpCircle } from "lucide-react";
+
 import ProductCard from "@/components/admin/ProductCard";
 import ProductDetailModal from "@/components/admin/ProductDetailModal";
 
-export default function CatalogPage() {
+export default function CatalogPage({isAdmin = false}) {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -130,19 +131,68 @@ export default function CatalogPage() {
     [products]
   );
 
+  function ScrollTopButton() {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+      const onScroll = () => setVisible(window.scrollY > 250);
+      window.addEventListener("scroll", onScroll);
+      return () => window.removeEventListener("scroll", onScroll);
+    }, []);
+
+    if (!visible) return null;
+
+    return (
+      <button
+        onClick={() =>
+          window.scrollTo({ top: 0, behavior: "smooth" })
+        }
+        className="
+          fixed bottom-4 left-4 z-50
+          p-2 rounded-full bg-white border shadow-xl
+          hover:shadow-2xl transition-all
+        "
+      >
+        <ArrowUpCircle className="w-8 h-8 text-green-600 drop-shadow-sm" />
+      </button>
+    );
+  }
+
   return (
     <div className="px-4 sm:px-6 md:px-8 space-y-6">
       {/* 🔍 Filtros */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <h2 className="text-xl font-semibold w-full sm:w-auto">Productos</h2>
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <h2 className="text-xl font-semibold w-full sm:w-auto text-center">Productos MFT</h2>
 
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <Input
-            placeholder="Buscar productos..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sm:max-w-sm bg-white"
-          />
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:max-w-sm">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 105.65 5.65a7.5 7.5 0 0010.6 10.6z"
+              />
+            </svg>
+
+            <Input
+              placeholder="Buscar productos..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="
+                w-full pl-10 pr-4 py-2
+                rounded-full border border-gray-300
+                focus:ring-2 focus:ring-green-500 focus:border-green-500
+                transition-all bg-white shadow-sm
+              "
+            />
+          </div>
 
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full sm:w-[150px] bg-white">
@@ -180,6 +230,7 @@ export default function CatalogPage() {
                 <ProductCard
                   product={product}
                   onClick={() => setSelectedProduct(product.id)}
+                  isAdmin={isAdmin}
                 />
               </div>
             );
@@ -190,6 +241,7 @@ export default function CatalogPage() {
               key={product.id}
               product={product}
               onClick={() => setSelectedProduct(product.id)}
+              isAdmin={isAdmin}
             />
           );
         })}
@@ -206,8 +258,11 @@ export default function CatalogPage() {
         <ProductDetailModal
           productId={selectedProduct}
           onClose={() => setSelectedProduct(null)}
+          isAdmin={isAdmin}
         />
       )}
+
+      <ScrollTopButton />
     </div>
   );
 }

@@ -18,7 +18,7 @@ export default function AdminLayout({ children }) {
         <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
         {/* Contenido */}
-        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+        <main className="flex-1 py-3 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

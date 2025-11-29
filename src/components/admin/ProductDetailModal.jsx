@@ -19,7 +19,7 @@ function formatPrice(value) {
   return Number.isFinite(n) ? `S/ ${n.toFixed(2)}` : "—";
 }
 
-export default function ProductDetailModal({ productId, onClose }) {
+export default function ProductDetailModal({ productId, onClose, isAdmin = false }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -98,7 +98,7 @@ export default function ProductDetailModal({ productId, onClose }) {
             ========================== */}
             <div className="border-t pt-3 text-sm space-y-1">
               <strong>Precios</strong>
-              <p><strong>Compra:</strong> {formatPrice(detail.price_purchase)}</p>
+              { isAdmin && (<p><strong>Compra:</strong> {formatPrice(detail.price_purchase)}</p>) }
               <p><strong>Venta:</strong> {formatPrice(detail.price_sale)}</p>
 
               {detail.price_list?.length > 0 && (
