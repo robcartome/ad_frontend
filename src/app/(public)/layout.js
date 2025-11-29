@@ -12,7 +12,7 @@ export default function PublicLayout({ children }) {
 
       {/* 🛠️ HEADER: Barra de Navegación Principal */}
       <header className="sticky top-0 z-50 bg-white shadow-lg border-b border-blue-100">
-        <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py- flex justify-between items-center">
+        <nav className="container mx-auto px-4 sm:px-0 sm:py-2 flex justify-between items-center">
 
           {/* Nombre de la Empresa Usuario */}
           <Link href="/" className="flex items-center space-x-3"> {/* Aumenté un poco el espacio */}
