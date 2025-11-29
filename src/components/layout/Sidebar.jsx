@@ -26,7 +26,7 @@ export default function Sidebar({ open, setOpen }) {
     { name: "Categorías", href: "/admin/categories", icon: Tags },
     { name: "Marcas", href: "/admin/brands", icon: Tags },
     { name: "Almacenes", href: "/admin/warehouses", icon: Warehouse },
-    { name: "Catalogo", href: "/admin/catalog", icon: Notebook },
+    { name: "Catalogo", href: "/admin/catalog_admin", icon: Notebook },
   ];
 
   return (

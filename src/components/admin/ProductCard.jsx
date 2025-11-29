@@ -10,11 +10,11 @@ function formatPrice(value) {
   return Number.isFinite(n) ? n.toFixed(2) : null;
 }
 
-export default function ProductCard({ product, onClick }) {
+export default function ProductCard({ product, onClick, isAdmin = false }) {
   return (
     <div
       onClick={onClick}
-      className="w-full rounded-xl border p-3 flex items-center gap-3 bg-white shadow-sm hover:shadow-md transition cursor-pointer"
+      className="w-full rounded-xl border p-2 flex items-center gap-3 bg-white shadow-sm hover:shadow-md transition cursor-pointer"
     >
       <img
         src={product.image || "/placeholder.png"}
@@ -31,9 +31,11 @@ export default function ProductCard({ product, onClick }) {
           <span>SKU: {product.sku}</span>
         </div>
         <div className="flex flex-wrap gap-x-2">
-          {/* <span className="text-green-600 font-semibold text-sm mt-1">
-            P.C. {formatPrice(product.price_sale) ? `S/ ${formatPrice(product.price_sale)}` : "S/ 0.00"}
-          </span> */}
+          {isAdmin && (
+            <span className="text-blue-600 font-semibold text-sm mt-1">
+              P.C. {formatPrice(product.price_purchase) ? `S/ ${formatPrice(product.price_purchase)}` : "S/ 0.00"}
+            </span>
+          )}
           <span className="text-green-600 font-semibold text-sm mt-1">
             P.V. {formatPrice(product.price_sale) ? `S/ ${formatPrice(product.price_sale)}` : "S/ 0.00"}
           </span>
