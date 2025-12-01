@@ -59,6 +59,7 @@ export default function MovementDetailTable({ details, setDetails }) {
 
   const handleSelectProduct = (index, product) => {
     handleChange(index, "product_id", product.id);
+    handleChange(index, "sku", product.sku || "")
     handleChange(index, "product_name", product.name);
     handleChange(index, "unit", product.unit);
     handleChange(index, "unit_price", parseFloat(product.price_purchase || 0));
@@ -72,35 +73,43 @@ export default function MovementDetailTable({ details, setDetails }) {
       <h3 className="font-semibold">Detalle del Movimiento</h3>
 
       {/* Encabezados */}
-      <div className="grid grid-cols-13 gap-2 text-sm font-medium border-b pb-1">
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-12 gap-2 text-sm font-medium border-b pb-1 mb-0">
         <div className="col-span-1 text-center">#</div>
-        <div className="col-span-4">Producto</div>
-        <div className="col-span-2">Unidad</div>
-        <div className="col-span-2">Cantidad</div>
-        <div className="col-span-2">Precio Unit.</div>
-        <div className="col-span-1 text-right">Subtotal</div>
-        <div className="col-span-1"></div>
+        <div className="col-span-5">Producto</div>
+        <div className="col-span-2 md:col-span-1">Unidad</div>
+        <div className="col-span-2 md:col-span-1">Cantidad</div>
+        <div className="col-span-2 md:col-span-1">Precio Unit.</div>
+        <div className="col-span-2 text-right">Subtotal</div>
+        <div className="col-span-1 text-right"></div>
       </div>
 
       {details.map((row, i) => {
         const subtotal = (row.quantity || 0) * (row.unit_price || 0);
 
         return (
-          <div key={i} className="grid grid-cols-13 gap-2 items-center border-b py-2 relative">
+          <div key={i} className="grid grid-cols-5 md:grid-cols-12 gap-2 items-center border-b py-2 relative mb-0">
             {/* Nº Ítem */}
             <div className="text-center font-semibold">
               {i + 1}
             </div>
             {/* 🔹 Campo de búsqueda de producto */}
-            <div className="col-span-4 relative">
+            <div className="col-span-5 relative">
               <Input
+                className="h-8 px-2"
                 placeholder="Buscar por nombre o SKU..."
-                value={activeRow === i ? searchTerm : row.product_name || ""}
+                value={
+                  activeRow === i
+                    ? searchTerm
+                    : row.sku
+                    ? `${row.sku} ${row.product_name}`
+                    : row.product_name || ""
+                }
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                   setActiveRow(i);
                 }}
                 onFocus={() => setActiveRow(i)}
+                title={`${row.product_id ? `${row.sku} - ${row.product_name}` : ""}`}
               />
 
               {/* 🔹 Resultados de búsqueda */}
@@ -147,13 +156,14 @@ export default function MovementDetailTable({ details, setDetails }) {
             </div>
 
             {/* Unidad */}
-            <div className="col-span-2">
-              <Input value={row.unit || ""} readOnly className="bg-gray-100" />
+            <div className="col-span-2 md:col-span-1">
+              <Input value={row.unit || ""} readOnly className="!text-xs h-8 px-2 bg-gray-100" />
             </div>
 
             {/* Cantidad */}
-            <div className="col-span-2">
+            <div className="col-span-2 md:col-span-1">
               <Input
+                className="h-8 px-2"
                 type="number"
                 value={row.quantity}
                 min="1"
@@ -164,11 +174,13 @@ export default function MovementDetailTable({ details, setDetails }) {
             </div>
 
             {/* Precio Unitario */}
-            <div className="col-span-2">
+            <div className="col-span-2 md:col-span-1">
               <Input
+                className="h-8 px-2"
                 type="number"
                 value={row.unit_price}
                 min="0"
+                step="any"
                 onChange={(e) =>
                   handleChange(i, "unit_price", parseFloat(e.target.value))
                 }
@@ -176,7 +188,7 @@ export default function MovementDetailTable({ details, setDetails }) {
             </div>
 
             {/* Subtotal */}
-            <div className="col-span-1 text-right pr-2">
+            <div className="col-span-2 pr-2 text-right">
               <span className="text-gray-700">S/ {subtotal.toFixed(2)}</span>
             </div>
 

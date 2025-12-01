@@ -111,14 +111,14 @@ export default function MovementForm({
   }
 
   return (
-    <Card className="max-w-6xl mx-auto">
+    <Card className="max-w-7xl mx-auto">
       <CardHeader className={`text-white p-2 border gap-0 ${type === "ENTRY" ? "bg-green-400" : "bg-red-400"}`}>
         <CardTitle>
           Movimientos de Almacén / {type === "ENTRY" ? "Ingreso" : "Salida"} / {mode === "edit" ? "EDICIÓN" : "CREAR"}
         </CardTitle>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="px-3 md:px-4">
         <form onSubmit={handleSubmit} className="space-y-3 text-xs md:text-sm">
 
           {/* Proveedor o Cliente */}
