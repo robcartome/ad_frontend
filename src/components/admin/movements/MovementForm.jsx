@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+
+import { Loader2, CircleFadingArrowUpIcon  } from "lucide-react";
 import { toast } from "sonner";
 
 import MovementDetailTable from "@/components/admin/movements/MovementDetailTable";
 import { createMovement, updateMovement } from "@/services/movementsService";
+
+
 
 export default function MovementForm({
   type,
@@ -19,8 +25,8 @@ export default function MovementForm({
   mode = "create",         // ("create" | "edit")
   onSubmitSuccess = null,  //callback
 }) {
-
-  console.log("MovementForm movementsssss:", movement);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(() => {
     if (movement) {
       return {
@@ -68,7 +74,7 @@ export default function MovementForm({
 
   async function handleSubmit(e) {
     e.preventDefault();
-
+    setLoading(true);
     const payload = {
       type,
       date: new Date(form.date).toISOString(),
@@ -104,13 +110,27 @@ export default function MovementForm({
       }
       // Reset detail
       // setDetails([{ product_id: "", quantity: 1, unit_price: 0 }]);
-      if (onSubmitSuccess) () => router.push("/admin/movements");
+      if (onSubmitSuccess) () => router.push("/admin/inventory/movements");
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
+  const handleCancel = () => {
+    router.push("/admin/inventory/movements");
+  };
+
   return (
+    <>
+    {/* Overlay + Spinner */}
+    {loading && (
+      <div className="fixed inset-0 bg-black/40 z-[9999] flex flex-col items-center justify-center backdrop-blur-sm">
+        <Loader2 className="w-10 h-10 animate-spin text-white" />
+        <p className="mt-2 text-white text-sm">Procesando...</p>
+      </div>
+    )}
     <Card className="max-w-7xl mx-auto">
       <CardHeader className={`text-white p-2 border gap-0 ${type === "ENTRY" ? "bg-green-400" : "bg-red-400"}`}>
         <CardTitle>
@@ -240,13 +260,17 @@ export default function MovementForm({
 
           {/* Botones */}
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary">
+            <Button type="button" variant="outline" onClick={handleCancel} className="cursor-pointer">
               Cancelar
             </Button>
-            <Button type="submit">Guardar</Button>
+            <Button type="submit" className="cursor-pointer">
+              <CircleFadingArrowUpIcon />
+              Guardar
+            </Button>
           </div>
         </form>
       </CardContent>
     </Card>
+    </>
   );
 }

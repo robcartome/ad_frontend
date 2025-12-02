@@ -199,6 +199,7 @@ export default function MovementDetailTable({ details, setDetails }) {
                 size="sm"
                 type="button"
                 onClick={() => removeRow(i)}
+                className="cursor-pointer"
               >
                 ✕
               </Button>
@@ -207,7 +208,7 @@ export default function MovementDetailTable({ details, setDetails }) {
         );
       })}
 
-      <Button type="button" onClick={addRow} className="mt-2">
+      <Button type="button" onClick={addRow} className="mt-2 cursor-pointer">
         + Agregar producto
       </Button>
     </div>
