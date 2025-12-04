@@ -204,15 +204,16 @@ export default function MovementForm({
                   <>
                     <option value="COMPRA">Compra</option>
                     <option value="DEVOLUCIÓN">Devolución</option>
-                    <option value="PRESTAMO">Préstamo recibido</option>
+                    <option value="PRESTAMO_RECIBIDO">Préstamo recibido</option>
+                    <option value="CONSUMO_INTERNO">Consumo interno</option>
                     <option value="AJUSTE">Ajuste de stock</option>
-                    <option value="INICIAL">Saldo inicial</option>
+                    <option value="SALDO_INICIAL">Saldo inicial</option>
                   </>
                 ) : (
                   <>
                     <option value="VENTA">Venta</option>
-                    <option value="PRESTAMO">Préstamo entregado</option>
-                    <option value="CONSUMO">Consumo interno</option>
+                    <option value="PRESTAMO_ENTREGADO">Préstamo entregado</option>
+                    <option value="CONSUMO_INTERNO">Consumo interno</option>
                     <option value="AJUSTE">Ajuste de stock</option>
                   </>
                 )}
@@ -256,7 +257,7 @@ export default function MovementForm({
           </div>
 
           {/* Tabla de detalles */}
-          <MovementDetailTable details={details} setDetails={setDetails} />
+          <MovementDetailTable details={details} setDetails={setDetails} type_movement={type} />
 
           {/* Botones */}
           <div className="flex justify-end gap-3">
