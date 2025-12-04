@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getProducts } from "@/services/productsService";
 
-export default function MovementDetailTable({ details, setDetails }) {
+export default function MovementDetailTable({ details, setDetails, type_movement }) {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeRow, setActiveRow] = useState(null);
@@ -62,7 +62,7 @@ export default function MovementDetailTable({ details, setDetails }) {
     handleChange(index, "sku", product.sku || "")
     handleChange(index, "product_name", product.name);
     handleChange(index, "unit", product.unit);
-    handleChange(index, "unit_price", parseFloat(product.price_purchase || 0));
+    handleChange(index, "unit_price", parseFloat(type_movement=="ENTRY" ? product.price_purchase : product.price_sale || 0)  );
     setSearchResults([]);
     setSearchTerm("");
     setActiveRow(null);
@@ -199,6 +199,7 @@ export default function MovementDetailTable({ details, setDetails }) {
                 size="sm"
                 type="button"
                 onClick={() => removeRow(i)}
+                className="cursor-pointer"
               >
                 ✕
               </Button>
@@ -207,7 +208,7 @@ export default function MovementDetailTable({ details, setDetails }) {
         );
       })}
 
-      <Button type="button" onClick={addRow} className="mt-2">
+      <Button type="button" onClick={addRow} className="mt-2 cursor-pointer">
         + Agregar producto
       </Button>
     </div>

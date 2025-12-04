@@ -28,7 +28,7 @@ export default function MovementsTable({ movements, onDelete }) {
 
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="min-w-full border text-xs md:text-sm">
+            <table className="min-w-full border text-sm">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-4 py-2 text-left">Fecha</th>
@@ -37,10 +37,10 @@ export default function MovementsTable({ movements, onDelete }) {
                   <th className="px-4 py-2 text-left">Operación</th>
                   <th className="px-4 py-2 text-left">Socio de Negocio</th>
                   <th className="px-4 py-2 text-left">Documento</th>
-                  <th className="px-4 py-2 text-left">Acciones</th>
+                  <th className="px-4 py-2 text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="text-xs">
                 {movements.map((m) => (
                   <tr key={m.id} className="border-t hover:bg-gray-50">
                     <td className="px-4">{new Date(m.date).toLocaleString()}</td>
@@ -50,7 +50,7 @@ export default function MovementsTable({ movements, onDelete }) {
                     <td className="px-4 py-1">{m.warehouse_name}</td>
                     <td className="px-4 py-1">{m.reason || "-"}</td>
                     <td className="px-4 py-1">{(m.type == "EXIT" ? m.customer_name : m.supplier_name) || "-"}</td>
-                    <td className="px-4 py-1">{`${m.document_type_name} ${m.series}-${m.number}`}</td>
+                    <td className="px-2 py-1">{`${m.document_type_name} ${m.series}-${m.number}`}</td>
                     {/* <td className="px-4 py-1">
                       S/{" "}
                       {m.details
