@@ -47,7 +47,9 @@ export default function MovementsTable({ movements, onDelete }) {
                     <td className="px-4 py-1">
                       <Badge className={typeBadge[m.type].className}>{typeBadge[m.type].text}</Badge>
                     </td>
-                    <td className="px-4 py-1">{m.warehouse_name}</td>
+                    <td className="px-4 py-1">{
+                        m.type == "TRANSFER" ? m.warehouse_origin_name + " > " + m.warehouse_dest_name
+                                             : m.warehouse_name}</td>
                     <td className="px-4 py-1">{m.reason || "-"}</td>
                     <td className="px-4 py-1">{(m.type == "EXIT" ? m.customer_name : m.supplier_name) || "-"}</td>
                     <td className="px-2 py-1">{`${m.document_type_name} ${m.series}-${m.number}`}</td>
