@@ -63,6 +63,8 @@ export default function MovementDetailTable({ details, setDetails, type_movement
     handleChange(index, "product_name", product.name);
     handleChange(index, "unit", product.unit);
     handleChange(index, "unit_price", parseFloat(type_movement=="ENTRY" ? product.price_purchase : product.price_sale || 0)  );
+    handleChange(index, "price_purchase", product.price_purchase || 0);
+    handleChange(index, "stock_total", product.stock_total || 0);
     setSearchResults([]);
     setSearchTerm("");
     setActiveRow(null);
@@ -87,11 +89,12 @@ export default function MovementDetailTable({ details, setDetails, type_movement
         const subtotal = (row.quantity || 0) * (row.unit_price || 0);
 
         return (
-          <div key={i} className="grid grid-cols-5 md:grid-cols-12 gap-2 items-center border-b py-2 relative mb-0">
+          <div
+            key={i}
+            className="grid grid-cols-5 md:grid-cols-12 gap-2 items-center border-b py-2 relative mb-0"
+          >
             {/* Nº Ítem */}
-            <div className="text-center font-semibold">
-              {i + 1}
-            </div>
+            <div className="text-center font-semibold">{i + 1}</div>
             {/* 🔹 Campo de búsqueda de producto */}
             <div className="col-span-5 relative">
               <Input
@@ -101,15 +104,15 @@ export default function MovementDetailTable({ details, setDetails, type_movement
                   activeRow === i
                     ? searchTerm
                     : row.sku
-                    ? `${row.sku} ${row.product_name}`
-                    : row.product_name || ""
+                      ? `${row.sku} ${row.product_name}`
+                      : row.product_name || ""
                 }
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                   setActiveRow(i);
                 }}
                 onFocus={() => setActiveRow(i)}
-                title={`${row.product_id ? `${row.sku} - ${row.product_name}` : ""}`}
+                title={`${row.product_id ? `${row.sku} - ${row.product_name} - Stock ${row.stock_total} - PC ${row.price_purchase}` : ""}`}
               />
 
               {/* 🔹 Resultados de búsqueda */}
@@ -126,7 +129,9 @@ export default function MovementDetailTable({ details, setDetails, type_movement
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open("/admin/products", "_blank")}
+                          onClick={() =>
+                            window.open("/admin/products", "_blank")
+                          }
                         >
                           ➕ Crear producto
                         </Button>
@@ -136,18 +141,19 @@ export default function MovementDetailTable({ details, setDetails, type_movement
 
                   {!loading &&
                     !noResults &&
-                    searchResults.map((p) => (
+                    searchResults.map((product) => (
                       <li
-                        key={p.id}
+                        key={product.id}
                         className="p-2 text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={() => handleSelectProduct(i, p)}
+                        onClick={() => handleSelectProduct(i, product)}
                       >
-                        <div className="font-medium">{p.name}</div>
+                        <div className="font-medium">{product.name}</div>
                         <div className="text-xs text-gray-500">
-                          {p.sku || ""} • {p.brand?.name || ""} • {p.category?.name || ""} • {p.unit}
+                          {product.sku || ""} • {product.stock_total}{" "}
+                          {product.unit} • {product.category}
                         </div>
                         <div className="text-xs text-gray-600">
-                          Precio: S/ {p.price_purchase}
+                          P. Compra: S/ {product.price_purchase}
                         </div>
                       </li>
                     ))}
@@ -157,7 +163,11 @@ export default function MovementDetailTable({ details, setDetails, type_movement
 
             {/* Unidad */}
             <div className="col-span-2 md:col-span-1">
-              <Input value={row.unit || ""} readOnly className="!text-xs h-8 px-2 bg-gray-100" />
+              <Input
+                value={row.unit || ""}
+                readOnly
+                className="!text-xs h-8 px-2 bg-gray-100"
+              />
             </div>
 
             {/* Cantidad */}
