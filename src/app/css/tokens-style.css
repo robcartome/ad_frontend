@@ -1,0 +1,72 @@
+/* styles/tokens-web.css */
+@theme {
+  /* ======================
+     Fonts
+  ====================== */
+  --font-web-sans: "Euclid Circular A", system-ui, sans-serif;
+
+  /* ======================
+     Text / Neutral colors
+  ====================== */
+  --color-white: #ffffff;
+
+  --color-body: #6c6f93;
+
+  --color-dark: #1c274c;
+  --color-dark-2: #495270;
+  --color-dark-3: #606882;
+  --color-dark-4: #8d93a5;
+  --color-dark-5: #bbbec9;
+
+  /* ======================
+     Gray
+  ====================== */
+  --color-gray-1: #f9fafb;
+  --color-gray-2: #f3f4f6;
+  --color-gray-3: #e5e7eb;
+  --color-gray-4: #d1d5db;
+  --color-gray-5: #9ca3af;
+  --color-gray-6: #6b7280;
+  --color-gray-7: #374151;
+
+  /* ======================
+     Brand colors
+  ====================== */
+  --color-blue: #3c50e0;
+  --color-blue-dark: #1c3fb7;
+  --color-blue-light: #5475e5;
+  --color-blue-light-2: #8099ec;
+  --color-blue-light-3: #adbcf2;
+  --color-blue-light-4: #c3cef6;
+  --color-blue-light-5: #e1e8ff;
+
+  --color-red: #f23030;
+  --color-red-dark: #e10e0e;
+
+  --color-green: #22ad5c;
+  --color-green-dark: #1a8245;
+
+  --color-yellow: #fbbf24;
+  --color-yellow-dark: #f59e0b;
+
+  /* ======================
+     Headings
+  ====================== */
+  --heading-1: 60px;
+  --heading-1-lh: 72px;
+
+  --heading-2: 48px;
+  --heading-2-lh: 64px;
+
+  --heading-3: 40px;
+  --heading-3-lh: 48px;
+
+  --heading-4: 30px;
+  --heading-4-lh: 38px;
+
+  --heading-5: 28px;
+  --heading-5-lh: 40px;
+
+  --heading-6: 24px;
+  --heading-6-lh: 30px;
+}

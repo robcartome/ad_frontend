@@ -7,7 +7,11 @@ module.exports = {
     "./src/app/**/*.{js,jsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        "euclid-circular-a": ["'Euclid Circular A'", "sans-serif"],
+      },
+    },
   },
   plugins: [require("tailwindcss-animate")],
 };
