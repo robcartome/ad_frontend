@@ -126,6 +126,16 @@ export default function Sidebar({ open, setOpen }) {
               >
                 Transferencias
               </Link>
+              <Link
+                href="/admin/inventory/adjustments"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/adjustments"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Ajuste de Inventario
+              </Link>
             </div>
           )}
         </div>
