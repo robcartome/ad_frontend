@@ -101,11 +101,11 @@ export default function MovementDetailTable({ details, setDetails, type_movement
                 className="h-8 px-2"
                 placeholder="Buscar por nombre o SKU..."
                 value={
-                  activeRow === i
+                  (activeRow === i
                     ? searchTerm
                     : row.sku
                       ? `${row.sku} ${row.product_name}`
-                      : row.product_name || ""
+                      : row.product_name) || ""
                 }
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -175,7 +175,7 @@ export default function MovementDetailTable({ details, setDetails, type_movement
               <Input
                 className="h-8 px-2"
                 type="number"
-                value={row.quantity}
+                value={row.quantity === undefined || row.quantity === null ? "" : row.quantity}
                 min="1"
                 onChange={(e) =>
                   handleChange(i, "quantity", parseFloat(e.target.value))
@@ -188,7 +188,7 @@ export default function MovementDetailTable({ details, setDetails, type_movement
               <Input
                 className="h-8 px-2"
                 type="number"
-                value={row.unit_price}
+                value={row.unit_price === undefined || row.unit_price === null ? "" : row.unit_price}
                 min="0"
                 step="any"
                 onChange={(e) =>
