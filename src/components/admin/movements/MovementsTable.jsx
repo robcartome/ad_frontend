@@ -17,6 +17,7 @@ export default function MovementsTable({ movements, onDelete }) {
     ENTRY: { text: "Entrada", className: "bg-green-400 hover:bg-green-500" },
     EXIT: { text: "Salida", className: "bg-red-400 hover:bg-red-500" },
     TRANSFER: { text: "Transferencia", className: "bg-blue-400 hover:bg-blue-500" },
+    ADJUSTMENT: { text: "Ajuste", className: "bg-yellow-400 hover:bg-yellow-500" },
   }
 
   return (

@@ -46,9 +46,11 @@ export default function AdjustmentForm({
         product_id: d.product_id,
         product_name: d.product_name,
         quantity: d.quantity,
+        unit: d.unit || d.unit_code || "",
+        physical_quantity: typeof d.physical_quantity !== "undefined" ? d.physical_quantity : null,
       }));
     }
-    return [{ product_id: "", quantity: 1 }];
+    return [{ product_id: "", quantity: 1, unit: "", unit_price: 0, physical_quantity: null }];
   });
 
   const handleChange = (field, value) =>
@@ -63,9 +65,11 @@ export default function AdjustmentForm({
       reason: form.reason,
       warehouse_id: form.warehouse_id,
       reference_doc: form.reference,
-      created_by: createdBy,
       details,
     };
+    if (createdBy && typeof createdBy === "string" && createdBy.length > 0) {
+      payload.created_by = createdBy;
+    }
     try {
       if (mode === "edit") {
         await updateMovement(movement.id, payload);
@@ -74,8 +78,7 @@ export default function AdjustmentForm({
         await createMovement(payload);
         toast.success("Ajuste registrado correctamente");
       }
-      if (onSubmitSuccess) onSubmitSuccess();
-      router.push("/admin/inventory/movements");
+      if (onSubmitSuccess) () => router.push("/admin/inventory/movements");
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -147,7 +150,7 @@ export default function AdjustmentForm({
                 onChange={e => handleChange("reference", e.target.value)}
               />
             </div>
-            <MovementDetailTable details={details} setDetails={setDetails} type_movement="ADJUSTMENT" />
+            <MovementDetailTable details={details} setDetails={setDetails} type_movement="ADJUSTMENT" warehouse_id={form.warehouse_id} />
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={handleCancel} className="cursor-pointer">
                 Cancelar

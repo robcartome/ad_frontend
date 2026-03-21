@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import MovementForm from "@/components/admin/movements/MovementForm";
+import AdjustmentForm from "@/components/admin/movements/AdjustmentForm";
 
 import { getMovementById } from "@/services/movementsService";
 import { getWarehouses } from "@/services/warehousesService";
@@ -47,13 +48,25 @@ export default function EditMovement({ id }) {
     );
   }
 
+  // Render AdjustmentForm if type is ADJUSTMENT
+  if (data.movement.type === "ADJUSTMENT") {
+    return (
+      <AdjustmentForm
+        warehouses={data.warehouses}
+        movement={data.movement}
+        mode="edit"
+        onSubmitSuccess={() => router.push("/admin/movements")}
+      />
+    );
+  }
+
   return (
     <MovementForm
       type={data.movement.type}
       warehouses={data.warehouses}
       partners={data.partners}
       documentTypes={data.documentTypes}
-      movement={data.movement}  // 👈 nuevo
+      movement={data.movement}
       mode="edit"
       onSubmitSuccess={() => router.push("/admin/movements")}
     />
