@@ -6,13 +6,79 @@ import { Input } from "@/components/ui/input";
 import { getProducts } from "@/services/productsService";
 import { getStockByProductAndWarehouse } from "@/services/stockService";
 
+import { importExcelFile, downloadExcelTemplate } from "@/utils/importExcel";
+
+
 export default function MovementDetailTable({ details, setDetails, type_movement, warehouse_id }) {
+  const handleDownloadTemplate = () => {
+    const headers = ["CODIGO", "CANTIDAD"];
+    const example = ["P0001", 10];
+    downloadExcelTemplate(headers, example, `modelo_importacion_${type_movement?.toLowerCase() || "movimiento"}.xlsx`);
+  };
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeRow, setActiveRow] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [noResults, setNoResults] = useState(false);
   const isAdjustment = type_movement === "ADJUSTMENT";
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const importedRows = await importExcelFile(file, {
+        requiredHeaders: ["CODIGO", "CANTIDAD"],
+        rowMapper: (headers, row) => {
+          const codeIdx = headers.findIndex(h => h.toString().toLowerCase().includes("codigo"));
+          const qtyIdx = headers.findIndex(h => h.toString().toLowerCase().includes("cantidad"));
+          if (codeIdx === -1 || qtyIdx === -1) return null;
+          return {
+            code: row[codeIdx]?.toString().trim(),
+            qty: parseFloat(row[qtyIdx]) || 1,
+          };
+        },
+      });
+      // Buscar productos por código (SKU)
+      let newDetails = [];
+      for (const { code, qty } of importedRows) {
+        if (!code) continue;
+        try {
+          const res = await getProducts(1, 1, code);
+          const product = (res.results || []).find(p => p.sku === code);
+          if (product) {
+            let stockTotal = product.stock_total || 0;
+            if (isAdjustment && product.id && warehouse_id) {
+              stockTotal = await getStockByProductAndWarehouse(product.id, warehouse_id);
+            }
+            newDetails.push({
+              product_id: product.id,
+              sku: product.sku || "",
+              product_name: product.name,
+              unit: product.unit,
+              unit_price: parseFloat(
+                type_movement === "ENTRY"
+                  ? product.price_purchase
+                  : product.price_sale || 0,
+              ),
+              price_purchase: product.price_purchase || 0,
+              stock_total: stockTotal,
+              quantity: qty,
+              ...(isAdjustment ? { physical_quantity: qty } : {}),
+            });
+          }
+        } catch (err) {
+          // Si no se encuentra, ignorar
+        }
+      }
+      if (newDetails.length === 0) {
+        alert("No se encontraron productos válidos en el archivo.");
+        return;
+      }
+      setDetails(newDetails);
+    } catch (err) {
+      alert(err.message || "Error al importar el archivo Excel");
+    }
+  };
 
   // 🔍 Buscar productos al escribir
   useEffect(() => {
@@ -121,6 +187,19 @@ export default function MovementDetailTable({ details, setDetails, type_movement
 
   return (
     <div className="border rounded-md p-3 space-y-3 relative">
+      <div className="flex justify-end mb-2 gap-2">
+        <button
+          type="button"
+          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-xs"
+          onClick={handleDownloadTemplate}
+        >
+          Descargar modelo Excel
+        </button>
+        <label className="inline-flex items-center gap-2 cursor-pointer">
+          <span className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-xs">Importar Excel</span>
+          <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel} />
+        </label>
+      </div>
       <h3 className="font-semibold">Detalle del Movimiento</h3>
 
       {/* Encabezados */}
@@ -151,7 +230,6 @@ export default function MovementDetailTable({ details, setDetails, type_movement
           >
             {/* Nº Ítem */}
             <div className="text-center font-semibold">{i + 1}</div>
-            {/* 🔹 Campo de búsqueda de producto */}
             <div className="col-span-5 relative">
               <Input
                 className="h-8 px-2"
@@ -175,7 +253,6 @@ export default function MovementDetailTable({ details, setDetails, type_movement
                     Stock actual: {Number(row.stock_total || 0).toFixed(2)}
                   </span>
                 </div>
-              {/* 🔹 Resultados de búsqueda */}
               {activeRow === i && (
                 <ul className="absolute z-50 bg-white border w-full max-h-48 overflow-y-auto shadow-md rounded-md">
                   {loading && (
@@ -221,7 +298,6 @@ export default function MovementDetailTable({ details, setDetails, type_movement
               )}
             </div>
 
-            {/* Unidad */}
             <div className="col-span-2 md:col-span-1">
               <Input
                 value={row.unit || ""}
@@ -230,7 +306,6 @@ export default function MovementDetailTable({ details, setDetails, type_movement
               />
             </div>
 
-            {/* Cantidad física (solo para AJUSTE) */}
             {isAdjustment ? (
               <div className="col-span-1 md:col-span-2 space-y-1">
                 <Input
@@ -255,7 +330,6 @@ export default function MovementDetailTable({ details, setDetails, type_movement
               </div>
             ) : (
               <>
-                {/* Cantidad */}
                 <div className="col-span-2 md:col-span-1">
                   <Input
                     className="h-8 px-2"
@@ -272,7 +346,6 @@ export default function MovementDetailTable({ details, setDetails, type_movement
                   />
                 </div>
 
-                {/* Precio Unitario */}
                 <div className="col-span-2 md:col-span-1">
                   <Input
                     className="h-8 px-2"
@@ -290,7 +363,6 @@ export default function MovementDetailTable({ details, setDetails, type_movement
                   />
                 </div>
 
-                {/* Subtotal */}
                 <div className="col-span-2 pr-2 text-right">
                   <span className="text-gray-700">
                     S/ {subtotal.toFixed(2)}
@@ -299,7 +371,6 @@ export default function MovementDetailTable({ details, setDetails, type_movement
               </>
             )}
 
-            {/* Eliminar fila */}
             <div className="col-span-1 text-right">
               <Button
                 variant="destructive"
