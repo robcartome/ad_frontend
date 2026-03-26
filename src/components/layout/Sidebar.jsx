@@ -12,13 +12,33 @@ import {
   ChevronRight,
   Notebook,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export default function Sidebar({ open, setOpen }) {
+export default function Sidebar({
+  mobileOpen,
+  setMobileOpen,
+  desktopOpen,
+}) {
   const pathname = usePathname();
+  const sidebarRef = useRef(null);
   const [inventoryOpen, setInventoryOpen] = useState(
     pathname.startsWith("/admin/inventory")
   );
+
+  useEffect(() => {
+    if (desktopOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setInventoryOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [desktopOpen]);
 
   const menuItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -31,61 +51,95 @@ export default function Sidebar({ open, setOpen }) {
 
   return (
     <aside
+      ref={sidebarRef}
       className={`${
-        open ? "translate-x-0" : "-translate-x-full"
-      } fixed lg:static lg:translate-x-0 z-40 w-64 bg-white border-r shadow-sm transition-transform duration-300`}
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      } fixed inset-y-0 left-0 z-40 w-56 bg-white border-r shadow-sm transition-all duration-300 lg:translate-x-0 lg:static ${
+        desktopOpen ? "lg:w-56" : "lg:w-16"
+      }`}
     >
       {/* 🔹 Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h1 className="text-lg font-semibold text-gray-800">Panel Admin</h1>
+      <div
+        className={`flex items-center p-4 border-b h-14 ${
+          desktopOpen ? "justify-between" : "justify-center lg:px-2"
+        }`}
+      >
+        {desktopOpen ? (
+          <h1 className="text-lg font-semibold text-gray-800">Panel Admin</h1>
+        ) : (
+          <span className="hidden lg:block text-sm font-semibold text-primary">
+            AD+
+          </span>
+        )}
         <button
-          onClick={() => setOpen(false)}
-          className="block lg:hidden text-gray-500 hover:text-gray-700"
+          onClick={() => setMobileOpen(false)}
+          className="block lg:hidden ml-auto text-gray-500 hover:text-gray-700"
+          aria-label="Cerrar sidebar"
         >
           ✕
         </button>
       </div>
 
       {/* 🔹 Menú */}
-      <nav className="p-4 space-y-1 text-sm">
+      <nav className={`space-y-1 text-sm ${desktopOpen ? "p-4" : "p-2 lg:p-2"}`}>
         {menuItems.map(({ name, href, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+            title={!desktopOpen ? name : undefined}
+            className={`group relative flex items-center py-2 rounded-md transition ${
+              desktopOpen ? "gap-2 px-3" : "lg:justify-center lg:px-2 px-3 gap-2"
+            } ${
               pathname === href
                 ? "bg-primary text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }`}
           >
             <Icon size={18} />
-            {name}
+            <span className={desktopOpen ? "" : "lg:hidden"}>{name}</span>
+            {!desktopOpen && (
+              <span className="hidden lg:block pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-gray-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {name}
+              </span>
+            )}
           </Link>
         ))}
 
         {/* 📦 Inventario con submenús */}
-        <div>
+        <div className="relative">
           <button
             onClick={() => setInventoryOpen(!inventoryOpen)}
-            className={`flex w-full items-center justify-between px-3 py-2 rounded-md transition ${
+            title={!desktopOpen ? "Inventario" : undefined}
+            className={`group relative flex w-full items-center py-2 rounded-md transition ${
+              desktopOpen ? "justify-between px-3" : "lg:justify-center lg:px-2 px-3"
+            } ${
               pathname.startsWith("/admin/inventory")
                 ? "bg-primary text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }`}
           >
-            <span className="flex items-center gap-2">
+            <span
+              className={`flex items-center ${desktopOpen ? "gap-2" : "gap-2 lg:gap-0"}`}
+            >
               <Boxes size={18} />
-              Inventario
+              <span className={desktopOpen ? "" : "lg:hidden"}>Inventario</span>
             </span>
-            {inventoryOpen ? (
-              <ChevronDown size={16} />
-            ) : (
-              <ChevronRight size={16} />
+            <span className={desktopOpen ? "" : "lg:hidden"}>
+              {inventoryOpen ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </span>
+            {!desktopOpen && (
+              <span className="hidden lg:block pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-gray-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                Inventario
+              </span>
             )}
           </button>
 
-          {inventoryOpen && (
-            <div className="ml-6 mt-1 space-y-1">
+          {inventoryOpen && (desktopOpen || mobileOpen) && (
+            <div className="ml-3 mt-1 space-y-1">
               <Link
                 href="/admin/inventory/movements"
                 className={`block px-3 py-2 rounded-md transition ${
@@ -128,6 +182,66 @@ export default function Sidebar({ open, setOpen }) {
               </Link>
               <Link
                 href="/admin/inventory/adjustments"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/adjustments"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Ajuste de Inventario
+              </Link>
+            </div>
+          )}
+
+          {inventoryOpen && !desktopOpen && !mobileOpen && (
+            <div className="hidden lg:block absolute left-full top-0 ml-2 w-52 bg-white border border-gray-200 rounded-md shadow-lg p-2 z-50">
+              <Link
+                href="/admin/inventory/movements"
+                onClick={() => setInventoryOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/movements"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Movimientos
+              </Link>
+              <Link
+                href="/admin/inventory/entries"
+                onClick={() => setInventoryOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/entries"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Entradas
+              </Link>
+              <Link
+                href="/admin/inventory/exits"
+                onClick={() => setInventoryOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/exits"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Salidas
+              </Link>
+              <Link
+                href="/admin/inventory/transfers"
+                onClick={() => setInventoryOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/inventory/transfers"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Transferencias
+              </Link>
+              <Link
+                href="/admin/inventory/adjustments"
+                onClick={() => setInventoryOpen(false)}
                 className={`block px-3 py-2 rounded-md transition ${
                   pathname === "/admin/inventory/adjustments"
                     ? "bg-primary/20 text-primary font-medium"

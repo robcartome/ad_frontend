@@ -1,19 +1,35 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { Menu, PanelLeftClose } from "lucide-react";
 
-export default function Topbar({ onMenuClick }) {
+export default function Topbar({
+  onMenuClick,
+  desktopSidebarOpen,
+  onDesktopSidebarToggle,
+}) {
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm">
-      {/* Botón menú móvil */}
-      <button
-        onClick={onMenuClick}
-        className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition"
-      >
-        <Menu size={20} />
-      </button>
+    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shadow-sm">
+      <div className="flex items-center gap-2">
+        {/* Botón menú móvil */}
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition"
+          aria-label="Abrir menú"
+        >
+          <Menu size={20} />
+        </button>
 
-      <h2 className="font-semibold text-gray-800">Panel de Administración</h2>
+        {/* Botón menú escritorio */}
+        <button
+          onClick={onDesktopSidebarToggle}
+          className="hidden lg:flex p-2 rounded-md hover:bg-gray-100 text-gray-600 transition"
+          aria-label={desktopSidebarOpen ? "Ocultar sidebar" : "Mostrar sidebar"}
+        >
+          {desktopSidebarOpen ? <PanelLeftClose size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      <h2 className="font-semibold text-gray-800">APUDIG</h2>
 
       <div className="flex items-center gap-3">
         <span className="text-sm text-gray-600">admin@apudig.com</span>
