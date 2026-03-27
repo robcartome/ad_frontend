@@ -29,7 +29,7 @@ export default function Topbar({
         </button>
       </div>
 
-      <h2 className="font-semibold text-gray-800">APUDIG</h2>
+      <h2 className="font-semibold text-gray-800">PANEL ADMIN</h2>
 
       <div className="flex items-center gap-3">
         <span className="text-sm text-gray-600">admin@apudig.com</span>

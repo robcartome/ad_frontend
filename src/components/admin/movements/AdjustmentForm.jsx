@@ -155,7 +155,7 @@ export default function AdjustmentForm({
               <Button type="button" variant="outline" onClick={handleCancel} className="cursor-pointer">
                 Cancelar
               </Button>
-              <Button type="submit" className="cursor-pointer">
+              <Button type="submit" className="cursor-pointer" disabled={mode === "edit"}>
                 <CircleFadingArrowUpIcon />
                 Guardar
               </Button>

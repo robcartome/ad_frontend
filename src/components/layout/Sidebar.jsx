@@ -65,7 +65,7 @@ export default function Sidebar({
         }`}
       >
         {desktopOpen ? (
-          <h1 className="text-lg font-semibold text-gray-800">Panel Admin</h1>
+          <h1 className="text-lg font-semibold text-gray-800">ApuDig</h1>
         ) : (
           <span className="hidden lg:block text-sm font-semibold text-primary">
             AD+
