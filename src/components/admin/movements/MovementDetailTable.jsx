@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getProducts } from "@/services/productsService";
 import { getStockByProductAndWarehouse } from "@/services/stockService";
+import { Loader2, TriangleAlert } from "lucide-react";
+import { toast } from "sonner";
 
 import { importExcelFile, downloadExcelTemplate } from "@/utils/importExcel";
 
@@ -20,11 +22,20 @@ export default function MovementDetailTable({ details, setDetails, type_movement
   const [activeRow, setActiveRow] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [noResults, setNoResults] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ processed: 0, total: 0 });
+  const [importWarnings, setImportWarnings] = useState([]);
   const isAdjustment = type_movement === "ADJUSTMENT";
 
   const handleImportExcel = async (e) => {
-    const file = e.target.files[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
+
+    setIsImporting(true);
+    setImportWarnings([]);
+    setImportProgress({ processed: 0, total: 0 });
+
     try {
       const importedRows = await importExcelFile(file, {
         requiredHeaders: ["CODIGO", "CANTIDAD"],
@@ -38,17 +49,25 @@ export default function MovementDetailTable({ details, setDetails, type_movement
           };
         },
       });
+
+      const normalizedRows = importedRows.filter((row) => row?.code);
+      setImportProgress({ processed: 0, total: normalizedRows.length });
+
       // Buscar productos por código (SKU)
       let newDetails = [];
-      for (const { code, qty } of importedRows) {
-        if (!code) continue;
+      const missingCodes = [];
+
+      for (let index = 0; index < normalizedRows.length; index += 1) {
+        const { code, qty } = normalizedRows[index];
+
         try {
           const res = await getProducts(1, 1, code);
           const product = (res.results || []).find(p => p.sku === code);
           if (product) {
-            let stockTotal = product.stock_total || 0;
-            if (isAdjustment && product.id && warehouse_id) {
-              stockTotal = await getStockByProductAndWarehouse(product.id, warehouse_id);
+            const stockTotal = product.stock_total || 0;
+            let warehouseStock = stockTotal;
+            if (product.id && warehouse_id) {
+              warehouseStock = await getStockByProductAndWarehouse(product.id, warehouse_id);
             }
             newDetails.push({
               product_id: product.id,
@@ -62,23 +81,43 @@ export default function MovementDetailTable({ details, setDetails, type_movement
               ),
               price_purchase: product.price_purchase || 0,
               stock_total: stockTotal,
+              warehouse_stock: warehouseStock,
               quantity: qty,
               ...(isAdjustment ? { physical_quantity: qty } : {}),
             });
+          } else {
+            missingCodes.push(code);
           }
         } catch (err) {
-          // Si no se encuentra, ignorar
+          missingCodes.push(code);
+        } finally {
+          setImportProgress({ processed: index + 1, total: normalizedRows.length });
         }
       }
+
+      if (missingCodes.length > 0) {
+        const uniqueMissingCodes = [...new Set(missingCodes)];
+        setImportWarnings(uniqueMissingCodes);
+      }
+
       if (newDetails.length === 0) {
-        alert("No se encontraron productos válidos en el archivo.");
+        toast.error("No se encontraron productos válidos en el archivo.");
         return;
       }
+
       setDetails(newDetails);
+      toast.success(`Se importaron ${newDetails.length} producto(s) correctamente.`);
     } catch (err) {
-      alert(err.message || "Error al importar el archivo Excel");
+      toast.error(err.message || "Error al importar el archivo Excel");
+    } finally {
+      setIsImporting(false);
+      input.value = "";
     }
   };
+
+  const importPercent = importProgress.total > 0
+    ? Math.round((importProgress.processed / importProgress.total) * 100)
+    : 0;
 
   // 🔍 Buscar productos al escribir
   useEffect(() => {
@@ -107,24 +146,18 @@ export default function MovementDetailTable({ details, setDetails, type_movement
     return () => clearTimeout(delay);
   }, [searchTerm]);
 
-  // Actualiza el stock actual cuando cambia el almacén seleccionado SOLO para ADJUSTMENT
+  // Actualiza solo el stock por almacén cuando cambia el almacén para cualquier tipo de movimiento
   useEffect(() => {
-    if (!warehouse_id || !isAdjustment) return;
+    if (!warehouse_id) return;
 
     async function updateStocks() {
       const updated = await Promise.all(details.map(async (row) => {
         if (!row.product_id) return row;
 
         const qty = await getStockByProductAndWarehouse(row.product_id, warehouse_id);
-        const shouldSyncPhysicalQuantity =
-          row.physical_quantity === undefined ||
-          row.physical_quantity === null ||
-          Number(row.physical_quantity) === Number(row.stock_total ?? 0);
-
         return {
           ...row,
-          stock_total: qty,
-          physical_quantity: shouldSyncPhysicalQuantity ? qty : row.physical_quantity,
+          warehouse_stock: qty,
         };
       }));
 
@@ -133,7 +166,7 @@ export default function MovementDetailTable({ details, setDetails, type_movement
 
     updateStocks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [warehouse_id, isAdjustment]);
+  }, [warehouse_id]);
 
   const updateRow = (index, patch) => {
     setDetails((prev) =>
@@ -159,10 +192,11 @@ export default function MovementDetailTable({ details, setDetails, type_movement
   };
 
   const handleSelectProduct = async (index, product) => {
-    let stockTotal = product.stock_total || 0;
+    const stockTotal = product.stock_total || 0;
+    let warehouseStock = stockTotal;
 
-    if (isAdjustment && product.id && warehouse_id) {
-      stockTotal = await getStockByProductAndWarehouse(product.id, warehouse_id);
+    if (product.id && warehouse_id) {
+      warehouseStock = await getStockByProductAndWarehouse(product.id, warehouse_id);
     }
 
     updateRow(index, {
@@ -177,7 +211,8 @@ export default function MovementDetailTable({ details, setDetails, type_movement
       ),
       price_purchase: product.price_purchase || 0,
       stock_total: stockTotal,
-      ...(isAdjustment ? { physical_quantity: stockTotal } : {}),
+      warehouse_stock: warehouseStock,
+      ...(isAdjustment ? { physical_quantity: warehouseStock } : {}),
     });
 
     setSearchResults([]);
@@ -187,6 +222,40 @@ export default function MovementDetailTable({ details, setDetails, type_movement
 
   return (
     <div className="border rounded-md p-3 space-y-3 relative">
+      {importWarnings.length > 0 && (
+        <div className="border rounded-md p-3 text-sm">
+          <div className="flex items-start gap-2">
+            <TriangleAlert className="h-4 w-4 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-medium">
+                Algunos códigos no existen y no fueron importados ({importWarnings.length}).
+              </p>
+              <p className="text-xs break-all">
+                {importWarnings.slice(0, 30).join(", ")}
+                {importWarnings.length > 30 ? ` ... y ${importWarnings.length - 30} más` : ""}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isImporting && (
+        <div className="border rounded-md p-3 text-xs space-y-2">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>
+              Importando Excel... {importProgress.processed}/{importProgress.total || 0} filas ({importPercent}%)
+            </span>
+          </div>
+          <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
+            <div
+              className="h-2 bg-green-600 transition-all"
+              style={{ width: `${importPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end mb-2 gap-2">
         <button
           type="button"
@@ -195,9 +264,18 @@ export default function MovementDetailTable({ details, setDetails, type_movement
         >
           Descargar modelo Excel
         </button>
-        <label className="inline-flex items-center gap-2 cursor-pointer">
-          <span className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-xs">Importar Excel</span>
-          <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel} />
+        <label className={`inline-flex items-center gap-2 ${isImporting ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}>
+          <span className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-xs inline-flex items-center gap-1">
+            {isImporting && <Loader2 className="h-3 w-3 animate-spin" />}
+            {isImporting ? "Importando..." : "Importar Excel"}
+          </span>
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleImportExcel}
+            disabled={isImporting}
+          />
         </label>
       </div>
       <h3 className="font-semibold">Detalle del Movimiento</h3>
@@ -250,7 +328,7 @@ export default function MovementDetailTable({ details, setDetails, type_movement
               />
                 <div className="flex justify-end">
                   <span className="inline-flex items-center rounded-md bg-blue-50 px-1 py-0.5 text-[10px] font-medium text-blue-600 border border-blue-200">
-                    Stock actual: {Number(row.stock_total || 0).toFixed(2)}
+                    Stock en almacén: {Number(row.warehouse_stock ?? row.stock_total ?? 0).toFixed(2)}
                   </span>
                 </div>
               {activeRow === i && (
