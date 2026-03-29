@@ -9,6 +9,7 @@ import {
   Warehouse,
   Boxes,
   FileText,
+  Settings,
   ChevronDown,
   ChevronRight,
   Notebook,
@@ -28,6 +29,9 @@ export default function Sidebar({
   const [reportsOpen, setReportsOpen] = useState(
     pathname.startsWith("/admin/reports")
   );
+  const [administrationOpen, setAdministrationOpen] = useState(
+    pathname.startsWith("/admin/administration")
+  );
 
   useEffect(() => {
     if (desktopOpen) return;
@@ -36,6 +40,7 @@ export default function Sidebar({
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         setInventoryOpen(false);
         setReportsOpen(false);
+        setAdministrationOpen(false);
       }
     };
 
@@ -51,6 +56,9 @@ export default function Sidebar({
     }
     if (pathname.startsWith("/admin/reports")) {
       setReportsOpen(true);
+    }
+    if (pathname.startsWith("/admin/administration")) {
+      setAdministrationOpen(true);
     }
   }, [pathname]);
 
@@ -390,6 +398,70 @@ export default function Sidebar({
                 }`}
               >
                 Kardex de Inventario
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <div className="relative">
+          <button
+            onClick={() => setAdministrationOpen(!administrationOpen)}
+            title={!desktopOpen ? "Administración" : undefined}
+            className={`group relative flex w-full items-center py-2 rounded-md transition ${
+              desktopOpen ? "justify-between px-3" : "lg:justify-center lg:px-2 px-3"
+            } ${
+              pathname.startsWith("/admin/administration")
+                ? "bg-primary text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <span
+              className={`flex items-center ${desktopOpen ? "gap-2" : "gap-2 lg:gap-0"}`}
+            >
+              <Settings size={18} />
+              <span className={desktopOpen ? "" : "lg:hidden"}>Administración</span>
+            </span>
+            <span className={desktopOpen ? "" : "lg:hidden"}>
+              {administrationOpen ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </span>
+            {!desktopOpen && (
+              <span className="hidden lg:block pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-gray-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                Administración
+              </span>
+            )}
+          </button>
+
+          {administrationOpen && (desktopOpen || mobileOpen) && (
+            <div className="ml-3 mt-1 space-y-1">
+              <Link
+                href="/admin/administration/configuration"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/administration/configuration"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Configuración
+              </Link>
+            </div>
+          )}
+
+          {administrationOpen && !desktopOpen && !mobileOpen && (
+            <div className="hidden lg:block absolute left-full top-0 ml-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg p-2 z-50">
+              <Link
+                href="/admin/administration/configuration"
+                onClick={() => setAdministrationOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/administration/configuration"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Configuración
               </Link>
             </div>
           )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import MovementForm from "@/components/admin/movements/MovementForm";
 import AdjustmentForm from "@/components/admin/movements/AdjustmentForm";
 
@@ -13,6 +14,7 @@ import { getDocumentTypes } from "@/services/documentTypesService";
 import { Loader2 } from "lucide-react";
 
 export default function EditMovement({ id }) {
+  const router = useRouter();
   const [data, setData] = useState({ loading: true });
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function EditMovement({ id }) {
         warehouses={data.warehouses}
         movement={data.movement}
         mode="edit"
-        onSubmitSuccess={() => router.push("/admin/movements")}
+        onSubmitSuccess={() => router.push("/admin/inventory/movements")}
       />
     );
   }
@@ -68,7 +70,7 @@ export default function EditMovement({ id }) {
       documentTypes={data.documentTypes}
       movement={data.movement}
       mode="edit"
-      onSubmitSuccess={() => router.push("/admin/movements")}
+      onSubmitSuccess={() => router.push("/admin/inventory/movements")}
     />
   );
 }
