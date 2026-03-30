@@ -23,6 +23,7 @@ export default function AdjustmentForm({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const defaultWarehouseId = warehouses.find((w) => w.is_default)?.id || warehouses[0]?.id || "";
   const [form, setForm] = useState(() => {
     if (movement) {
       return {
@@ -35,7 +36,7 @@ export default function AdjustmentForm({
     return {
       date: new Date().toISOString().slice(0, 16),
       reason: "",
-      warehouse_id: warehouses[0]?.id || "",
+      warehouse_id: defaultWarehouseId,
       reference: "",
     };
   });
@@ -78,7 +79,11 @@ export default function AdjustmentForm({
         await createMovement(payload);
         toast.success("Ajuste registrado correctamente");
       }
-      if (onSubmitSuccess) () => router.push("/admin/inventory/movements");
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      } else {
+        router.push("/admin/inventory/movements");
+      }
     } catch (err) {
       toast.error(err.message);
     } finally {

@@ -27,6 +27,10 @@ export default function MovementForm({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const defaultWarehouseId = warehouses.find((w) => w.is_default)?.id || warehouses[0]?.id || "";
+  const defaultTransferDestId =
+    warehouses.find((w) => w.id !== defaultWarehouseId)?.id || defaultWarehouseId;
+
   const [form, setForm] = useState(() => {
     if (movement) {
       return {
@@ -47,9 +51,9 @@ export default function MovementForm({
     return {
       date: new Date().toISOString().slice(0, 16),
       reason: "",
-      warehouse_id: warehouses[0]?.id || "",
-      warehouse_origin_id: warehouses[0]?.id || "",
-      warehouse_dest_id: warehouses[1]?.id || "",
+      warehouse_id: defaultWarehouseId,
+      warehouse_origin_id: defaultWarehouseId,
+      warehouse_dest_id: defaultTransferDestId,
       document_type_id: documentTypes[0]?.id || "",
       series: "0000",
       number: "0",
@@ -126,7 +130,11 @@ export default function MovementForm({
 
       // Reset detail
       // setDetails([{ product_id: "", quantity: 1, unit_price: 0 }]);
-      if (onSubmitSuccess) () => router.push("/admin/inventory/movements");
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      } else {
+        router.push("/admin/inventory/movements");
+      }
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -325,10 +333,13 @@ export default function MovementForm({
             </div>
           </div>
 
-          {/* Tabla de detalles */}
-          <MovementDetailTable details={details} setDetails={setDetails} type_movement={type} />
+          <MovementDetailTable
+            details={details}
+            setDetails={setDetails}
+            type_movement={type}
+            warehouse_id={type === "TRANSFER" ? form.warehouse_origin_id : form.warehouse_id}
+          />
 
-          {/* Botones */}
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={handleCancel} className="cursor-pointer">
               Cancelar
