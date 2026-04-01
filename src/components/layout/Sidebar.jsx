@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
   Notebook,
+  ShoppingCart,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -31,6 +32,9 @@ export default function Sidebar({
   );
   const [administrationOpen, setAdministrationOpen] = useState(
     pathname.startsWith("/admin/administration")
+  );
+  const [salesOpen, setSalesOpen] = useState(
+    pathname.startsWith("/admin/sales")
   );
 
   useEffect(() => {
@@ -59,6 +63,9 @@ export default function Sidebar({
     }
     if (pathname.startsWith("/admin/administration")) {
       setAdministrationOpen(true);
+    }
+    if (pathname.startsWith("/admin/sales")) {
+      setSalesOpen(true);
     }
   }, [pathname]);
 
@@ -127,7 +134,114 @@ export default function Sidebar({
           </Link>
         ))}
 
-        {/* 📦 Inventario con submenús */}
+        {/* � Ventas con submenús */}
+        <div className="relative">
+          <button
+            onClick={() => setSalesOpen(!salesOpen)}
+            title={!desktopOpen ? "Ventas" : undefined}
+            className={`group relative flex w-full items-center py-2 rounded-md transition ${
+              desktopOpen ? "justify-between px-3" : "lg:justify-center lg:px-2 px-3"
+            } ${
+              pathname.startsWith("/admin/sales")
+                ? "bg-primary text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <span
+              className={`flex items-center ${desktopOpen ? "gap-2" : "gap-2 lg:gap-0"}`}
+            >
+              <ShoppingCart size={18} />
+              <span className={desktopOpen ? "" : "lg:hidden"}>Ventas</span>
+            </span>
+            <span className={desktopOpen ? "" : "lg:hidden"}>
+              {salesOpen ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </span>
+            {!desktopOpen && (
+              <span className="hidden lg:block pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-gray-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                Ventas
+              </span>
+            )}
+          </button>
+
+          {salesOpen && (desktopOpen || mobileOpen) && (
+            <div className="ml-3 mt-1 space-y-1">
+              <Link
+                href="/admin/sales"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/sales"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Comprobantes
+              </Link>
+              <Link
+                href="/admin/sales/quotations"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/quotations")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Cotizaciones
+              </Link>
+              <Link
+                href="/admin/sales/orders"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/orders")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Pedidos de Venta
+              </Link>
+            </div>
+          )}
+
+          {salesOpen && !desktopOpen && !mobileOpen && (
+            <div className="hidden lg:block absolute left-full top-0 ml-2 w-52 bg-white border border-gray-200 rounded-md shadow-lg p-2 z-50">
+              <Link
+                href="/admin/sales"
+                onClick={() => setSalesOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/sales"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Comprobantes
+              </Link>
+              <Link
+                href="/admin/sales/quotations"
+                onClick={() => setSalesOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/quotations")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Cotizaciones
+              </Link>
+              <Link
+                href="/admin/sales/orders"
+                onClick={() => setSalesOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/orders")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Pedidos de Venta
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* �📦 Inventario con submenús */}
         <div className="relative">
           <button
             onClick={() => setInventoryOpen(!inventoryOpen)}
