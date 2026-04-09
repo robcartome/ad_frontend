@@ -1,4 +1,10 @@
 import { apiFetch } from "./api";
+import {
+  getSuppliers,
+  getSupplier,
+  createSupplier,
+  updateSupplier,
+} from "./suppliersService";
 
 // ─── Clientes (sales module) ─────────────────────────────────────────────────
 
@@ -34,23 +40,18 @@ export async function updatePartnerCustomer(id, data) {
 // ─── Proveedores (inventory module) ──────────────────────────────────────────
 
 export async function getPartnerSuppliers() {
-  return apiFetch(`/suppliers/`);
+  const data = await getSuppliers({ limit: 100, offset: 0, active: true });
+  return Array.isArray(data) ? data : (data?.items || []);
 }
 
 export async function getPartnerSupplier(id) {
-  return apiFetch(`/suppliers/${id}`);
+  return getSupplier(id);
 }
 
 export async function createPartnerSupplier(data) {
-  return apiFetch("/suppliers/", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
+  return createSupplier(data);
 }
 
 export async function updatePartnerSupplier(id, data) {
-  return apiFetch(`/suppliers/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
+  return updateSupplier(id, data);
 }

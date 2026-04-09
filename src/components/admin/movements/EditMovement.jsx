@@ -7,7 +7,6 @@ import AdjustmentForm from "@/components/admin/movements/AdjustmentForm";
 
 import { getMovementById } from "@/services/movementsService";
 import { getWarehouses } from "@/services/warehousesService";
-import { getSuppliers } from "@/services/suppliersService";
 import { getDocumentTypes } from "@/services/documentTypesService";
 
 import { Loader2 } from "lucide-react";
@@ -22,15 +21,11 @@ export default function EditMovement({ id }) {
       const warehouses = await getWarehouses();
       const documentTypes = await getDocumentTypes();
 
-      // ENTRY = proveedor (select) / EXIT = cliente (CustomerSearchInput, no necesita prefetch)
-      const partners = movement.type === "ENTRY" ? await getSuppliers() : [];
-
       setData({
         loading: false,
         movement,
         warehouses,
         documentTypes,
-        partners,
       });
     }
 
@@ -62,7 +57,6 @@ export default function EditMovement({ id }) {
     <MovementForm
       type={data.movement.type}
       warehouses={data.warehouses}
-      partners={data.partners}
       documentTypes={data.documentTypes}
       movement={data.movement}
       mode="edit"

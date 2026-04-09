@@ -14,13 +14,13 @@ import { toast } from "sonner";
 import MovementDetailTable from "@/components/admin/movements/MovementDetailTable";
 import { createMovement, updateMovement } from "@/services/movementsService";
 import CustomerSearchInput from "@/components/ui/CustomerSearchInput";
+import SupplierSearchInput from "@/components/ui/SupplierSearchInput";
 
 
 
 export default function MovementForm({
   type,
   warehouses,
-  partners = [],
   documentTypes,
   movement = null,         // (solo para edición)
   mode = "create",         // ("create" | "edit")
@@ -28,6 +28,16 @@ export default function MovementForm({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(
+    movement?.supplier_id
+      ? {
+          id: movement.supplier_id,
+          name: movement.supplier_name || movement.supplier_id,
+          document_number: movement.supplier_document_number || "",
+          address: movement.supplier_address || "",
+        }
+      : null
+  );
   // Cliente seleccionado para EXIT (objeto completo para CustomerSearchInput)
   const [selectedCustomer, setSelectedCustomer] = useState(
     movement?.customer_id
@@ -189,18 +199,13 @@ export default function MovementForm({
             {type === "ENTRY" && (
               <div>
                 <Label className="text-xs">Proveedor</Label>
-                <select
-                  className="w-full p-1 border rounded"
-                  value={form.supplier_id}
-                  onChange={e => handleChange("supplier_id", e.target.value)}
-                >
-                  <option value="">Elegir</option>
-                  {partners.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                <SupplierSearchInput
+                  value={selectedSupplier}
+                  onChange={(s) => {
+                    setSelectedSupplier(s);
+                    handleChange("supplier_id", s?.id || "");
+                  }}
+                />
               </div>
             )}
             {type === "EXIT" && (

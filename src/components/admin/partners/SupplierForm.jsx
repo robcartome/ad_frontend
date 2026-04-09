@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Save, Loader2, Truck, ChevronRight } from "lucide-react";
-import { createPartnerSupplier } from "@/services/partnersService";
+import { createPartnerSupplier, updatePartnerSupplier } from "@/services/partnersService";
 
 export default function SupplierForm({ initialData = null, mode = "create" }) {
   const router = useRouter();
@@ -36,9 +36,9 @@ export default function SupplierForm({ initialData = null, mode = "create" }) {
 
       let result;
       if (isEdit && initialData?.id) {
-        // update not implemented in supplier router yet → just show message
-        toast.info("Actualización de proveedores próximamente");
-        return;
+        result = await updatePartnerSupplier(initialData.id, payload);
+        toast.success("Proveedor actualizado correctamente");
+        router.push(`/admin/partners/suppliers/${initialData.id}`);
       } else {
         result = await createPartnerSupplier(payload);
         toast.success("Proveedor creado correctamente");
