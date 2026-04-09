@@ -28,7 +28,6 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 import {
-  getSalesCustomers,
   createQuotation,
   sendQuotation,
   approveQuotation,
@@ -38,6 +37,7 @@ import {
   createSaleOrderFromQuotation,
 } from "@/services/salesService";
 import QuotationDetailTable, { calcLine, newLine } from "./QuotationDetailTable";
+import CustomerSearchInput from "@/components/ui/CustomerSearchInput";
 
 const CURRENCIES = [
   { value: "PEN", label: "Soles [S/]" },
@@ -100,14 +100,6 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   const [customerAddress, setCustomerAddress] = useState(
     initialData?.customer_address || ""
   );
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [customerOptions, setCustomerOptions] = useState([]);
-  const [showCustomerDrop, setShowCustomerDrop] = useState(false);
-  const [loadingCustomers, setLoadingCustomers] = useState(false);
-  const [dropdownStyle, setDropdownStyle] = useState({});
-  const customerInputRef = useRef(null);
-  const customerBlurTimer = useRef(null);
-
   const [issueDate, setIssueDate] = useState(
     initialData?.issue_date || new Date().toISOString().slice(0, 10)
   );
@@ -148,80 +140,23 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   const [saving, setSaving] = useState(false);
   const [actioning, setActioning] = useState(false);
 
-  const recalcDropdown = useCallback(() => {
-    if (!customerInputRef.current) return;
-    const rect = customerInputRef.current.getBoundingClientRect();
-    setDropdownStyle({
-      position: "fixed",
-      top: rect.bottom + 2,
-      left: rect.left,
-      width: Math.max(rect.width, 320),
-      zIndex: 9999,
-    });
-  }, []);
+  // ── Customer search (delegado a CustomerSearchInput) ───────────────────
+  const selectedCustomer = customerId
+    ? { id: customerId, legal_name: customerName, document_number: customerDoc, address: customerAddress }
+    : null;
 
-  useEffect(() => {
-    if (!showCustomerDrop) return;
-    recalcDropdown();
-    window.addEventListener("scroll", recalcDropdown, true);
-    window.addEventListener("resize", recalcDropdown);
-    return () => {
-      window.removeEventListener("scroll", recalcDropdown, true);
-      window.removeEventListener("resize", recalcDropdown);
-    };
-  }, [showCustomerDrop, recalcDropdown]);
-
-  const fetchCustomers = useCallback(async (search = "") => {
-    setLoadingCustomers(true);
-    try {
-      const data = await getSalesCustomers({ search: search.trim(), limit: 20, offset: 0 });
-      setCustomerOptions(data?.items || []);
-    } catch {
-      setCustomerOptions([]);
-    } finally {
-      setLoadingCustomers(false);
+  function handleCustomerChange(c) {
+    if (c) {
+      setCustomerId(c.id);
+      setCustomerName(c.legal_name);
+      setCustomerDoc(c.document_number);
+      setCustomerAddress(c.address || "");
+    } else {
+      setCustomerId("");
+      setCustomerName("");
+      setCustomerDoc("");
+      setCustomerAddress("");
     }
-  }, []);
-
-  useEffect(() => {
-    if (!showCustomerDrop) return;
-    const timer = setTimeout(() => fetchCustomers(customerSearch), 300);
-    return () => clearTimeout(timer);
-  }, [customerSearch, showCustomerDrop, fetchCustomers]);
-
-  useEffect(() => {
-    if (!showCustomerDrop) {
-      setCustomerSearch("");
-    }
-  }, [showCustomerDrop]);
-
-  function handleCustomerFocus() {
-    clearTimeout(customerBlurTimer.current);
-    recalcDropdown();
-    setShowCustomerDrop(true);
-  }
-
-  function handleCustomerBlur() {
-    customerBlurTimer.current = setTimeout(() => setShowCustomerDrop(false), 200);
-  }
-
-  function selectCustomer(c) {
-    setCustomerId(c.id);
-    setCustomerName(c.legal_name);
-    setCustomerDoc(c.document_number);
-    setCustomerAddress(c.address || "");
-    setCustomerSearch("");
-    setCustomerOptions([]);
-    setShowCustomerDrop(false);
-  }
-
-  function clearCustomer() {
-    setCustomerId("");
-    setCustomerName("");
-    setCustomerDoc("");
-    setCustomerAddress("");
-    setCustomerSearch("");
-    setCustomerOptions([]);
   }
 
   const totals = useMemo(() => calcTotals(lines), [lines]);
@@ -341,7 +276,7 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   };
 
   return (
-    <Card className="max-w-7xl mx-auto">
+    <Card className="max-w-7xl mx-auto gap-0">
       <CardHeader className="bg-blue-500 text-white p-2 border gap-0">
         <CardTitle>
           Ventas / Cotización / {mode === "create" ? "CREAR" : initialData?.code || "VER"}
@@ -501,77 +436,11 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
               <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                 Cliente *
               </label>
-              {isReadOnly ? (
-                <div className="px-3 py-2 border rounded-md bg-gray-50 text-sm text-gray-700">
-                  <div className="font-medium">{customerName || initialData?.customer_legal_name}</div>
-                  <div className="text-xs text-gray-400">
-                    {initialData?.customer_document_number}
-                  </div>
-                </div>
-              ) : (
-                <div className="relative">
-                  <Search size={15} className="absolute left-2.5 top-2.5 text-gray-400 pointer-events-none" />
-                  <input
-                    ref={customerInputRef}
-                    type="text"
-                    className="w-full pl-8 pr-8 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    placeholder={customerId ? customerName : "Buscar por RUC o nombre..."}
-                    value={customerId ? customerName : customerSearch}
-                    onChange={(e) => {
-                      if (customerId) clearCustomer();
-                      setCustomerSearch(e.target.value);
-                    }}
-                    onFocus={handleCustomerFocus}
-                    onBlur={handleCustomerBlur}
-                    autoComplete="off"
-                  />
-                  {customerId && (
-                    <button
-                      type="button"
-                      onClick={clearCustomer}
-                      className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                  {showCustomerDrop && (
-                    <div style={dropdownStyle} className="bg-white border rounded-lg shadow-xl max-h-72 overflow-y-auto">
-                      {loadingCustomers ? (
-                        <div className="p-3 text-sm text-gray-400 text-center flex items-center justify-center gap-2">
-                          <Loader2 size={14} className="animate-spin" /> Cargando...
-                        </div>
-                      ) : customerOptions.length === 0 ? (
-                        <div className="p-3 text-sm text-gray-400 text-center">
-                          {customerSearch ? `Sin resultados para "${customerSearch}"` : "No hay clientes"}
-                        </div>
-                      ) : (
-                        customerOptions.map((c) => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b last:border-b-0"
-                            onMouseDown={() => selectCustomer(c)}
-                          >
-                            <div className="text-sm font-medium text-gray-800">
-                              {c.document_number} — {c.legal_name}
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              {c.document_type} · {c.address || "Sin dirección"}
-                            </div>
-                          </button>
-                        ))
-                      )}
-                      <button
-                        type="button"
-                        className="w-full text-left px-4 py-2.5 text-sm text-blue-600 font-medium hover:bg-blue-50 border-t flex items-center gap-1"
-                        onMouseDown={() => window.open("/admin/partners/customers/new", "_blank")}
-                      >
-                        <Plus size={14} /> Crear nuevo socio de negocio
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+              <CustomerSearchInput
+                value={selectedCustomer}
+                onChange={handleCustomerChange}
+                readOnly={isReadOnly}
+              />
             </div>
 
             {/* Dirección del cliente */}

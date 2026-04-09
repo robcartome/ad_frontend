@@ -4,19 +4,19 @@ import { apiFetch } from "./api";
 export async function getSalesCustomers({ search = "", limit = 50, offset = 0 } = {}) {
   const params = new URLSearchParams({ limit, offset });
   if (search) params.set("search", search);
-  return apiFetch(`/sales/customers/?${params}`);
+  return apiFetch(`/customers/?${params}`);
 }
 
 export async function getSalesCustomer(id) {
-  return apiFetch(`/sales/customers/${id}`);
+  return apiFetch(`/customers/${id}`);
 }
 
 export async function createSalesCustomer(data) {
-  return apiFetch("/sales/customers/", { method: "POST", body: JSON.stringify(data) });
+  return apiFetch("/customers/", { method: "POST", body: JSON.stringify(data) });
 }
 
 export async function updateSalesCustomer(id, data) {
-  return apiFetch(`/sales/customers/${id}`, { method: "PUT", body: JSON.stringify(data) });
+  return apiFetch(`/customers/${id}`, { method: "PUT", body: JSON.stringify(data) });
 }
 
 // ─── Document Series ──────────────────────────────────────────────────────────

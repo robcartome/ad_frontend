@@ -6,26 +6,26 @@ export async function getPartnerCustomers({ search = "", limit = 20, offset = 0,
   const params = new URLSearchParams({ limit, offset });
   if (search) params.set("search", search);
   if (active !== undefined) params.set("active", active);
-  return apiFetch(`/sales/customers/?${params}`);
+  return apiFetch(`/customers/?${params}`);
 }
 
 export async function getPartnerCustomer(id) {
-  return apiFetch(`/sales/customers/${id}`);
+  return apiFetch(`/customers/${id}`);
 }
 
 export async function getPartnerCustomerByDocument(documentNumber) {
-  return apiFetch(`/sales/customers/by-document/${documentNumber}`);
+  return apiFetch(`/customers/by-document/${documentNumber}`);
 }
 
 export async function createPartnerCustomer(data) {
-  return apiFetch("/sales/customers/", {
+  return apiFetch("/customers/", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function updatePartnerCustomer(id, data) {
-  return apiFetch(`/sales/customers/${id}`, {
+  return apiFetch(`/customers/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });

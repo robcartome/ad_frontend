@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import MovementDetailTable from "@/components/admin/movements/MovementDetailTable";
 import { createMovement, updateMovement } from "@/services/movementsService";
+import CustomerSearchInput from "@/components/ui/CustomerSearchInput";
 
 
 
@@ -27,6 +28,12 @@ export default function MovementForm({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  // Cliente seleccionado para EXIT (objeto completo para CustomerSearchInput)
+  const [selectedCustomer, setSelectedCustomer] = useState(
+    movement?.customer_id
+      ? { id: movement.customer_id, legal_name: movement.customer_name || movement.customer_id, document_number: movement.customer_document_number || "", address: movement.customer_address || "" }
+      : null
+  );
   const defaultWarehouseId = warehouses.find((w) => w.is_default)?.id || warehouses[0]?.id || "";
   const defaultTransferDestId =
     warehouses.find((w) => w.id !== defaultWarehouseId)?.id || defaultWarehouseId;
@@ -179,20 +186,13 @@ export default function MovementForm({
         <form onSubmit={handleSubmit} className="space-y-3 text-xs md:text-sm">
 
             {/* ---------------- Supplier / Customer ---------------- */}
-            {type !== "TRANSFER" && (
+            {type === "ENTRY" && (
               <div>
-                <Label className="text-xs">
-                  {type === "ENTRY" ? "Proveedor" : "Cliente"}
-                </Label>
+                <Label className="text-xs">Proveedor</Label>
                 <select
                   className="w-full p-1 border rounded"
-                  value={type === "ENTRY" ? form.supplier_id : form.customer_id}
-                  onChange={e =>
-                    handleChange(
-                      type === "ENTRY" ? "supplier_id" : "customer_id",
-                      e.target.value
-                    )
-                  }
+                  value={form.supplier_id}
+                  onChange={e => handleChange("supplier_id", e.target.value)}
                 >
                   <option value="">Elegir</option>
                   {partners.map(p => (
@@ -201,6 +201,18 @@ export default function MovementForm({
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+            {type === "EXIT" && (
+              <div>
+                <Label className="text-xs">Cliente</Label>
+                <CustomerSearchInput
+                  value={selectedCustomer}
+                  onChange={(c) => {
+                    setSelectedCustomer(c);
+                    handleChange("customer_id", c?.id || "");
+                  }}
+                />
               </div>
             )}
 
