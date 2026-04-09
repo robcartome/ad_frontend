@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Search,
   Plus,
-  Trash2,
   Save,
   Send,
   CheckCircle2,
@@ -15,10 +14,10 @@ import {
   GitBranch,
   ShoppingCart,
   Loader2,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectTrigger,
@@ -95,10 +94,19 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   const [customerName, setCustomerName] = useState(
     initialData?.customer_legal_name || ""
   );
+  const [customerDoc, setCustomerDoc] = useState(
+    initialData?.customer_document_number || ""
+  );
+  const [customerAddress, setCustomerAddress] = useState(
+    initialData?.customer_address || ""
+  );
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerOptions, setCustomerOptions] = useState([]);
   const [showCustomerDrop, setShowCustomerDrop] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState({});
+  const customerInputRef = useRef(null);
+  const customerBlurTimer = useRef(null);
 
   const [issueDate, setIssueDate] = useState(
     initialData?.issue_date || new Date().toISOString().slice(0, 10)
@@ -106,8 +114,10 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   const [validUntil, setValidUntil] = useState(initialData?.valid_until || "");
   const [currency, setCurrency] = useState(initialData?.currency || "PEN");
   const [exchangeRate, setExchangeRate] = useState(
-    initialData?.exchange_rate?.toString() || "1.00"
+    initialData?.exchange_rate?.toString() || "3.438"
   );
+  const [globalIgv, setGlobalIgv] = useState("18");
+  const [paymentCondition, setPaymentCondition] = useState(initialData?.payment_condition || "CONTADO");
   const [notes, setNotes] = useState(initialData?.notes || "");
   const [internalRef, setInternalRef] = useState(
     initialData?.internal_reference || ""
@@ -138,37 +148,46 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   const [saving, setSaving] = useState(false);
   const [actioning, setActioning] = useState(false);
 
+  const recalcDropdown = useCallback(() => {
+    if (!customerInputRef.current) return;
+    const rect = customerInputRef.current.getBoundingClientRect();
+    setDropdownStyle({
+      position: "fixed",
+      top: rect.bottom + 2,
+      left: rect.left,
+      width: Math.max(rect.width, 320),
+      zIndex: 9999,
+    });
+  }, []);
+
   useEffect(() => {
     if (!showCustomerDrop) return;
-
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      setLoadingCustomers(true);
-      try {
-        const data = await getSalesCustomers({
-          search: customerSearch.trim(),
-          limit: 50,
-          offset: 0,
-        });
-        if (!cancelled) {
-          setCustomerOptions(data?.items || []);
-        }
-      } catch {
-        if (!cancelled) {
-          setCustomerOptions([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingCustomers(false);
-        }
-      }
-    }, 300);
-
+    recalcDropdown();
+    window.addEventListener("scroll", recalcDropdown, true);
+    window.addEventListener("resize", recalcDropdown);
     return () => {
-      cancelled = true;
-      clearTimeout(timer);
+      window.removeEventListener("scroll", recalcDropdown, true);
+      window.removeEventListener("resize", recalcDropdown);
     };
-  }, [customerSearch, showCustomerDrop]);
+  }, [showCustomerDrop, recalcDropdown]);
+
+  const fetchCustomers = useCallback(async (search = "") => {
+    setLoadingCustomers(true);
+    try {
+      const data = await getSalesCustomers({ search: search.trim(), limit: 20, offset: 0 });
+      setCustomerOptions(data?.items || []);
+    } catch {
+      setCustomerOptions([]);
+    } finally {
+      setLoadingCustomers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!showCustomerDrop) return;
+    const timer = setTimeout(() => fetchCustomers(customerSearch), 300);
+    return () => clearTimeout(timer);
+  }, [customerSearch, showCustomerDrop, fetchCustomers]);
 
   useEffect(() => {
     if (!showCustomerDrop) {
@@ -176,12 +195,33 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
     }
   }, [showCustomerDrop]);
 
+  function handleCustomerFocus() {
+    clearTimeout(customerBlurTimer.current);
+    recalcDropdown();
+    setShowCustomerDrop(true);
+  }
+
+  function handleCustomerBlur() {
+    customerBlurTimer.current = setTimeout(() => setShowCustomerDrop(false), 200);
+  }
+
   function selectCustomer(c) {
     setCustomerId(c.id);
     setCustomerName(c.legal_name);
+    setCustomerDoc(c.document_number);
+    setCustomerAddress(c.address || "");
     setCustomerSearch("");
     setCustomerOptions([]);
     setShowCustomerDrop(false);
+  }
+
+  function clearCustomer() {
+    setCustomerId("");
+    setCustomerName("");
+    setCustomerDoc("");
+    setCustomerAddress("");
+    setCustomerSearch("");
+    setCustomerOptions([]);
   }
 
   const totals = useMemo(() => calcTotals(lines), [lines]);
@@ -456,66 +496,67 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
         )}
 
         <div className="p-6 space-y-6">
-          {/* ── Row 1: Cliente + dates ── */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Cliente search */}
-            <div className="md:col-span-2 space-y-1 relative">
+            <div className="md:col-span-2 space-y-1">
               <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                 Cliente *
               </label>
               {isReadOnly ? (
                 <div className="px-3 py-2 border rounded-md bg-gray-50 text-sm text-gray-700">
-                  {customerName || initialData?.customer_legal_name}
+                  <div className="font-medium">{customerName || initialData?.customer_legal_name}</div>
                   <div className="text-xs text-gray-400">
                     {initialData?.customer_document_number}
                   </div>
                 </div>
               ) : (
-                <>
-                  <div className="relative">
-                    <Search
-                      size={15}
-                      className="absolute left-2.5 top-2.5 text-gray-400"
-                    />
-                    <Input
-                      className="pl-8"
-                      placeholder={loadingCustomers ? "Cargando clientes..." : "Buscar por RUC o nombre..."}
-                      value={customerId ? customerName : customerSearch}
-                      onChange={(e) => {
-                        if (customerId) {
-                          setCustomerId("");
-                          setCustomerName("");
-                        }
-                        setCustomerSearch(e.target.value);
-                        setShowCustomerDrop(true);
-                      }}
-                      onFocus={() => setShowCustomerDrop(true)}
-                      onBlur={() => setTimeout(() => setShowCustomerDrop(false), 200)}
-                    />
-                  </div>
+                <div className="relative">
+                  <Search size={15} className="absolute left-2.5 top-2.5 text-gray-400 pointer-events-none" />
+                  <input
+                    ref={customerInputRef}
+                    type="text"
+                    className="w-full pl-8 pr-8 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    placeholder={customerId ? customerName : "Buscar por RUC o nombre..."}
+                    value={customerId ? customerName : customerSearch}
+                    onChange={(e) => {
+                      if (customerId) clearCustomer();
+                      setCustomerSearch(e.target.value);
+                    }}
+                    onFocus={handleCustomerFocus}
+                    onBlur={handleCustomerBlur}
+                    autoComplete="off"
+                  />
+                  {customerId && (
+                    <button
+                      type="button"
+                      onClick={clearCustomer}
+                      className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
                   {showCustomerDrop && (
-                    <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div style={dropdownStyle} className="bg-white border rounded-lg shadow-xl max-h-72 overflow-y-auto">
                       {loadingCustomers ? (
                         <div className="p-3 text-sm text-gray-400 text-center flex items-center justify-center gap-2">
-                          <Loader2 size={14} className="animate-spin" /> Cargando clientes...
+                          <Loader2 size={14} className="animate-spin" /> Cargando...
                         </div>
                       ) : customerOptions.length === 0 ? (
                         <div className="p-3 text-sm text-gray-400 text-center">
-                          Sin resultados para &ldquo;{customerSearch}&rdquo;
+                          {customerSearch ? `Sin resultados para "${customerSearch}"` : "No hay clientes"}
                         </div>
                       ) : (
                         customerOptions.map((c) => (
                           <button
                             key={c.id}
                             type="button"
-                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b last:border-b-0"
+                            className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b last:border-b-0"
                             onMouseDown={() => selectCustomer(c)}
                           >
-                            <div className="text-sm font-medium">
-                              {c.document_number} {c.legal_name}
+                            <div className="text-sm font-medium text-gray-800">
+                              {c.document_number} — {c.legal_name}
                             </div>
                             <div className="text-xs text-gray-400">
-                              {c.document_type_name || c.document_type}
+                              {c.document_type} · {c.address || "Sin dirección"}
                             </div>
                           </button>
                         ))
@@ -523,89 +564,165 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
                       <button
                         type="button"
                         className="w-full text-left px-4 py-2.5 text-sm text-blue-600 font-medium hover:bg-blue-50 border-t flex items-center gap-1"
-                        onMouseDown={() => window.open("/admin/administration/customers", "_blank")}
+                        onMouseDown={() => window.open("/admin/partners/customers/new", "_blank")}
                       >
                         <Plus size={14} /> Crear nuevo socio de negocio
                       </button>
                     </div>
                   )}
-                </>
+                </div>
               )}
             </div>
 
-            {/* Dates */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-                  Fecha Emisión *
-                </label>
-                <Input
-                  type="date"
-                  value={issueDate}
-                  onChange={(e) => setIssueDate(e.target.value)}
-                  disabled={isReadOnly}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-                  Válido hasta
-                </label>
-                <Input
-                  type="date"
-                  value={validUntil}
-                  onChange={(e) => setValidUntil(e.target.value)}
-                  disabled={isReadOnly}
-                />
+            {/* Dirección del cliente */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Dirección
+              </label>
+              <div className="px-3 py-2 border rounded-md bg-gray-50 text-sm text-gray-600 min-h-[38px]">
+                {customerAddress || <span className="text-gray-300 italic">Se autocompleta al elegir cliente</span>}
               </div>
             </div>
           </div>
 
-          {/* ── Row 2: Currency + ref ── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* ── Fila 2: Transacción, Cond. Pago, Moneda, Vendedor, Centro de Costo ── */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Transacción
+              </label>
+              <select
+                className="w-full border rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                value="VENTA_INTERNA"
+                disabled
+              >
+                <option value="VENTA_INTERNA">Venta Interna</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Con. de Pago
+              </label>
+              <select
+                className="w-full border rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                value={paymentCondition}
+                onChange={(e) => setPaymentCondition(e.target.value)}
+                disabled={isReadOnly}
+              >
+                <option value="CONTADO">[Contado] CONTADO</option>
+                <option value="CREDITO_15">Crédito 15 días</option>
+                <option value="CREDITO_30">Crédito 30 días</option>
+                <option value="CREDITO_60">Crédito 60 días</option>
+              </select>
+            </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                 Moneda
               </label>
-              <Select
-                value={currency}
-                onValueChange={setCurrency}
-                disabled={isReadOnly}
-              >
+              <Select value={currency} onValueChange={setCurrency} disabled={isReadOnly}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {CURRENCIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-                Tipo de Cambio
+                Vendedor
               </label>
-              <Input
-                type="number"
-                step="0.001"
-                min="0.001"
-                value={exchangeRate}
-                onChange={(e) => setExchangeRate(e.target.value)}
-                disabled={isReadOnly || currency === "PEN"}
+              <select
+                className="w-full border rounded-md px-2 py-2 text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                disabled
+              >
+                <option value="">Elegir</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Centro de Costo
+              </label>
+              <select
+                className="w-full border rounded-md px-2 py-2 text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                disabled
+              >
+                <option value="">Elegir</option>
+              </select>
+            </div>
+          </div>
+
+          {/* ── Fila 3: Fechas, T/C, Orden de Compra, IGV ── */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Fecha Emisión *
+              </label>
+              <input
+                type="date"
+                className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                value={issueDate}
+                onChange={(e) => setIssueDate(e.target.value)}
+                disabled={isReadOnly}
               />
             </div>
-            <div className="space-y-1 md:col-span-2">
+            <div className="space-y-1">
               <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-                Referencia / Orden de Compra
+                Válido hasta
               </label>
-              <Input
-                placeholder="Ref. interna u OC del cliente"
+              <input
+                type="date"
+                className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                value={validUntil}
+                onChange={(e) => setValidUntil(e.target.value)}
+                disabled={isReadOnly}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                T/C
+              </label>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                  value={exchangeRate}
+                  onChange={(e) => setExchangeRate(e.target.value)}
+                  disabled={isReadOnly || currency === "PEN"}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Orden de Compra
+              </label>
+              <input
+                type="text"
+                className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                placeholder="Ref. / OC del cliente"
                 value={internalRef}
                 onChange={(e) => setInternalRef(e.target.value)}
                 disabled={isReadOnly}
               />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                IGV
+              </label>
+              <select
+                className="w-full border rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                value={globalIgv}
+                onChange={(e) => setGlobalIgv(e.target.value)}
+                disabled={isReadOnly}
+              >
+                <option value="18">18%</option>
+                <option value="10">10%</option>
+                <option value="0">0%</option>
+              </select>
             </div>
           </div>
 
