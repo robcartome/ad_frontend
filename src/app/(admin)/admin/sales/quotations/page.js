@@ -85,7 +85,7 @@ export default function QuotationsPage() {
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="p-2 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-semibold">Cotizaciones</h1>
         <Link href="/admin/sales/quotations/new">
@@ -96,7 +96,6 @@ export default function QuotationsPage() {
         </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-2 items-end">
         <div className="relative">
           <Search size={15} className="absolute left-2.5 top-2.5 text-gray-400" />

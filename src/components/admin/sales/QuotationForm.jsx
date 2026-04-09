@@ -58,20 +58,19 @@ function calcTotals(lines) {
 
   for (const line of lines) {
     const c = calcLine(line);
-    const qty = parseFloat(line.quantity) || 0;
-    const unitPrice = parseFloat(line.unit_price) || 0;
     const discount = parseFloat(line.discount_amount) || 0;
-    const base = qty * unitPrice - discount;
+    // c.subtotal ya es la base sin IGV (calculada en calcLine)
+    const base = c.subtotal;
 
     subtotal += c.subtotal;
     igvTotal += c.igvAmount;
     totalDiscount += discount;
 
-    if (line.tax_type === "GRAVADO") gravada += base;
-    else if (line.tax_type === "EXONERADO") exonerada += base;
-    else if (line.tax_type === "INAFECTO") inafecta += base;
-    else if (line.tax_type === "GRATUITO") gratuita += base;
-    else if (line.tax_type === "EXPORTACION") exportacion += base;
+    if (line.tax_type === "10") gravada += base;       // Gravado
+    else if (line.tax_type === "20") exonerada += base; // Exonerado
+    else if (line.tax_type === "30") inafecta += base;  // Inafecto
+    else if (line.tax_type === "11") gratuita += base;  // Gratuito
+    else if (line.tax_type === "40") exportacion += base; // Exportación
   }
 
   return {
@@ -97,7 +96,7 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
     initialData?.customer_legal_name || ""
   );
   const [customerSearch, setCustomerSearch] = useState("");
-  const [allCustomers, setAllCustomers] = useState([]);
+  const [customerOptions, setCustomerOptions] = useState([]);
   const [showCustomerDrop, setShowCustomerDrop] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
 
@@ -126,10 +125,11 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
         quantity: l.quantity?.toString() || "1",
         unit_price: l.unit_price?.toString() || "0.00",
         discount_amount: l.discount_amount?.toString() || "0.00",
-        tax_type: l.tax_type || "GRAVADO",
+        tax_type: l.tax_type || "10",
         igv_rate: l.igv_rate?.toString() || "18.00",
         sunat_product_code: l.sunat_product_code || "",
         product_code: l.product_code || "",
+        memo: l.memo || "",
       }));
     }
     return [newLine()];
@@ -138,35 +138,49 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   const [saving, setSaving] = useState(false);
   const [actioning, setActioning] = useState(false);
 
-  // Load first 50 customers on mount
   useEffect(() => {
-    async function loadCustomers() {
+    if (!showCustomerDrop) return;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
       setLoadingCustomers(true);
       try {
-        const data = await getSalesCustomers({ limit: 50 });
-        setAllCustomers(data?.items || []);
+        const data = await getSalesCustomers({
+          search: customerSearch.trim(),
+          limit: 50,
+          offset: 0,
+        });
+        if (!cancelled) {
+          setCustomerOptions(data?.items || []);
+        }
       } catch {
-        setAllCustomers([]);
+        if (!cancelled) {
+          setCustomerOptions([]);
+        }
       } finally {
-        setLoadingCustomers(false);
+        if (!cancelled) {
+          setLoadingCustomers(false);
+        }
       }
-    }
-    loadCustomers();
-  }, []);
+    }, 300);
 
-  // Filter customers from loaded list; if search term, also call API
-  const filteredCustomers = customerSearch.length >= 1
-    ? allCustomers.filter(
-        (c) =>
-          c.legal_name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-          c.document_number?.includes(customerSearch)
-      )
-    : allCustomers;
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [customerSearch, showCustomerDrop]);
+
+  useEffect(() => {
+    if (!showCustomerDrop) {
+      setCustomerSearch("");
+    }
+  }, [showCustomerDrop]);
 
   function selectCustomer(c) {
     setCustomerId(c.id);
     setCustomerName(c.legal_name);
     setCustomerSearch("");
+    setCustomerOptions([]);
     setShowCustomerDrop(false);
   }
 
@@ -192,6 +206,7 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
         igv_rate: parseFloat(l.igv_rate) || 18,
         sunat_product_code: l.sunat_product_code || null,
         product_code: l.product_code || null,
+        memo: l.memo || null,
       })),
     };
   }
@@ -484,12 +499,12 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
                         <div className="p-3 text-sm text-gray-400 text-center flex items-center justify-center gap-2">
                           <Loader2 size={14} className="animate-spin" /> Cargando clientes...
                         </div>
-                      ) : filteredCustomers.length === 0 ? (
+                      ) : customerOptions.length === 0 ? (
                         <div className="p-3 text-sm text-gray-400 text-center">
                           Sin resultados para &ldquo;{customerSearch}&rdquo;
                         </div>
                       ) : (
-                        filteredCustomers.map((c) => (
+                        customerOptions.map((c) => (
                           <button
                             key={c.id}
                             type="button"
