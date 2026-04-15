@@ -1,4 +1,21 @@
-import { apiFetch } from "./api";
+import { apiFetch, apiFetchBlob } from "./api";
+
+function triggerBrowserDownload(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+function openBlobInNewTab(blob) {
+  const url = window.URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+}
 
 // ─── Customers ────────────────────────────────────────────────────────────────
 export async function getSalesCustomers({ search = "", limit = 50, offset = 0 } = {}) {
@@ -70,6 +87,16 @@ export async function newVersionQuotation(id, issue_date = null) {
   return apiFetch(`/sales/quotations/${id}/new-version${params}`, { method: "POST" });
 }
 
+export async function downloadQuotationPdf(id, format = "a4") {
+  const { blob, filename } = await apiFetchBlob(`/sales/quotations/${id}/pdf?format=${format}`);
+  triggerBrowserDownload(blob, filename);
+}
+
+export async function openQuotationPdfInNewTab(id, format = "a4") {
+  const { blob } = await apiFetchBlob(`/sales/quotations/${id}/pdf?format=${format}`);
+  openBlobInNewTab(blob);
+}
+
 // ─── Sale Orders ──────────────────────────────────────────────────────────────
 export async function getSaleOrders({ limit = 20, offset = 0, status, customer_id, date_from, date_to, search } = {}) {
   const params = new URLSearchParams({ limit, offset });
@@ -129,4 +156,15 @@ export async function issueVoucher(id) {
 
 export async function cancelVoucher(id) {
   return apiFetch(`/sales/vouchers/${id}/cancel`, { method: "POST" });
+}
+
+export async function getDocumentPdfPreferences() {
+  return apiFetch("/sales/settings/document-pdf");
+}
+
+export async function updateDocumentPdfPreferences(data) {
+  return apiFetch("/sales/settings/document-pdf", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }

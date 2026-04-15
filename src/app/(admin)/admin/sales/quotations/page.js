@@ -9,11 +9,10 @@ import {
   Search,
   RefreshCw,
   Eye,
-  GitBranch,
+  FileDown,
   ChevronLeft,
   ChevronRight,
   FileText,
-  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +23,11 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { getQuotations, cancelQuotation, newVersionQuotation } from "@/services/salesService";
+import {
+  getDocumentPdfPreferences,
+  getQuotations,
+  openQuotationPdfInNewTab,
+} from "@/services/salesService";
 
 const STATUS_STYLES = {
   DRAFT: "bg-gray-100 text-gray-600",
@@ -56,7 +59,41 @@ export default function QuotationsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [pdfFormat, setPdfFormat] = useState("a4");
+  const [pdfFormats, setPdfFormats] = useState(["a4", "ticket"]);
   const LIMIT = 20;
+
+  function getFormatLabel(format) {
+    if (format === "a4") return "PDF A4";
+    if (format === "ticket") return "PDF Ticket";
+    return `PDF ${String(format).toUpperCase()}`;
+  }
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPdfPreference() {
+      try {
+        const prefs = await getDocumentPdfPreferences();
+        if (active && prefs?.default_pdf_format) {
+          setPdfFormat(prefs.default_pdf_format);
+        }
+        if (active && Array.isArray(prefs?.available_formats) && prefs.available_formats.length > 0) {
+          setPdfFormats(prefs.available_formats);
+        }
+      } catch {
+        if (active) {
+          setPdfFormat("a4");
+          setPdfFormats(["a4", "ticket"]);
+        }
+      }
+    }
+
+    loadPdfPreference();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -119,6 +156,16 @@ export default function QuotationsPage() {
         </Select>
         <Input type="date" className="w-36 text-sm" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} />
         <Input type="date" className="w-36 text-sm" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} />
+        <Select value={pdfFormat} onValueChange={setPdfFormat}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Formato PDF" />
+          </SelectTrigger>
+          <SelectContent>
+            {pdfFormats.map((format) => (
+              <SelectItem key={format} value={format}>{getFormatLabel(format)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button size="sm" variant="ghost" onClick={fetchData}>
           <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
         </Button>
@@ -193,13 +240,28 @@ export default function QuotationsPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => router.push(`/admin/sales/quotations/${q.id}`)}
-                      className="p-1 text-gray-400 hover:text-primary"
-                      title="Ver"
-                    >
-                      <Eye size={15} />
-                    </button>
+                    <div className="inline-flex items-center gap-1">
+                      <button
+                        onClick={() => router.push(`/admin/sales/quotations/${q.id}`)}
+                        className="p-1 text-gray-400 hover:text-primary"
+                        title="Ver"
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await openQuotationPdfInNewTab(q.id, pdfFormat);
+                          } catch (err) {
+                            toast.error(err.message || "No se pudo abrir el PDF");
+                          }
+                        }}
+                        className="p-1 text-gray-400 hover:text-red-600"
+                        title={`PDF (${pdfFormat.toUpperCase()})`}
+                      >
+                        <FileDown size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

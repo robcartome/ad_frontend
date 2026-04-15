@@ -29,12 +29,14 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 import {
   createQuotation,
+  openQuotationPdfInNewTab,
   sendQuotation,
   approveQuotation,
   rejectQuotation,
   cancelQuotation,
   newVersionQuotation,
   createSaleOrderFromQuotation,
+  getDocumentPdfPreferences,
 } from "@/services/salesService";
 import QuotationDetailTable, { calcLine, newLine } from "./QuotationDetailTable";
 import CustomerSearchInput from "@/components/ui/CustomerSearchInput";
@@ -139,6 +141,14 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
 
   const [saving, setSaving] = useState(false);
   const [actioning, setActioning] = useState(false);
+  const [pdfFormat, setPdfFormat] = useState("a4");
+  const [pdfFormats, setPdfFormats] = useState(["a4", "ticket"]);
+
+  function getFormatLabel(format) {
+    if (format === "a4") return "PDF A4";
+    if (format === "ticket") return "PDF Ticket";
+    return `PDF ${String(format).toUpperCase()}`;
+  }
 
   // ── Customer search (delegado a CustomerSearchInput) ───────────────────
   const selectedCustomer = customerId
@@ -160,6 +170,32 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   }
 
   const totals = useMemo(() => calcTotals(lines), [lines]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPdfPreferences() {
+      try {
+        const preferences = await getDocumentPdfPreferences();
+        if (active && preferences?.default_pdf_format) {
+          setPdfFormat(preferences.default_pdf_format);
+        }
+        if (active && Array.isArray(preferences?.available_formats) && preferences.available_formats.length > 0) {
+          setPdfFormats(preferences.available_formats);
+        }
+      } catch {
+        if (active) {
+          setPdfFormat("a4");
+          setPdfFormats(["a4", "ticket"]);
+        }
+      }
+    }
+
+    loadPdfPreferences();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function buildPayload() {
     return {
@@ -198,7 +234,14 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
     setSaving(true);
     try {
       const result = await createQuotation(buildPayload());
-      toast.success("Cotización guardada como borrador");
+      try {
+        await openQuotationPdfInNewTab(result.id, pdfFormat);
+        toast.success("Cotización guardada y PDF abierta en otra pestaña");
+      } catch (pdfError) {
+        console.error(pdfError);
+        toast.success("Cotización guardada como borrador");
+        toast.error("No se pudo abrir el PDF automáticamente");
+      }
       router.push(`/admin/sales/quotations/${result.id}`);
     } catch (err) {
       toast.error(err.message);
@@ -259,6 +302,20 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
     }
   }
 
+  async function handleDownloadPdf() {
+    if (!initialData?.id) return;
+
+    setActioning(true);
+    try {
+      await openQuotationPdfInNewTab(initialData.id, pdfFormat);
+      toast.success("PDF abierta en otra pestaña");
+    } catch (err) {
+      toast.error(err.message || "No se pudo generar el PDF");
+    } finally {
+      setActioning(false);
+    }
+  }
+
   const status = initialData?.status;
   const isDraft = !status || status === "DRAFT";
   const isSent = status === "SENT";
@@ -311,6 +368,29 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2">
+          {initialData?.id && (
+            <>
+              <select
+                className="border rounded-md px-2 py-2 text-sm bg-white"
+                value={pdfFormat}
+                onChange={(e) => setPdfFormat(e.target.value)}
+                disabled={actioning}
+              >
+                {pdfFormats.map((format) => (
+                  <option key={format} value={format}>{getFormatLabel(format)}</option>
+                ))}
+              </select>
+              <Button
+                variant="outline"
+                onClick={handleDownloadPdf}
+                disabled={actioning}
+                className="gap-1"
+              >
+                <Save size={15} />
+                PDF
+              </Button>
+            </>
+          )}
           {mode === "create" && (
             <Button onClick={handleSave} disabled={saving} className="gap-1">
               {saving ? (

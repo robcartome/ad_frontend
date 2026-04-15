@@ -16,12 +16,34 @@ function buildQuery(params = {}) {
   return query ? `?${query}` : "";
 }
 
-function buildAuthHeaders() {
+function getStoredAccessToken() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const candidates = ["access_token", "auth_token", "token"];
+  for (const key of candidates) {
+    const token = localStorage.getItem(key);
+    if (token) {
+      return token;
+    }
+  }
+  return null;
+}
+
+async function buildAuthHeaders() {
   const headers = {};
   if (typeof window !== "undefined") {
+    const accessToken = getStoredAccessToken();
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+      return headers;
+    }
+
     const uuid = getFakeUserUUID && getFakeUserUUID();
     if (uuid) {
-      headers.Authorization = `Bearer ${generateFakeJwt(uuid)}`;
+      const companyId = localStorage.getItem("company_id") || undefined;
+      const fakeJwt = await generateFakeJwt(uuid, companyId ? { company_id: companyId } : {});
+      headers.Authorization = `Bearer ${fakeJwt}`;
     }
   }
   return headers;
@@ -32,7 +54,7 @@ async function downloadReportFile(endpoint, params, fallbackFilename) {
   const res = await fetch(`${API_URL}${endpoint}${query}`, {
     headers: {
       Accept: "*/*",
-      ...buildAuthHeaders(),
+      ...(await buildAuthHeaders()),
     },
   });
 
