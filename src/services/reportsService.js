@@ -1,6 +1,5 @@
 import { apiFetch } from "./api";
-import { getFakeUserUUID } from "@/utils/fakeAuth";
-import { generateFakeJwt } from "@/utils/fakeJwt";
+import { TOKEN_KEY, refreshAccessToken } from "@/services/authService";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -16,38 +15,26 @@ function buildQuery(params = {}) {
   return query ? `?${query}` : "";
 }
 
-function getStoredAccessToken() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  const candidates = ["access_token", "auth_token", "token"];
-  for (const key of candidates) {
-    const token = localStorage.getItem(key);
-    if (token) {
-      return token;
-    }
-  }
-  return null;
-}
-
 async function buildAuthHeaders() {
-  const headers = {};
-  if (typeof window !== "undefined") {
-    const accessToken = getStoredAccessToken();
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
-      return headers;
-    }
+  if (typeof window === "undefined") return {};
 
-    const uuid = getFakeUserUUID && getFakeUserUUID();
-    if (uuid) {
-      const companyId = localStorage.getItem("company_id") || undefined;
-      const fakeJwt = await generateFakeJwt(uuid, companyId ? { company_id: companyId } : {});
-      headers.Authorization = `Bearer ${fakeJwt}`;
+  let token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return {};
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      token = await refreshAccessToken();
+      if (!token) return {};
     }
+  } catch {
+    // Ignore decode errors
   }
-  return headers;
+
+  return { Authorization: `Bearer ${token}` };
 }
+
 
 async function downloadReportFile(endpoint, params, fallbackFilename) {
   const query = buildQuery(params);
