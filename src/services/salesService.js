@@ -66,6 +66,10 @@ export async function createQuotation(data) {
   return apiFetch("/sales/quotations/", { method: "POST", body: JSON.stringify(data) });
 }
 
+export async function updateQuotation(id, data) {
+  return apiFetch(`/sales/quotations/${id}`, { method: "PUT", body: JSON.stringify(data) });
+}
+
 export async function sendQuotation(id) {
   return apiFetch(`/sales/quotations/${id}/send`, { method: "POST" });
 }
@@ -158,12 +162,14 @@ export async function cancelVoucher(id) {
   return apiFetch(`/sales/vouchers/${id}/cancel`, { method: "POST" });
 }
 
-export async function getDocumentPdfPreferences() {
-  return apiFetch("/sales/settings/document-pdf");
+export async function getDocumentPdfPreferences(documentType = "COTIZACION") {
+  const params = new URLSearchParams({ document_type: documentType });
+  return apiFetch(`/sales/settings/document-pdf?${params}`);
 }
 
-export async function updateDocumentPdfPreferences(data) {
-  return apiFetch("/sales/settings/document-pdf", {
+export async function updateDocumentPdfPreferences(data, documentType = "COTIZACION") {
+  const params = new URLSearchParams({ document_type: documentType });
+  return apiFetch(`/sales/settings/document-pdf?${params}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });

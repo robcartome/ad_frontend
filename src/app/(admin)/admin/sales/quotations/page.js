@@ -9,10 +9,12 @@ import {
   Search,
   RefreshCw,
   Eye,
+  Pencil,
   FileDown,
   ChevronLeft,
   ChevronRight,
   FileText,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +29,19 @@ import {
   getDocumentPdfPreferences,
   getQuotations,
   openQuotationPdfInNewTab,
+  sendQuotation,
+  approveQuotation,
+  rejectQuotation,
+  cancelQuotation,
+  newVersionQuotation,
 } from "@/services/salesService";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const STATUS_STYLES = {
   DRAFT: "bg-gray-100 text-gray-600",
@@ -61,6 +75,7 @@ export default function QuotationsPage() {
   const [dateTo, setDateTo] = useState("");
   const [pdfFormat, setPdfFormat] = useState("a4");
   const [pdfFormats, setPdfFormats] = useState(["a4", "ticket"]);
+  const [actioningId, setActioningId] = useState(null);
   const LIMIT = 20;
 
   function getFormatLabel(format) {
@@ -120,6 +135,31 @@ export default function QuotationsPage() {
   }, [fetchData]);
 
   const totalPages = Math.ceil(total / LIMIT);
+
+  async function handleWorkflowAction(quotationId, action) {
+    setActioningId(quotationId);
+    try {
+      if (action === "send") await sendQuotation(quotationId);
+      else if (action === "approve") await approveQuotation(quotationId);
+      else if (action === "reject") await rejectQuotation(quotationId);
+      else if (action === "cancel") await cancelQuotation(quotationId);
+      else if (action === "new-version") await newVersionQuotation(quotationId);
+
+      const labels = {
+        send: "Cotización enviada",
+        approve: "Cotización aprobada",
+        reject: "Cotización rechazada",
+        cancel: "Cotización cancelada",
+        "new-version": "Nueva versión creada",
+      };
+      toast.success(labels[action] || "Acción realizada");
+      await fetchData();
+    } catch (err) {
+      toast.error(err.message || "No se pudo ejecutar la acción");
+    } finally {
+      setActioningId(null);
+    }
+  }
 
   return (
     <div className="p-2 md:p-6 space-y-4">
@@ -240,28 +280,53 @@ export default function QuotationsPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
-                    <div className="inline-flex items-center gap-1">
-                      <button
-                        onClick={() => router.push(`/admin/sales/quotations/${q.id}`)}
-                        className="p-1 text-gray-400 hover:text-primary"
-                        title="Ver"
-                      >
-                        <Eye size={15} />
-                      </button>
-                      <button
-                        onClick={async () => {
-                          try {
-                            await openQuotationPdfInNewTab(q.id, pdfFormat);
-                          } catch (err) {
-                            toast.error(err.message || "No se pudo abrir el PDF");
-                          }
-                        }}
-                        className="p-1 text-gray-400 hover:text-red-600"
-                        title={`PDF (${pdfFormat.toUpperCase()})`}
-                      >
-                        <FileDown size={15} />
-                      </button>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-50"
+                          title="Opciones"
+                          disabled={actioningId === q.id}
+                        >
+                          <Menu size={16} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuItem onClick={() => router.push(`/admin/sales/quotations/${q.id}`)}>
+                          <Eye size={14} /> Ver
+                        </DropdownMenuItem>
+                        {q.status === "DRAFT" && (
+                          <DropdownMenuItem onClick={() => router.push(`/admin/sales/quotations/${q.id}?mode=edit`)}>
+                            <Pencil size={14} /> Editar
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            try {
+                              await openQuotationPdfInNewTab(q.id, pdfFormat);
+                            } catch (err) {
+                              toast.error(err.message || "No se pudo abrir el PDF");
+                            }
+                          }}
+                        >
+                          <FileDown size={14} /> PDF ({pdfFormat.toUpperCase()})
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+
+                        {q.status === "DRAFT" && (
+                          <DropdownMenuItem onClick={() => handleWorkflowAction(q.id, "send")}>Enviar cotización</DropdownMenuItem>
+                        )}
+                        {q.status === "SENT" && (
+                          <>
+                            <DropdownMenuItem onClick={() => handleWorkflowAction(q.id, "approve")}>Aprobar</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleWorkflowAction(q.id, "reject")}>Rechazar</DropdownMenuItem>
+                          </>
+                        )}
+                        {!["CANCELLED", "ORDERED"].includes(q.status) && (
+                          <DropdownMenuItem onClick={() => handleWorkflowAction(q.id, "cancel")}>Cancelar</DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => handleWorkflowAction(q.id, "new-version")}>Nueva versión</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))
