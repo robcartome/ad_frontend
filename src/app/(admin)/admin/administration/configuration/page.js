@@ -19,7 +19,6 @@ export default function ConfigurationPage() {
   const [pdfFormat, setPdfFormat] = useState("a4");
   const [pdfLogoUrl, setPdfLogoUrl] = useState("");
   const [pdfFooterText, setPdfFooterText] = useState("");
-  const [pdfTemplateName, setPdfTemplateName] = useState("modern");
   const [pdfFormats, setPdfFormats] = useState(["a4", "ticket"]);
   const [loading, setLoading] = useState(true);
   const [savingWarehouse, setSavingWarehouse] = useState(false);
@@ -49,14 +48,12 @@ export default function ConfigurationPage() {
       setPdfFormat(data?.default_pdf_format || "a4");
       setPdfLogoUrl(data?.logo_url || "");
       setPdfFooterText(data?.footer_text || "");
-      setPdfTemplateName(data?.template_name || "modern");
       setPdfFormats(Array.isArray(data?.available_formats) && data.available_formats.length > 0 ? data.available_formats : ["a4", "ticket"]);
     } catch (err) {
       toast.error(err.message || "No se pudo cargar la configuración de comprobantes");
       setPdfFormat("a4");
       setPdfLogoUrl("");
       setPdfFooterText("");
-      setPdfTemplateName("modern");
       setPdfFormats(["a4", "ticket"]);
     }
   }
@@ -112,12 +109,10 @@ export default function ConfigurationPage() {
         default_pdf_format: pdfFormat,
         logo_url: pdfLogoUrl || null,
         footer_text: pdfFooterText || null,
-        template_name: pdfTemplateName || null,
       });
       setPdfFormat(data.default_pdf_format);
       setPdfLogoUrl(data.logo_url || "");
       setPdfFooterText(data.footer_text || "");
-      setPdfTemplateName(data.template_name || "modern");
       setPdfFormats(data.available_formats);
       toast.success("Configuración PDF actualizada correctamente");
     } catch (err) {
@@ -249,24 +244,6 @@ export default function ConfigurationPage() {
                     />
                   </div>
                 ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="pdf-template" className="text-sm font-medium block">
-                  Plantilla de PDF
-                </label>
-                <select
-                  id="pdf-template"
-                  value={pdfTemplateName}
-                  onChange={(e) => setPdfTemplateName(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                >
-                  <option value="modern">Moderna</option>
-                  <option value="classic">Clásica</option>
-                </select>
-                <p className="text-xs text-gray-500">
-                  La plantilla clásica usa estilos similares a formatos tradicionales impresos.
-                </p>
               </div>
 
               <div className="space-y-2">
