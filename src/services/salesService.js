@@ -47,6 +47,10 @@ export async function createSeries(data) {
   return apiFetch("/sales/series/", { method: "POST", body: JSON.stringify(data) });
 }
 
+export async function deactivateSeries(id) {
+  return apiFetch(`/sales/series/${id}`, { method: "DELETE" });
+}
+
 // ─── Quotations ───────────────────────────────────────────────────────────────
 export async function getQuotations({ limit = 20, offset = 0, status, customer_id, date_from, date_to, search } = {}) {
   const params = new URLSearchParams({ limit, offset });

@@ -217,12 +217,13 @@ export default function QuotationsPage() {
           <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
             <tr>
               <th className="px-3 py-3 text-left">Fecha</th>
-              <th className="px-3 py-3 text-left">Versión</th>
-              <th className="px-3 py-3 text-left">Referencia</th>
+              <th className="px-3 py-3 text-left">Tipo de comprobante</th>
+              <th className="px-3 py-3 text-left">Serie</th>
+              <th className="px-3 py-3 text-left">Número</th>
               <th className="px-3 py-3 text-left">Cliente</th>
               <th className="px-3 py-3 text-center">Moneda</th>
               <th className="px-3 py-3 text-right">Total</th>
-              <th className="px-3 py-3 text-center">Válido hasta</th>
+              <th className="px-3 py-3 text-center">Valida hasta</th>
               <th className="px-3 py-3 text-center">Estado</th>
               <th className="px-3 py-3 text-center">OP</th>
             </tr>
@@ -230,14 +231,14 @@ export default function QuotationsPage() {
           <tbody className="divide-y divide-gray-100">
             {loading ? (
               <tr>
-                <td colSpan={9} className="text-center py-8 text-gray-400">
+                <td colSpan={10} className="text-center py-8 text-gray-400">
                   <RefreshCw size={18} className="inline animate-spin mr-2 text-primary" />
                   Cargando...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-10 text-gray-400">
+                <td colSpan={10} className="text-center py-10 text-gray-400">
                   <FileText size={32} className="mx-auto mb-2 text-gray-200" />
                   No hay cotizaciones
                 </td>
@@ -254,11 +255,14 @@ export default function QuotationsPage() {
                       ? new Date(q.issue_date + "T00:00:00").toLocaleDateString("es-PE")
                       : "—"}
                   </td>
-                  <td className="px-3 py-2.5 text-center text-gray-600">
-                    v{q.version_number}
+                  <td className="px-3 py-2.5 text-gray-600">
+                    Cotización
                   </td>
-                  <td className="px-3 py-2.5 text-gray-600 text-xs">
-                    {q.internal_reference || "—"}
+                  <td className="px-3 py-2.5 text-gray-600 text-xs font-mono">
+                    {q.series || ""}
+                  </td>
+                  <td className="px-3 py-2.5 text-gray-600 text-xs font-mono">
+                    {q.number != null ? String(q.number) : ""}
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="font-medium text-gray-800">{q.customer_legal_name}</div>

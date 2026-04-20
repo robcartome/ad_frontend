@@ -633,6 +633,16 @@ export default function Sidebar({
               >
                 Configuración
               </Link>
+              <Link
+                href="/admin/sales/series"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/series")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Series y correlativos
+              </Link>
             </div>
           )}
 
@@ -648,6 +658,17 @@ export default function Sidebar({
                 }`}
               >
                 Configuración
+              </Link>
+              <Link
+                href="/admin/sales/series"
+                onClick={() => setAdministrationOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/series")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Series y correlativos
               </Link>
             </div>
           )}

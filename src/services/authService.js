@@ -142,6 +142,29 @@ export async function refreshAccessToken() {
 
   const data = await res.json();
   localStorage.setItem(TOKEN_KEY, data.access_token);
+
+  // Important: refresh returns a generic token; restore selected company scope.
+  const selectedCompany = getSelectedCompany();
+  if (selectedCompany?.company_id) {
+    try {
+      const scoped = await fetch(`${AUTH_BASE}/select-company`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.access_token}`,
+        },
+        body: JSON.stringify({ company_id: selectedCompany.company_id }),
+      });
+      if (scoped.ok) {
+        const scopedData = await scoped.json();
+        localStorage.setItem(TOKEN_KEY, scopedData.access_token);
+        return scopedData.access_token;
+      }
+    } catch {
+      // Fallback: keep generic token; caller may prompt for company re-selection.
+    }
+  }
+
   return data.access_token;
 }
 

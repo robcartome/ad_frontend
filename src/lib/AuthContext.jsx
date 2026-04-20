@@ -61,7 +61,18 @@ export function AuthProvider({ children }) {
       if (currentUser) {
         setUser(currentUser);
         const company = getSelectedCompany();
-        if (company) setSelectedCompany(company);
+        if (company) {
+          setSelectedCompany(company);
+          const scopedToken = getAccessToken();
+          const scopedPayload = decodeTokenPayload(scopedToken || "");
+          if (!scopedPayload.company_id) {
+            try {
+              await apiSelectCompany(company.company_id, company.company_name);
+            } catch {
+              // If re-scope fails, user can still continue and re-select company manually.
+            }
+          }
+        }
         // Restaurar store seleccionada
         const store = getSelectedStore();
         if (store) setSelectedStore(store);

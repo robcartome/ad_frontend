@@ -39,6 +39,7 @@ import {
   newVersionQuotation,
   createSaleOrderFromQuotation,
   getDocumentPdfPreferences,
+  getSeries,
 } from "@/services/salesService";
 import QuotationDetailTable, { calcLine, newLine } from "./QuotationDetailTable";
 import CustomerSearchInput from "@/components/ui/CustomerSearchInput";
@@ -90,6 +91,7 @@ function calcTotals(lines) {
 }
 
 export default function QuotationForm({ initialData = null, mode = "create" }) {
+  const AUTO_SERIES_VALUE = "__AUTO__";
   const router = useRouter();
   const isEdit = mode === "edit";
   const isView = mode === "view";
@@ -119,6 +121,16 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
   const [internalRef, setInternalRef] = useState(
     initialData?.internal_reference || ""
   );
+
+  // Series/number state
+  const [seriesList, setSeriesList] = useState([]);
+  const [seriesId, setSeriesId] = useState(initialData?.series_id || AUTO_SERIES_VALUE);
+  const [quotationNumber, setQuotationNumber] = useState(
+    initialData?.number != null ? String(initialData.number) : ""
+  );
+  const [numberEditable, setNumberEditable] = useState(false);
+  // When viewing/editing existing cotización, show its code; otherwise show auto placeholder
+  const existingCode = initialData?.code || null;
 
   // Lines state
   const [lines, setLines] = useState(() => {
@@ -200,6 +212,14 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
     };
   }, []);
 
+  // Load available COT series for selector
+  useEffect(() => {
+    if (isView) return;
+    getSeries("COT")
+      .then((data) => setSeriesList(Array.isArray(data) ? data : []))
+      .catch(() => setSeriesList([]));
+  }, [isView]);
+
   function buildPayload() {
     return {
       customer_id: customerId,
@@ -209,6 +229,8 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
       exchange_rate: parseFloat(exchangeRate) || 1,
       notes: notes || null,
       internal_reference: internalRef || null,
+      series_id: !seriesId || seriesId === AUTO_SERIES_VALUE ? null : seriesId,
+      number: quotationNumber ? parseInt(quotationNumber, 10) : null,
       lines: lines.map((l) => ({
         product_id: l.product_id,
         description: l.description,
@@ -362,7 +384,7 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
             ← Volver
           </button>
           <h1 className="text-xl font-semibold text-gray-800">
-            {mode === "create" ? "Nueva Cotización" : "Cotización"}
+            {mode === "create" ? "Nueva Cotización" : `Cotización ${existingCode || ""}`}
             {initialData?.version_number
               ? ` — v${initialData.version_number}`
               : ""}
@@ -665,6 +687,71 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
                   onChange={(e) => setExchangeRate(e.target.value)}
                   disabled={isReadOnly || currency === "PEN"}
                 />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Serie
+              </label>
+              <div className="flex gap-2 items-center">
+                {seriesList.length > 0 ? (
+                  <Select value={seriesId} onValueChange={setSeriesId} disabled={isReadOnly}>
+                    <SelectTrigger className="w-28 text-sm">
+                      <SelectValue placeholder="Serie…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={AUTO_SERIES_VALUE}>Automático</SelectItem>
+                      {seriesList.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.series}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <input
+                    type="text"
+                    className="w-28 border rounded-md px-3 py-2 text-sm bg-gray-50 font-mono"
+                    value={initialData?.series || ""}
+                    disabled
+                  />
+                )}
+                <span className="text-xs text-gray-400 italic">
+                  {seriesList.length === 0
+                    ? "Sin series COT configuradas"
+                    : "Series según sucursales permitidas"}
+                </span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Número
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-gray-50"
+                  value={quotationNumber}
+                  onChange={(e) => setQuotationNumber(e.target.value)}
+                  placeholder={isEdit ? "Se auto-completa al guardar si está vacío" : "Auto"}
+                  disabled={
+                    isReadOnly ||
+                    !isEdit ||
+                    (isEdit && !numberEditable)
+                  }
+                />
+                {isEdit && !isReadOnly && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    title={numberEditable ? "Bloquear edición" : "Editar número"}
+                    onClick={() => setNumberEditable((v) => !v)}
+                  >
+                    <Pencil size={14} />
+                  </Button>
+                )}
               </div>
             </div>
             <div className="space-y-1">
