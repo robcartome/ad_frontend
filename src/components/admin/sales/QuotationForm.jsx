@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   Loader2,
   X,
+  Pencil,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 import {
   createQuotation,
+  updateQuotation,
   openQuotationPdfInNewTab,
   sendQuotation,
   approveQuotation,
@@ -89,6 +91,7 @@ function calcTotals(lines) {
 
 export default function QuotationForm({ initialData = null, mode = "create" }) {
   const router = useRouter();
+  const isEdit = mode === "edit";
   const isView = mode === "view";
 
   // Header state
@@ -233,16 +236,25 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
     }
     setSaving(true);
     try {
-      const result = await createQuotation(buildPayload());
-      try {
-        await openQuotationPdfInNewTab(result.id, pdfFormat);
-        toast.success("Cotización guardada y PDF abierta en otra pestaña");
-      } catch (pdfError) {
-        console.error(pdfError);
-        toast.success("Cotización guardada como borrador");
-        toast.error("No se pudo abrir el PDF automáticamente");
+      const payload = buildPayload();
+      const result = isEdit && initialData?.id
+        ? await updateQuotation(initialData.id, payload)
+        : await createQuotation(payload);
+
+      if (isEdit) {
+        toast.success("Cotización actualizada correctamente");
+        router.push(`/admin/sales/quotations/${result.id}`);
+      } else {
+        try {
+          await openQuotationPdfInNewTab(result.id, pdfFormat);
+          toast.success("Cotización guardada y PDF abierta en otra pestaña");
+        } catch (pdfError) {
+          console.error(pdfError);
+          toast.success("Cotización guardada como borrador");
+          toast.error("No se pudo abrir el PDF automáticamente");
+        }
+        router.push(`/admin/sales/quotations/${result.id}`);
       }
-      router.push(`/admin/sales/quotations/${result.id}`);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -368,6 +380,16 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2">
+          {mode === "view" && initialData?.id && status === "DRAFT" && (
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/admin/sales/quotations/${initialData.id}?mode=edit`)}
+              className="gap-1"
+            >
+              <Pencil size={15} />
+              Editar
+            </Button>
+          )}
           {initialData?.id && (
             <>
               <select
@@ -391,14 +413,14 @@ export default function QuotationForm({ initialData = null, mode = "create" }) {
               </Button>
             </>
           )}
-          {mode === "create" && (
+          {(mode === "create" || isEdit) && (
             <Button onClick={handleSave} disabled={saving} className="gap-1">
               {saving ? (
                 <Loader2 size={15} className="animate-spin" />
               ) : (
                 <Save size={15} />
               )}
-              Guardar Borrador
+              {isEdit ? "Guardar cambios" : "Guardar Borrador"}
             </Button>
           )}
           {isDraft && initialData?.id && (

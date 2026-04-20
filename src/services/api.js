@@ -1,43 +1,33 @@
 
 import { parseApiError } from "./errors/parseError";
-import { getFakeUserUUID } from "@/utils/fakeAuth";
-import { generateFakeJwt } from "@/utils/fakeJwt";
-
+import { TOKEN_KEY, refreshAccessToken } from "@/services/authService";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 function getStoredAccessToken() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  const candidates = ["access_token", "auth_token", "token"];
-  for (const key of candidates) {
-    const token = localStorage.getItem(key);
-    if (token) {
-      return token;
-    }
-  }
-  return null;
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 async function buildAuthHeaders() {
-  if (typeof window === "undefined") {
-    return {};
+  if (typeof window === "undefined") return {};
+
+  let token = getStoredAccessToken();
+  if (!token) return {};
+
+  // Check expiry and refresh if needed
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      token = await refreshAccessToken();
+      if (!token) return {};
+    }
+  } catch {
+    // Ignore decode errors
   }
 
-  const accessToken = getStoredAccessToken();
-  if (accessToken) {
-    return { Authorization: `Bearer ${accessToken}` };
-  }
-
-  const uuid = getFakeUserUUID && getFakeUserUUID();
-  if (!uuid) {
-    return {};
-  }
-
-  const companyId = localStorage.getItem("company_id") || undefined;
-  const jwt = await generateFakeJwt(uuid, companyId ? { company_id: companyId } : {});
-  return { Authorization: `Bearer ${jwt}` };
+  return { Authorization: `Bearer ${token}` };
 }
 
 async function buildHeaders(options = {}) {

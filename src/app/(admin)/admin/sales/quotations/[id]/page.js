@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import QuotationForm from "@/components/admin/sales/QuotationForm";
@@ -9,8 +9,10 @@ import { getQuotation } from "@/services/salesService";
 
 export default function QuotationDetailPage() {
   const { id } = useParams();
+  const searchParams = useSearchParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const requestedMode = searchParams.get("mode");
 
   useEffect(() => {
     if (!id) return;
@@ -37,5 +39,6 @@ export default function QuotationDetailPage() {
     );
   }
 
-  return <QuotationForm initialData={data} mode="view" />;
+  const mode = requestedMode === "edit" && data?.status === "DRAFT" ? "edit" : "view";
+  return <QuotationForm initialData={data} mode={mode} />;
 }

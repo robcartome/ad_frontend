@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,8 @@ export default function ConfigurationPage() {
   const [selectedWarehouseId, setSelectedWarehouseId] = useState("");
   const [pdfFormat, setPdfFormat] = useState("a4");
   const [pdfLogoUrl, setPdfLogoUrl] = useState("");
+  const [pdfFooterText, setPdfFooterText] = useState("");
+  const [pdfTemplateName, setPdfTemplateName] = useState("modern");
   const [pdfFormats, setPdfFormats] = useState(["a4", "ticket"]);
   const [loading, setLoading] = useState(true);
   const [savingWarehouse, setSavingWarehouse] = useState(false);
@@ -45,11 +48,15 @@ export default function ConfigurationPage() {
       const data = await getDocumentPdfPreferences();
       setPdfFormat(data?.default_pdf_format || "a4");
       setPdfLogoUrl(data?.logo_url || "");
+      setPdfFooterText(data?.footer_text || "");
+      setPdfTemplateName(data?.template_name || "modern");
       setPdfFormats(Array.isArray(data?.available_formats) && data.available_formats.length > 0 ? data.available_formats : ["a4", "ticket"]);
     } catch (err) {
       toast.error(err.message || "No se pudo cargar la configuración de comprobantes");
       setPdfFormat("a4");
       setPdfLogoUrl("");
+      setPdfFooterText("");
+      setPdfTemplateName("modern");
       setPdfFormats(["a4", "ticket"]);
     }
   }
@@ -104,9 +111,13 @@ export default function ConfigurationPage() {
       const data = await updateDocumentPdfPreferences({
         default_pdf_format: pdfFormat,
         logo_url: pdfLogoUrl || null,
+        footer_text: pdfFooterText || null,
+        template_name: pdfTemplateName || null,
       });
       setPdfFormat(data.default_pdf_format);
       setPdfLogoUrl(data.logo_url || "");
+      setPdfFooterText(data.footer_text || "");
+      setPdfTemplateName(data.template_name || "modern");
       setPdfFormats(data.available_formats);
       toast.success("Configuración PDF actualizada correctamente");
     } catch (err) {
@@ -225,6 +236,53 @@ export default function ConfigurationPage() {
                 />
                 <p className="text-xs text-gray-500">
                   Solo se guarda la URL. La imagen se obtiene desde el storage externo de cada empresa.
+                </p>
+                {pdfLogoUrl ? (
+                  <div className="inline-flex items-center border rounded p-1 bg-white">
+                    <Image
+                      src={pdfLogoUrl}
+                      alt="Vista previa logo"
+                      width={140}
+                      height={48}
+                      className="h-12 w-auto object-contain"
+                      unoptimized
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="pdf-template" className="text-sm font-medium block">
+                  Plantilla de PDF
+                </label>
+                <select
+                  id="pdf-template"
+                  value={pdfTemplateName}
+                  onChange={(e) => setPdfTemplateName(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="modern">Moderna</option>
+                  <option value="classic">Clásica</option>
+                </select>
+                <p className="text-xs text-gray-500">
+                  La plantilla clásica usa estilos similares a formatos tradicionales impresos.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="pdf-footer-text" className="text-sm font-medium block">
+                  Información adicional al pie del PDF
+                </label>
+                <textarea
+                  id="pdf-footer-text"
+                  value={pdfFooterText}
+                  onChange={(e) => setPdfFooterText(e.target.value)}
+                  placeholder="Ejemplo: Validez de la oferta, condiciones de pago, cuentas bancarias, texto legal..."
+                  rows={4}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
+                <p className="text-xs text-gray-500">
+                  Este texto se mostrará en la parte inferior de la cotización y otros documentos comerciales.
                 </p>
               </div>
             </div>
