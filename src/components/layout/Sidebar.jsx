@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Sidebar({
   mobileOpen,
@@ -24,6 +25,8 @@ export default function Sidebar({
   desktopOpen,
 }) {
   const pathname = usePathname();
+  const { isSuperuser, hasRole } = useAuth();
+  const isAdmin = isSuperuser || hasRole("admin", "super_admin", "superadmin");
   const sidebarRef = useRef(null);
   const [inventoryOpen, setInventoryOpen] = useState(
     pathname.startsWith("/admin/inventory")
@@ -643,6 +646,18 @@ export default function Sidebar({
               >
                 Series y correlativos
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin/administration/users"
+                  className={`block px-3 py-2 rounded-md transition ${
+                    pathname.startsWith("/admin/administration/users")
+                      ? "bg-primary/20 text-primary font-medium"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Usuarios
+                </Link>
+              )}
             </div>
           )}
 
@@ -670,6 +685,19 @@ export default function Sidebar({
               >
                 Series y correlativos
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin/administration/users"
+                  onClick={() => setAdministrationOpen(false)}
+                  className={`block px-3 py-2 rounded-md transition ${
+                    pathname.startsWith("/admin/administration/users")
+                      ? "bg-primary/20 text-primary font-medium"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Usuarios
+                </Link>
+              )}
             </div>
           )}
         </div>
