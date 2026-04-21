@@ -5,8 +5,32 @@ import { toast } from "sonner";
 import { Plus, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { getSeries, createSeries, deactivateSeries } from "@/services/salesService";
 import { getMyStoresDetail } from "@/services/storeAccessService";
+import { getSelectedCompany } from "@/services/authService";
 
 const VOUCHER_TYPE_LABELS = {
   "01": "Factura",
@@ -28,6 +52,7 @@ export default function SeriesAdminPage() {
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("");
   const [stores, setStores] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState(null);
 
   // New series form
   const [newType, setNewType] = useState("COT");
@@ -40,6 +65,11 @@ export default function SeriesAdminPage() {
     (id) => stores.find((s) => s.id === id)?.name || "—",
     [stores]
   );
+
+  const totalSeries = series.length;
+  const activeSeries = series.filter((item) => item.active).length;
+  const storesWithSeries = new Set(series.map((item) => item.store_id).filter(Boolean)).size;
+  const legacySeriesCount = series.filter((item) => !item.company_id).length;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,6 +97,8 @@ export default function SeriesAdminPage() {
         }
       })
       .catch(() => setStores([]));
+
+    setSelectedCompany(getSelectedCompany());
   }, []);
 
   async function handleCreate(e) {
@@ -99,13 +131,19 @@ export default function SeriesAdminPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-800">Series / Correlativos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Administra las series de numeración por tipo de documento
+          <h1 className="text-2xl font-semibold">Series y Correlativos por Sucursal</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Configura comprobantes y series para la empresa actual y sus sucursales accesibles.
           </p>
+          {selectedCompany?.company_name && (
+            <div className="mt-2 flex items-center gap-2">
+              <Badge variant="outline">Empresa actual</Badge>
+              <span className="text-sm text-muted-foreground">{selectedCompany.company_name}</span>
+            </div>
+          )}
         </div>
         <Button variant="outline" size="sm" onClick={load} className="gap-1">
           <RefreshCw size={14} />
@@ -113,81 +151,118 @@ export default function SeriesAdminPage() {
         </Button>
       </div>
 
-      {/* Filter */}
-      <div className="flex gap-3 flex-wrap">
-        <select
-          className="border rounded-md px-3 py-2 text-sm bg-white"
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-        >
-          <option value="">Todos los tipos</option>
-          {VOUCHER_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Total de series</CardDescription>
+            <CardTitle className="text-2xl">{totalSeries}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Series activas</CardDescription>
+            <CardTitle className="text-2xl">{activeSeries}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Sucursales con series</CardDescription>
+            <CardTitle className="text-2xl">{storesWithSeries}</CardTitle>
+          </CardHeader>
+        </Card>
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-100 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Tipo</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Sucursal</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Serie</th>
-              <th className="px-4 py-3 text-right font-medium text-gray-600">Nro. Actual</th>
-              <th className="px-4 py-3 text-center font-medium text-gray-600">Estado</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Creada</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
+      {legacySeriesCount > 0 && (
+        <Card className="border-amber-200 bg-amber-50/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-amber-900">Series legacy detectadas</CardTitle>
+            <CardDescription className="text-amber-800">
+              Hay {legacySeriesCount} serie(s) antiguas sin empresa asociada. Conviene revisarlas o recrearlas para mantener la numeración totalmente alineada a multiempresa.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between gap-3">
+          <div>
+            <CardTitle>Listado de series</CardTitle>
+            <CardDescription>
+              Visualiza series por comprobante y sucursal.
+            </CardDescription>
+          </div>
+          <Select value={filterType || "ALL"} onValueChange={(value) => setFilterType(value === "ALL" ? "" : value)}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Todos los comprobantes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos los comprobantes</SelectItem>
+              {VOUCHER_TYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Comprobante</TableHead>
+                <TableHead>Sucursal</TableHead>
+                <TableHead>Serie</TableHead>
+                <TableHead>Scope</TableHead>
+                <TableHead className="text-right">Nro. Actual</TableHead>
+                <TableHead className="text-center">Estado</TableHead>
+                <TableHead>Creada</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
             {loading ? (
-              <tr>
-                <td colSpan={7} className="text-center py-8 text-gray-400">
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   Cargando…
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : series.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="text-center py-8 text-gray-400">
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No hay series registradas
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               series.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2.5 text-gray-700">
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">
                     {VOUCHER_TYPE_LABELS[s.voucher_type] || s.voucher_type}
-                  </td>
-                  <td className="px-4 py-2.5 text-gray-600">
+                  </TableCell>
+                  <TableCell>
                     {storeNameById(s.store_id)}
-                  </td>
-                  <td className="px-4 py-2.5 font-mono font-semibold text-gray-800">
+                  </TableCell>
+                  <TableCell className="font-mono font-semibold">
                     {s.series}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-gray-600">
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={s.company_id ? "outline" : "destructive"}>
+                      {s.company_id ? "Empresa" : "Legacy"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
                     {s.current_number.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2.5 text-center">
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        s.active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-600"
-                      }`}
-                    >
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant={s.active ? "secondary" : "outline"}>
                       {s.active ? "Activa" : "Inactiva"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-xs text-gray-400">
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
                     {s.created_at
                       ? new Date(s.created_at).toLocaleDateString("es-PE")
                       : "—"}
-                  </td>
-                  <td className="px-4 py-2.5 text-center">
+                  </TableCell>
+                  <TableCell className="text-center">
                     {s.active && (
                       <button
                         onClick={async () => {
@@ -200,56 +275,67 @@ export default function SeriesAdminPage() {
                             toast.error("Error al desactivar");
                           }
                         }}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-destructive hover:opacity-80"
                         title="Desactivar serie"
                       >
                         <Trash2 size={14} />
                       </button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-      {/* Create form */}
-      <div className="border rounded-lg bg-white shadow-sm p-4 space-y-4">
-        <h2 className="font-semibold text-gray-700">Nueva Serie</h2>
-        <form onSubmit={handleCreate} className="flex flex-wrap gap-3 items-end">
+      <Card>
+        <CardHeader>
+          <CardTitle>Nueva serie</CardTitle>
+          <CardDescription>
+            Registra una serie para un comprobante y sucursal específica.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreate} className="flex flex-wrap gap-3 items-end">
           <div className="space-y-1">
-            <label className="text-xs text-gray-500 uppercase tracking-wide">Tipo</label>
-            <select
-              className="border rounded-md px-3 py-2 text-sm bg-white"
-              value={newType}
-              onChange={(e) => setNewType(e.target.value)}
-            >
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">Comprobante</label>
+            <Select value={newType} onValueChange={setNewType}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Seleccione tipo" />
+              </SelectTrigger>
+              <SelectContent>
               {VOUCHER_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
+                <SelectItem key={t.value} value={t.value}>
                   {t.label}
-                </option>
+                </SelectItem>
               ))}
-            </select>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-gray-500 uppercase tracking-wide">Sucursal</label>
-            <select
-              className="border rounded-md px-3 py-2 text-sm bg-white min-w-44"
-              value={newStoreId}
-              onChange={(e) => setNewStoreId(e.target.value)}
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">Sucursal</label>
+            <Select
+              value={newStoreId || (stores.length === 1 ? stores[0]?.id : "NONE") || "NONE"}
+              onValueChange={(value) => setNewStoreId(value === "NONE" ? "" : value)}
               disabled={stores.length <= 1}
             >
-              {stores.length > 1 && <option value="">Seleccionar sucursal</option>}
+              <SelectTrigger className="w-[240px]">
+                <SelectValue placeholder="Seleccionar sucursal" />
+              </SelectTrigger>
+              <SelectContent>
+              {stores.length > 1 && <SelectItem value="NONE">Seleccionar sucursal</SelectItem>}
               {stores.map((s) => (
-                <option key={s.id} value={s.id}>
+                <SelectItem key={s.id} value={s.id}>
                   {s.name}
-                </option>
+                </SelectItem>
               ))}
-            </select>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-gray-500 uppercase tracking-wide">
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">
               Código serie
             </label>
             <Input
@@ -261,7 +347,7 @@ export default function SeriesAdminPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-gray-500 uppercase tracking-wide">
+            <label className="text-xs text-muted-foreground uppercase tracking-wide">
               Número inicio
             </label>
             <Input
@@ -277,8 +363,9 @@ export default function SeriesAdminPage() {
             <Plus size={14} />
             {creating ? "Creando…" : "Crear Serie"}
           </Button>
-        </form>
-      </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
