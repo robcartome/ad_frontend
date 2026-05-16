@@ -1,41 +1,57 @@
 // src/utils/fakeJwt.js
-// Genera un JWT falso para pruebas, compatible con el backend actual
-// Algoritmo y clave deben coincidir con el backend (HS256, 'secret')
+// Genera JWT válido HS256 para desarrollo local.
 
-function base64url(source) {
-  // Encode in classical base64
-  let encodedSource = btoa(JSON.stringify(source));
-  // Remove padding equal characters
-  encodedSource = encodedSource.replace(/=+$/, "");
-  // Replace characters according to base64url spec
-  encodedSource = encodedSource.replace(/\+/g, "-");
-  encodedSource = encodedSource.replace(/\//g, "_");
-  return encodedSource;
+const DEV_SECRET =
+  process.env.NEXT_PUBLIC_JWT_SECRET_KEY || "CHANGE_THIS_SECRET_IN_PRODUCTION";
+
+function base64UrlEncodeString(value) {
+  return btoa(value).replace(/=+$/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-// Solo para pruebas, clave hardcodeada igual que en backend
-const SECRET = "secret";
-
-function signHS256(header, payload, secret) {
-  // No implementamos HMAC-SHA256 real, solo para pruebas locales
-  // El backend acepta cualquier token firmado con 'secret' y HS256
-  // Esto NO es seguro, solo para desarrollo
-  const headerEncoded = base64url(header);
-  const payloadEncoded = base64url(payload);
-  // Fake signature: base64url(header.payload.secret)
-  const signature = btoa(headerEncoded + "." + payloadEncoded + "." + secret)
-    .replace(/=+$/, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-  return `${headerEncoded}.${payloadEncoded}.${signature}`;
+function base64UrlEncodeJson(obj) {
+  return base64UrlEncodeString(JSON.stringify(obj));
 }
 
-export function generateFakeJwt(uuid) {
+function arrayBufferToBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return base64UrlEncodeString(binary);
+}
+
+async function signHS256(unsignedToken, secret) {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(unsignedToken);
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
+  return arrayBufferToBase64Url(signature);
+}
+
+export async function generateFakeJwt(uuid, extraClaims = {}) {
   const header = { alg: "HS256", typ: "JWT" };
+  const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: uuid,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 24 * 3600,
+    iat: now,
+    exp: now + 24 * 3600,
+    type: "access",
+    ...extraClaims,
   };
-  return signHS256(header, payload, SECRET);
+
+  const headerEncoded = base64UrlEncodeJson(header);
+  const payloadEncoded = base64UrlEncodeJson(payload);
+  const unsignedToken = `${headerEncoded}.${payloadEncoded}`;
+  const signature = await signHS256(unsignedToken, DEV_SECRET);
+  return `${unsignedToken}.${signature}`;
 }

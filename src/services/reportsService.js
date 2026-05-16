@@ -1,6 +1,5 @@
 import { apiFetch } from "./api";
-import { getFakeUserUUID } from "@/utils/fakeAuth";
-import { generateFakeJwt } from "@/utils/fakeJwt";
+import { TOKEN_KEY, refreshAccessToken } from "@/services/authService";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -16,23 +15,33 @@ function buildQuery(params = {}) {
   return query ? `?${query}` : "";
 }
 
-function buildAuthHeaders() {
-  const headers = {};
-  if (typeof window !== "undefined") {
-    const uuid = getFakeUserUUID && getFakeUserUUID();
-    if (uuid) {
-      headers.Authorization = `Bearer ${generateFakeJwt(uuid)}`;
+async function buildAuthHeaders() {
+  if (typeof window === "undefined") return {};
+
+  let token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return {};
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      token = await refreshAccessToken();
+      if (!token) return {};
     }
+  } catch {
+    // Ignore decode errors
   }
-  return headers;
+
+  return { Authorization: `Bearer ${token}` };
 }
+
 
 async function downloadReportFile(endpoint, params, fallbackFilename) {
   const query = buildQuery(params);
   const res = await fetch(`${API_URL}${endpoint}${query}`, {
     headers: {
       Accept: "*/*",
-      ...buildAuthHeaders(),
+      ...(await buildAuthHeaders()),
     },
   });
 

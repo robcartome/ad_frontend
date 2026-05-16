@@ -13,8 +13,11 @@ import {
   ChevronDown,
   ChevronRight,
   Notebook,
+  ShoppingCart,
+  Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Sidebar({
   mobileOpen,
@@ -22,6 +25,8 @@ export default function Sidebar({
   desktopOpen,
 }) {
   const pathname = usePathname();
+  const { isSuperuser, hasRole } = useAuth();
+  const isAdmin = isSuperuser || hasRole("admin", "super_admin", "superadmin");
   const sidebarRef = useRef(null);
   const [inventoryOpen, setInventoryOpen] = useState(
     pathname.startsWith("/admin/inventory")
@@ -31,6 +36,12 @@ export default function Sidebar({
   );
   const [administrationOpen, setAdministrationOpen] = useState(
     pathname.startsWith("/admin/administration")
+  );
+  const [salesOpen, setSalesOpen] = useState(
+    pathname.startsWith("/admin/sales")
+  );
+  const [partnersOpen, setPartnersOpen] = useState(
+    pathname.startsWith("/admin/partners")
   );
 
   useEffect(() => {
@@ -59,6 +70,12 @@ export default function Sidebar({
     }
     if (pathname.startsWith("/admin/administration")) {
       setAdministrationOpen(true);
+    }
+    if (pathname.startsWith("/admin/sales")) {
+      setSalesOpen(true);
+    }
+    if (pathname.startsWith("/admin/partners")) {
+      setPartnersOpen(true);
     }
   }, [pathname]);
 
@@ -127,7 +144,179 @@ export default function Sidebar({
           </Link>
         ))}
 
-        {/* 📦 Inventario con submenús */}
+        <div className="relative">
+          <button
+            onClick={() => setPartnersOpen(!partnersOpen)}
+            title={!desktopOpen ? "Socios de Negocio" : undefined}
+            className={`group relative flex w-full items-center py-2 rounded-md transition ${
+              desktopOpen ? "justify-between px-3" : "lg:justify-center lg:px-2 px-3"
+            } ${
+              pathname.startsWith("/admin/partners")
+                ? "bg-primary text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <span className={`flex items-center ${desktopOpen ? "gap-2" : "gap-2 lg:gap-0"}`}>
+              <Users size={18} />
+              <span className={desktopOpen ? "" : "lg:hidden"}>Socios de Negocio</span>
+            </span>
+            <span className={desktopOpen ? "" : "lg:hidden"}>
+              {partnersOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </span>
+            {!desktopOpen && (
+              <span className="hidden lg:block pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-gray-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                Socios de Negocio
+              </span>
+            )}
+          </button>
+
+          {partnersOpen && (desktopOpen || mobileOpen) && (
+            <div className="ml-3 mt-1 space-y-1">
+              <div className="px-3 py-1 text-[10px] font-semibold uppercase text-gray-400 tracking-widest">Clientes</div>
+              <Link href="/admin/partners/customers" className={`block px-3 py-2 rounded-md transition ${pathname === "/admin/partners/customers" ? "bg-primary/20 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"}`}>
+                Lista de Clientes
+              </Link>
+              <Link href="/admin/partners/customers/new" className={`block px-3 py-2 rounded-md transition ${pathname === "/admin/partners/customers/new" ? "bg-primary/20 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"}`}>
+                + Crear Cliente
+              </Link>
+              <div className="px-3 py-1 text-[10px] font-semibold uppercase text-gray-400 tracking-widest mt-1">Proveedores</div>
+              <Link href="/admin/partners/suppliers" className={`block px-3 py-2 rounded-md transition ${pathname === "/admin/partners/suppliers" ? "bg-primary/20 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"}`}>
+                Lista de Proveedores
+              </Link>
+              <Link href="/admin/partners/suppliers/new" className={`block px-3 py-2 rounded-md transition ${pathname === "/admin/partners/suppliers/new" ? "bg-primary/20 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"}`}>
+                + Crear Proveedor
+              </Link>
+            </div>
+          )}
+
+          {partnersOpen && !desktopOpen && !mobileOpen && (
+            <div className="hidden lg:block absolute left-full top-0 ml-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg p-2 z-50">
+              <div className="px-3 py-1 text-[10px] font-semibold uppercase text-gray-400 tracking-widest">Clientes</div>
+              <Link href="/admin/partners/customers" onClick={() => setPartnersOpen(false)} className={`block px-3 py-2 rounded-md transition ${pathname === "/admin/partners/customers" ? "bg-primary/20 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"}`}>
+                Lista de Clientes
+              </Link>
+              <Link href="/admin/partners/customers/new" onClick={() => setPartnersOpen(false)} className={`block px-3 py-2 rounded-md transition ${pathname === "/admin/partners/customers/new" ? "bg-primary/20 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"}`}>
+                + Crear Cliente
+              </Link>
+              <div className="px-3 py-1 text-[10px] font-semibold uppercase text-gray-400 tracking-widest mt-1">Proveedores</div>
+              <Link href="/admin/partners/suppliers" onClick={() => setPartnersOpen(false)} className={`block px-3 py-2 rounded-md transition ${pathname === "/admin/partners/suppliers" ? "bg-primary/20 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"}`}>
+                Lista de Proveedores
+              </Link>
+              <Link href="/admin/partners/suppliers/new" onClick={() => setPartnersOpen(false)} className={`block px-3 py-2 rounded-md transition ${pathname === "/admin/partners/suppliers/new" ? "bg-primary/20 text-primary font-medium" : "text-gray-700 hover:bg-gray-100"}`}>
+                + Crear Proveedor
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Ventas con submenús */}
+        <div className="relative">
+          <button
+            onClick={() => setSalesOpen(!salesOpen)}
+            title={!desktopOpen ? "Ventas" : undefined}
+            className={`group relative flex w-full items-center py-2 rounded-md transition ${
+              desktopOpen ? "justify-between px-3" : "lg:justify-center lg:px-2 px-3"
+            } ${
+              pathname.startsWith("/admin/sales")
+                ? "bg-primary text-white"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <span
+              className={`flex items-center ${desktopOpen ? "gap-2" : "gap-2 lg:gap-0"}`}
+            >
+              <ShoppingCart size={18} />
+              <span className={desktopOpen ? "" : "lg:hidden"}>Ventas</span>
+            </span>
+            <span className={desktopOpen ? "" : "lg:hidden"}>
+              {salesOpen ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </span>
+            {!desktopOpen && (
+              <span className="hidden lg:block pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded-md bg-gray-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                Ventas
+              </span>
+            )}
+          </button>
+
+          {salesOpen && (desktopOpen || mobileOpen) && (
+            <div className="ml-3 mt-1 space-y-1">
+              <Link
+                href="/admin/sales"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/sales"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Comprobantes
+              </Link>
+              <Link
+                href="/admin/sales/quotations"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/quotations")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Cotizaciones
+              </Link>
+              <Link
+                href="/admin/sales/orders"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/orders")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Pedidos de Venta
+              </Link>
+            </div>
+          )}
+
+          {salesOpen && !desktopOpen && !mobileOpen && (
+            <div className="hidden lg:block absolute left-full top-0 ml-2 w-52 bg-white border border-gray-200 rounded-md shadow-lg p-2 z-50">
+              <Link
+                href="/admin/sales"
+                onClick={() => setSalesOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname === "/admin/sales"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Comprobantes
+              </Link>
+              <Link
+                href="/admin/sales/quotations"
+                onClick={() => setSalesOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/quotations")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Cotizaciones
+              </Link>
+              <Link
+                href="/admin/sales/orders"
+                onClick={() => setSalesOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/orders")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Pedidos de Venta
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* �📦 Inventario con submenús */}
         <div className="relative">
           <button
             onClick={() => setInventoryOpen(!inventoryOpen)}
@@ -447,6 +636,28 @@ export default function Sidebar({
               >
                 Configuración
               </Link>
+              <Link
+                href="/admin/sales/series"
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/series")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Series y correlativos
+              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin/administration/users"
+                  className={`block px-3 py-2 rounded-md transition ${
+                    pathname.startsWith("/admin/administration/users")
+                      ? "bg-primary/20 text-primary font-medium"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Usuarios
+                </Link>
+              )}
             </div>
           )}
 
@@ -463,6 +674,30 @@ export default function Sidebar({
               >
                 Configuración
               </Link>
+              <Link
+                href="/admin/sales/series"
+                onClick={() => setAdministrationOpen(false)}
+                className={`block px-3 py-2 rounded-md transition ${
+                  pathname.startsWith("/admin/sales/series")
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Series y correlativos
+              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin/administration/users"
+                  onClick={() => setAdministrationOpen(false)}
+                  className={`block px-3 py-2 rounded-md transition ${
+                    pathname.startsWith("/admin/administration/users")
+                      ? "bg-primary/20 text-primary font-medium"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Usuarios
+                </Link>
+              )}
             </div>
           )}
         </div>

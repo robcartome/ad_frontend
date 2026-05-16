@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🖥️ ApuDig Frontend — Panel Administrativo
 
-## Getting Started
+Frontend desarrollado con **Next.js (App Router)** para el sistema APUDIG.
 
-First, run the development server:
+Incluye módulos de inventario, ventas, socios de negocio y facturación, consumiendo la API FastAPI del backend.
+
+## 🚀 Tecnologías principales
+
+- Next.js 14+
+- React
+- Tailwind CSS
+- Sonner (notificaciones)
+- Lucide React (iconografía)
+
+## ▶️ Ejecución local
+
+Instalar dependencias:
+
+```bash
+npm install
+```
+
+Iniciar entorno de desarrollo:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir en el navegador:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- `http://localhost:3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📌 Estado actual del branch (abril 2026)
 
-## Learn More
+Este branch alinea frontend con la refactorización de socios de negocio del backend.
 
-To learn more about Next.js, take a look at the following resources:
+### Cambios funcionales principales
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Clientes (Customer BC)**
+	- Ruta canónica consumida: `/customers`.
+	- Se removieron llamadas legacy a `/sales/customers`.
+	- Se removió el uso de `/v2/customers`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Proveedores (Supplier BC)**
+	- Ruta canónica consumida: `/suppliers`.
+	- Servicio de proveedores unificado para list/search/get/create/update.
+	- Integración de partners para mantener compatibilidad de pantallas.
 
-## Deploy on Vercel
+3. **Movimientos de inventario (Entries/Exits)**
+	- `EXIT`: selector de cliente con buscador reutilizable (`CustomerSearchInput`).
+	- `ENTRY`: selector de proveedor migrado a buscador reutilizable (`SupplierSearchInput`).
+	- Se eliminó el prefetch masivo de socios para formularios de movimiento.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🧱 Componentes reutilizables agregados
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/components/ui/CustomerSearchInput.jsx`
+- `src/components/ui/SupplierSearchInput.jsx`
+
+Ambos componentes usan búsqueda incremental con debounce y dropdown posicionado, para reducir carga inicial y mejorar UX.
+
+## 🔌 Servicios API relevantes
+
+- `src/services/salesService.js` (clientes en ventas)
+- `src/services/partnersService.js` (compatibilidad de socios)
+- `src/services/customersService.js`
+- `src/services/suppliersService.js`
+
+## 📂 Estructura de referencia
+
+- `src/app/(admin)/admin/inventory/entries` — registro de ingresos
+- `src/app/(admin)/admin/inventory/exits` — registro de salidas
+- `src/components/admin/movements` — formularios y detalle de movimientos
+- `src/components/admin/partners` — gestión de clientes/proveedores
+
+## ✅ Recomendación de validación manual
+
+1. Entrar a `admin/inventory/entries` y buscar proveedor por nombre o documento.
+2. Entrar a `admin/inventory/exits` y buscar cliente por nombre o documento.
+3. Crear/editar proveedor en `admin/partners/suppliers`.
+4. Confirmar que no existan llamadas a endpoints legacy en consola de red.

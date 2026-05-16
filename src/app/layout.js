@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/lib/AuthContext";
 
 export const metadata = {
   title: "ApuDig",
@@ -10,7 +11,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body className="min-h-screen bg-gray-50 text-gray-900">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster richColors position="top-right" />
       </body>
     </html>
