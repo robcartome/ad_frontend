@@ -9,6 +9,7 @@ import { Loader2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { importExcelFile, downloadExcelTemplate } from "@/utils/importExcel";
+import ProductSearchInput from "@/components/admin/shared/ProductSearchInput";
 
 
 export default function MovementDetailTable({ details, setDetails, type_movement, warehouse_id }) {
@@ -21,6 +22,7 @@ export default function MovementDetailTable({ details, setDetails, type_movement
   const [loading, setLoading] = useState(false);
   const [activeRow, setActiveRow] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [hasTyped, setHasTyped] = useState(false);
   const [noResults, setNoResults] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState({ processed: 0, total: 0 });
@@ -119,32 +121,29 @@ export default function MovementDetailTable({ details, setDetails, type_movement
     ? Math.round((importProgress.processed / importProgress.total) * 100)
     : 0;
 
-  // 🔍 Buscar productos al escribir
+  // 🔍 Buscar productos al escribir o al abrir el dropdown
   useEffect(() => {
-    const delay = setTimeout(async () => {
-      if (!searchTerm || searchTerm.length < 2) {
-        setSearchResults([]);
-        setNoResults(false);
-        return;
-      }
+    if (activeRow === null) { setSearchResults([]); return; }
 
+    const delay = setTimeout(async () => {
+      const term = hasTyped && searchTerm.trim().length >= 2 ? searchTerm.trim() : "";
       try {
         setLoading(true);
         setNoResults(false);
-        const res = await getProducts(1, 10, searchTerm);
+        const res = await getProducts(1, 50, term);
         const results = res.results || [];
         setSearchResults(results);
-        setNoResults(results.length === 0);
+        setNoResults(hasTyped && searchTerm.trim().length >= 2 && results.length === 0);
       } catch (err) {
         console.error("Error al buscar productos:", err);
-        setNoResults(true);
+        setNoResults(hasTyped);
       } finally {
         setLoading(false);
       }
-    }, 400); // debounce
+    }, hasTyped ? 350 : 0);
 
     return () => clearTimeout(delay);
-  }, [searchTerm]);
+  }, [searchTerm, activeRow, hasTyped]);
 
   // Actualiza solo el stock por almacén cuando cambia el almacén para cualquier tipo de movimiento
   useEffect(() => {
@@ -217,6 +216,7 @@ export default function MovementDetailTable({ details, setDetails, type_movement
 
     setSearchResults([]);
     setSearchTerm("");
+    setHasTyped(false);
     setActiveRow(null);
   };
 
@@ -308,72 +308,58 @@ export default function MovementDetailTable({ details, setDetails, type_movement
           >
             {/* Nº Ítem */}
             <div className="text-center font-semibold">{i + 1}</div>
-            <div className="col-span-5 relative">
-              <Input
-                className="h-8 px-2"
-                placeholder="Buscar por nombre o SKU..."
-                value={
-                  (activeRow === i
-                    ? searchTerm
-                    : row.sku
-                      ? `${row.sku} ${row.product_name}`
-                      : row.product_name) || ""
+            <div className="col-span-5">
+              <ProductSearchInput
+                isActive={activeRow === i}
+                displayValue={
+                  row.sku ? `${row.sku} ${row.product_name}` : row.product_name || ""
                 }
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
+                searchTerm={searchTerm}
+                hasTyped={hasTyped}
+                searchResults={searchResults}
+                searchLoading={loading}
+                noResults={noResults}
+                pinnedResult={
+                  row.product_id
+                    ? {
+                        id: row.product_id,
+                        name: row.product_name,
+                        sku: row.sku,
+                        stock_total: row.stock_total,
+                        price_sale: row.unit_price,
+                        price_purchase: row.price_purchase,
+                        unit: row.unit,
+                        category: "",
+                      }
+                    : null
+                }
+                priceField={type_movement === "ENTRY" ? "purchase" : "sale"}
+                titleAttr={
+                  row.product_id
+                    ? `${row.sku} - ${row.product_name} — Stock: ${row.warehouse_stock ?? row.stock_total ?? 0}`
+                    : ""
+                }
+                onFocus={() => {
                   setActiveRow(i);
+                  setSearchTerm("");
+                  setHasTyped(false);
                 }}
-                onFocus={() => setActiveRow(i)}
-                title={`${row.product_id ? `${row.sku} - ${row.product_name} - Stock ${row.stock_total} - PC ${row.price_purchase}` : ""}`}
+                onChange={(val) => {
+                  setSearchTerm(val);
+                  setActiveRow(i);
+                  setHasTyped(true);
+                }}
+                onClearProduct={() => {
+                  updateRow(i, {
+                    product_id: "",
+                    sku: "",
+                    product_name: "",
+                    stock_total: 0,
+                    warehouse_stock: 0,
+                  });
+                }}
+                onSelect={(p) => handleSelectProduct(i, p)}
               />
-                <div className="flex justify-end">
-                  <span className="inline-flex items-center rounded-md bg-blue-50 px-1 py-0.5 text-[10px] font-medium text-blue-600 border border-blue-200">
-                    Stock en almacén: {Number(row.warehouse_stock ?? row.stock_total ?? 0).toFixed(2)}
-                  </span>
-                </div>
-              {activeRow === i && (
-                <ul className="absolute z-50 bg-white border w-full max-h-48 overflow-y-auto shadow-md rounded-md">
-                  {loading && (
-                    <li className="p-2 text-sm text-gray-500">Buscando...</li>
-                  )}
-
-                  {!loading && noResults && (
-                    <li className="p-3 text-sm text-gray-600">
-                      No se encontró el producto
-                      <div className="mt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            window.open("/admin/products", "_blank")
-                          }
-                        >
-                          ➕ Crear producto
-                        </Button>
-                      </div>
-                    </li>
-                  )}
-
-                  {!loading &&
-                    !noResults &&
-                    searchResults.map((product) => (
-                      <li
-                        key={product.id}
-                        className="p-2 text-sm hover:bg-gray-100 cursor-pointer"
-                        onClick={() => handleSelectProduct(i, product)}
-                      >
-                        <div className="font-medium">{product.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {product.sku || ""} • {product.stock_total}{" "}
-                          {product.unit} • {product.category}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          P. Compra: S/ {product.price_purchase}
-                        </div>
-                      </li>
-                    ))}
-                </ul>
-              )}
             </div>
 
             <div className="col-span-2 md:col-span-1">
@@ -422,6 +408,11 @@ export default function MovementDetailTable({ details, setDetails, type_movement
                       handleChange(i, "quantity", parseFloat(e.target.value))
                     }
                   />
+                  <div className="flex justify-center">
+                    <span className="inline-flex items-center rounded bg-blue-50 px-1 text-[9px] text-blue-600 border border-blue-200 leading-4">
+                      Stock Alm: {Number(row.warehouse_stock ?? row.stock_total ?? 0)}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="col-span-2 md:col-span-1">

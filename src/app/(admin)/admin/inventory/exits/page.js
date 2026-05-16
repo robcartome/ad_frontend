@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import MovementForm from "@/components/admin/movements/MovementForm";
 
 import { getWarehouses } from "@/services/warehousesService";
-import { getCustomers } from "@/services/customersService";
 import { getDocumentTypes } from "@/services/documentTypesService";
 import { Loader2 } from "lucide-react";
 
@@ -14,13 +13,11 @@ export default function ExitPage() {
   useEffect(() => {
     async function load() {
       const warehouses = await getWarehouses();
-      const customers = await getCustomers();
       const documentTypes = await getDocumentTypes();
 
       setData({
         loading: false,
         warehouses,
-        partners: customers,
         documentTypes,
       });
     }
@@ -41,7 +38,6 @@ export default function ExitPage() {
     <MovementForm
       type="EXIT"
       warehouses={data.warehouses}
-      partners={data.partners}
       documentTypes={data.documentTypes}
     />
   );
