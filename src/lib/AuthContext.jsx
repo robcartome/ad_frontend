@@ -40,6 +40,15 @@ export function AuthProvider({ children }) {
   // Initialize from localStorage on mount
   useEffect(() => {
     async function init() {
+      const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+      const isPublicCatalog = pathname.startsWith("/catalog");
+
+      // Public catalog now uses the MVP auth/service layer, not legacy authService.
+      if (isPublicCatalog) {
+        setLoading(false);
+        return;
+      }
+
       const token = getAccessToken();
       if (!token) {
         setLoading(false);
