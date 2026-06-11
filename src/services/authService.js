@@ -3,7 +3,8 @@
  * All auth operations go through here, no JWT required (public endpoints).
  */
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_V1_URL || "http://127.0.0.1:8000/api/v1";
+export const API_URL = RAW_API_URL.replace(/\/$/, "");
 
 const AUTH_BASE = `${API_URL}/auth`;
 
@@ -46,11 +47,34 @@ function saveTokens({ access_token, refresh_token }) {
   }
 }
 
+function normalizeTokenPayload(data = {}) {
+  const access_token = data.access_token || data.access;
+  const refresh_token = data.refresh_token || data.refresh;
+  const companies = normalizeCompanies(data.companies || []);
+  return {
+    ...data,
+    access_token,
+    refresh_token,
+    companies,
+  };
+}
+
+function normalizeCompanies(companies = []) {
+  if (!Array.isArray(companies)) return [];
+  return companies.map((company) => ({
+    ...company,
+    company_id: company.company_id || company.id,
+    company_name: company.company_name || company.name,
+    roles: Array.isArray(company.roles) ? company.roles : [],
+    permissions: Array.isArray(company.permissions) ? company.permissions : [],
+  }));
+}
+
 /**
  * Login — returns { access_token, refresh_token, companies[] }
  */
 export async function login(email, password) {
-  const res = await fetch(`${AUTH_BASE}/login`, {
+  const res = await fetch(`${AUTH_BASE}/token/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -61,7 +85,7 @@ export async function login(email, password) {
     throw new Error(err.detail || "Credenciales inválidas");
   }
 
-  const data = await res.json();
+  const data = normalizeTokenPayload(await res.json());
   // Save initial token (no company_id yet)
   saveTokens({ access_token: data.access_token, refresh_token: data.refresh_token });
   return data;
@@ -72,7 +96,7 @@ export async function login(email, password) {
  */
 export async function selectCompany(companyId, companyName) {
   const token = getAccessToken();
-  const res = await fetch(`${AUTH_BASE}/select-company`, {
+  const res = await fetch(`${AUTH_BASE}/select-company/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -86,7 +110,7 @@ export async function selectCompany(companyId, companyName) {
     throw new Error(err.detail || "No se pudo seleccionar la empresa");
   }
 
-  const data = await res.json();
+  const data = normalizeTokenPayload(await res.json());
   localStorage.setItem(TOKEN_KEY, data.access_token);
   localStorage.setItem(
     COMPANY_KEY,
@@ -102,7 +126,7 @@ export async function getCurrentUser() {
   const token = getAccessToken();
   if (!token) return null;
 
-  const res = await fetch(`${AUTH_BASE}/me`, {
+  const res = await fetch(`${AUTH_BASE}/me/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -115,11 +139,12 @@ export async function getCurrentUser() {
  */
 export async function getMyCompanies() {
   const token = getAccessToken();
-  const res = await fetch(`${AUTH_BASE}/my-companies`, {
+  const res = await fetch(`${AUTH_BASE}/my-companies/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("No se pudieron cargar las empresas");
-  return res.json();
+  const data = await res.json();
+  return normalizeCompanies(Array.isArray(data) ? data : (data.companies || []));
 }
 
 /**
@@ -129,7 +154,7 @@ export async function refreshAccessToken() {
   const refresh_token = getRefreshToken();
   if (!refresh_token) return null;
 
-  const res = await fetch(`${AUTH_BASE}/refresh`, {
+  const res = await fetch(`${AUTH_BASE}/refresh/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token }),
@@ -140,14 +165,14 @@ export async function refreshAccessToken() {
     return null;
   }
 
-  const data = await res.json();
+  const data = normalizeTokenPayload(await res.json());
   localStorage.setItem(TOKEN_KEY, data.access_token);
 
   // Important: refresh returns a generic token; restore selected company scope.
   const selectedCompany = getSelectedCompany();
   if (selectedCompany?.company_id) {
     try {
-      const scoped = await fetch(`${AUTH_BASE}/select-company`, {
+      const scoped = await fetch(`${AUTH_BASE}/select-company/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -156,7 +181,7 @@ export async function refreshAccessToken() {
         body: JSON.stringify({ company_id: selectedCompany.company_id }),
       });
       if (scoped.ok) {
-        const scopedData = await scoped.json();
+        const scopedData = normalizeTokenPayload(await scoped.json());
         localStorage.setItem(TOKEN_KEY, scopedData.access_token);
         return scopedData.access_token;
       }
@@ -174,7 +199,7 @@ export async function refreshAccessToken() {
 export async function logout() {
   const refresh_token = getRefreshToken();
   if (refresh_token) {
-    fetch(`${AUTH_BASE}/logout`, {
+    fetch(`${AUTH_BASE}/logout/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token }),
@@ -195,25 +220,25 @@ function authHeaders() {
 }
 
 export async function listUsers() {
-  const res = await fetch(`${AUTH_BASE}/users`, { headers: authHeaders() });
+  const res = await fetch(`${AUTH_BASE}/users/`, { headers: authHeaders() });
   if (!res.ok) throw new Error("No se pudieron cargar los usuarios");
   return res.json();
 }
 
 export async function listRoles() {
-  const res = await fetch(`${AUTH_BASE}/roles`, { headers: authHeaders() });
+  const res = await fetch(`${AUTH_BASE}/roles/`, { headers: authHeaders() });
   if (!res.ok) throw new Error("No se pudieron cargar los roles");
   return res.json();
 }
 
 export async function listPermissions() {
-  const res = await fetch(`${AUTH_BASE}/permissions`, { headers: authHeaders() });
+  const res = await fetch(`${AUTH_BASE}/permissions/`, { headers: authHeaders() });
   if (!res.ok) throw new Error("No se pudieron cargar los permisos");
   return res.json();
 }
 
 export async function createRole(name, description = "") {
-  const res = await fetch(`${AUTH_BASE}/roles`, {
+  const res = await fetch(`${AUTH_BASE}/roles/`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ name, description }),
@@ -226,7 +251,7 @@ export async function createRole(name, description = "") {
 }
 
 export async function createPermission(code, description = "") {
-  const res = await fetch(`${AUTH_BASE}/permissions`, {
+  const res = await fetch(`${AUTH_BASE}/permissions/`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ code, description }),
@@ -239,7 +264,7 @@ export async function createPermission(code, description = "") {
 }
 
 export async function assignRoleToUser(userId, roleId, companyId) {
-  const res = await fetch(`${AUTH_BASE}/roles/assign`, {
+  const res = await fetch(`${AUTH_BASE}/roles/assign/`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ user_id: userId, role_id: roleId, company_id: companyId }),
@@ -251,7 +276,7 @@ export async function assignRoleToUser(userId, roleId, companyId) {
 }
 
 export async function removeRoleFromUser(userId, roleId, companyId) {
-  const res = await fetch(`${AUTH_BASE}/roles/remove`, {
+  const res = await fetch(`${AUTH_BASE}/roles/remove/`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ user_id: userId, role_id: roleId, company_id: companyId }),
@@ -263,7 +288,7 @@ export async function removeRoleFromUser(userId, roleId, companyId) {
 }
 
 export async function registerUser(email, password, name = "", phone = "") {
-  const res = await fetch(`${AUTH_BASE}/register`, {
+  const res = await fetch(`${AUTH_BASE}/register/`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ email, password, name, phone }),

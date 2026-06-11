@@ -22,17 +22,18 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await login(email, password);
-      if (data.companies.length === 0) {
+      const userCompanies = Array.isArray(data?.companies) ? data.companies : [];
+      if (userCompanies.length === 0) {
         toast.error("Tu usuario no pertenece a ninguna empresa. Solicita acceso a un administrador.");
         return;
       }
-      if (data.companies.length === 1) {
+      if (userCompanies.length === 1) {
         // Auto-select the only company
-        await selectCompany(data.companies[0].company_id, data.companies[0].company_name);
+        await selectCompany(userCompanies[0].company_id, userCompanies[0].company_name);
         toast.success("Sesión iniciada correctamente");
         router.push("/admin");
       } else {
-        setCompanies(data.companies);
+        setCompanies(userCompanies);
         setStep("select-company");
       }
     } catch (err) {
@@ -133,16 +134,16 @@ export default function LoginPage() {
               Tu usuario tiene acceso a las siguientes empresas:
             </p>
             <div className="space-y-3">
-              {companies.map((company) => (
+              {companies.map((company, index) => (
                 <button
-                  key={company.company_id}
+                  key={`${company.company_id || "company"}-${index}`}
                   onClick={() => handleSelectCompany(company)}
                   disabled={loading}
                   className="w-full text-left border border-gray-200 hover:border-blue-400 hover:bg-blue-50 rounded-lg p-4 transition-colors disabled:opacity-50"
                 >
                   <div className="font-semibold text-gray-800">{company.company_name}</div>
                   <div className="text-xs text-gray-500 mt-1">
-                    Roles: {company.roles.join(", ")}
+                    Roles: {(Array.isArray(company.roles) ? company.roles : []).join(", ") || "Sin roles"}
                   </div>
                 </button>
               ))}

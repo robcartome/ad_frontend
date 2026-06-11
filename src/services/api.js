@@ -2,7 +2,17 @@
 import { parseApiError } from "./errors/parseError";
 import { TOKEN_KEY, refreshAccessToken } from "@/services/authService";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_V1_URL || "http://127.0.0.1:8000/api/v1";
+export const API_URL = RAW_API_URL.replace(/\/$/, "");
+
+function normalizeEndpoint(endpoint = "") {
+  if (!endpoint) return endpoint;
+  if (!endpoint.startsWith("/")) return endpoint;
+
+  const [pathPart, queryPart] = endpoint.split("?", 2);
+  const normalizedPath = pathPart.endsWith("/") ? pathPart : `${pathPart}/`;
+  return queryPart !== undefined ? `${normalizedPath}?${queryPart}` : normalizedPath;
+}
 
 function getStoredAccessToken() {
   if (typeof window === "undefined") return null;
@@ -45,13 +55,14 @@ async function buildHeaders(options = {}) {
 }
 
 export async function apiFetch(endpoint, options = {}) {
+  const normalizedEndpoint = normalizeEndpoint(endpoint);
   const config = {
     ...options,
     headers: await buildHeaders(options),
   };
 
   try {
-    const res = await fetch(`${API_URL}${endpoint}`, config);
+    const res = await fetch(`${API_URL}${normalizedEndpoint}`, config);
 
     if (!res.ok) {
       const errorData = await safeJson(res);
@@ -67,13 +78,14 @@ export async function apiFetch(endpoint, options = {}) {
 }
 
 export async function apiFetchBlob(endpoint, options = {}) {
+  const normalizedEndpoint = normalizeEndpoint(endpoint);
   const config = {
     ...options,
     headers: await buildHeaders({ ...options, headers: { Accept: "application/pdf", ...(options.headers || {}) } }),
   };
 
   try {
-    const res = await fetch(`${API_URL}${endpoint}`, config);
+    const res = await fetch(`${API_URL}${normalizedEndpoint}`, config);
 
     if (!res.ok) {
       const errorData = await safeJson(res);
