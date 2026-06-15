@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getProductDetail } from "@/services/productsService";
+import { getProductDetail, getPrivateProductDetail } from "@/services/productsService";
 
 // MEMO CACHE (global en este módulo)
 const productDetailCache = {};
@@ -38,7 +38,9 @@ export default function ProductDetailModal({ productId, onClose, isAdmin = false
     // 2️⃣ Sino, fetch al backend
     setLoading(true);
     try {
-      const data = await getProductDetail(productId);
+      const data = isAdmin
+        ? await getPrivateProductDetail(productId)
+        : await getProductDetail(productId);
       productDetailCache[productId] = data; // guardar en cache
       setDetail(data);
     } catch (err) {
@@ -46,7 +48,7 @@ export default function ProductDetailModal({ productId, onClose, isAdmin = false
     } finally {
       setLoading(false);
     }
-  }, [productId]);
+  }, [productId, isAdmin]);
 
   useEffect(() => {
     fetchDetail();

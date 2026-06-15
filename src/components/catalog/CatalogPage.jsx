@@ -10,7 +10,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCatalogProducts } from "@/services/productsService";
+import { getCatalogProducts, getCatalogProductsPrivate } from "@/services/productsService";
 import { ArrowUpCircle } from "lucide-react";
 
 import ProductCard from "@/components/admin/ProductCard";
@@ -52,7 +52,9 @@ export default function CatalogPage({isAdmin = false}) {
       setLoading(true);
 
       const currentPage = reset ? 1 : page;
-      const res = await getCatalogProducts(currentPage, 50, debouncedSearch);
+      const res = isAdmin
+        ? await getCatalogProductsPrivate(currentPage, 50, debouncedSearch)
+        : await getCatalogProducts(currentPage, 50, debouncedSearch);
 
       const normalized = res.results.map((p) => ({
         ...p,
