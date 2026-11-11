@@ -1,7 +1,6 @@
 import { apiFetch } from "./api";
 import { TOKEN_KEY, refreshAccessToken } from "@/services/authService";
-
-const API_V1_URL = (process.env.NEXT_PUBLIC_API_V1_URL || "http://127.0.0.1:8000/api/v1").replace(/\/$/, "");
+import { API_URL } from "@/lib/apiConfig";
 
 function normalizeEndpoint(endpoint = "") {
   if (!endpoint.startsWith("/")) return endpoint;
@@ -46,7 +45,7 @@ async function buildAuthHeaders() {
 async function downloadReportFile(endpoint, params, fallbackFilename) {
   const query = buildQuery(params);
   const normalizedEndpoint = normalizeEndpoint(endpoint);
-  const res = await fetch(`${API_V1_URL}${normalizedEndpoint}${query}`, {
+  const res = await fetch(`${API_URL}${normalizedEndpoint}${query}`, {
     headers: {
       Accept: "*/*",
       ...(await buildAuthHeaders()),

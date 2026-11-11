@@ -4,7 +4,6 @@ export async function getProductDetail(id) {
   return apiFetch(`/catalog/products/${id}/detail`);
 }
 
-// Obtener detalles de un producto de http://localhost:8000/api/v1/catalog/private/products/5b6cc9a7-e729-4b37-b347-c3ac0d584645/detail/
 export async function getPrivateProductDetail(id) {
   return apiFetch(`/catalog/private/products/${id}/detail`);
 }

@@ -3,8 +3,9 @@
  * All auth operations go through here, no JWT required (public endpoints).
  */
 
-const RAW_API_URL = process.env.NEXT_PUBLIC_API_V1_URL || "http://127.0.0.1:8000/api/v1";
-export const API_URL = RAW_API_URL.replace(/\/$/, "");
+import { API_URL } from "@/lib/apiConfig";
+
+export { API_URL };
 
 const AUTH_BASE = `${API_URL}/auth`;
 

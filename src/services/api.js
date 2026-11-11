@@ -1,9 +1,9 @@
 
 import { parseApiError } from "./errors/parseError";
 import { TOKEN_KEY, refreshAccessToken } from "@/services/authService";
+import { API_URL } from "@/lib/apiConfig";
 
-const RAW_API_URL = process.env.NEXT_PUBLIC_API_V1_URL || "http://127.0.0.1:8000/api/v1";
-export const API_URL = RAW_API_URL.replace(/\/$/, "");
+export { API_URL };
 
 function normalizeEndpoint(endpoint = "") {
   if (!endpoint) return endpoint;

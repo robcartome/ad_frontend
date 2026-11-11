@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getMovements } from "@/services/movementsService";
+import { useCallback, useEffect, useState } from "react";
+import { deleteMovement, getMovements } from "@/services/movementsService";
 import { getWarehouses } from "@/services/warehousesService";
-import { deleteMovement } from "@/services/movementsService";
 import { toast } from "sonner";
 
 import MovementsTable from "@/components/admin/movements/MovementsTable";
@@ -25,19 +24,18 @@ export default function MovementsPage() {
 
   // Cargar almacenes y movimientos
   useEffect(() => {
-    console.log("Cargando almacenes...", getWarehouses());
     getWarehouses().then(setWarehouses);
   }, []);
 
-  const fetchMovements = async () => {
+  const fetchMovements = useCallback(async () => {
     const data = await getMovements({ limit, offset, type, warehouse_id: warehouseId, date });
     setMovements(data.results);
     setTotal(data.total);
-  };
+  }, [date, limit, offset, type, warehouseId]);
 
   useEffect(() => {
     fetchMovements();
-  }, [limit, offset, type, warehouseId, date]);
+  }, [fetchMovements]);
 
   async function handleDelete(id) {
     if (!confirm("¿Seguro que deseas eliminar este movimiento?")) return;

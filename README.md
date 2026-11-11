@@ -1,80 +1,98 @@
-# 🖥️ ApuDig Frontend — Panel Administrativo
+# ApuDig Frontend
 
-Frontend desarrollado con **Next.js (App Router)** para el sistema APUDIG.
+Panel web de ApuDig para catálogo, inventario, ventas, socios de negocio y administración de ferreterías. En la rama `mvp_production` consume la API Django REST Framework de `apudig_mvp`.
 
-Incluye módulos de inventario, ventas, socios de negocio y facturación, consumiendo la API FastAPI del backend.
+## Tecnologías
 
-## 🚀 Tecnologías principales
+- Next.js 16 con App Router y Turbopack
+- React 19
+- Tailwind CSS 4
+- Radix UI y componentes basados en shadcn/ui
+- Sonner para notificaciones
+- Lucide React para iconografía
 
-- Next.js 14+
-- React
-- Tailwind CSS
-- Sonner (notificaciones)
-- Lucide React (iconografía)
+## Requisitos
 
-## ▶️ Ejecución local
+- Node.js 20.9 o superior
+- npm 10 o superior
+- API de `apudig_mvp` disponible
 
-Instalar dependencias:
+## Configuración local
 
-```bash
-npm install
-```
+1. Instala las dependencias:
 
-Iniciar entorno de desarrollo:
+   ```bash
+   npm ci
+   ```
+
+2. Crea el archivo de entorno a partir del ejemplo:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   En PowerShell:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+3. Ajusta `NEXT_PUBLIC_API_V1_URL` si el backend no utiliza la URL predeterminada.
+
+4. Inicia el entorno de desarrollo:
+
+   ```bash
+   npm run dev
+   ```
+
+La aplicación queda disponible en `http://localhost:3000`.
+
+## Comandos
 
 ```bash
 npm run dev
+npm run lint
+npm run build
+npm start
 ```
 
-Abrir en el navegador:
+## Estructura
 
-- `http://localhost:3000`
+```text
+src/
+├── app/          Rutas públicas, login y panel administrativo
+├── components/   Componentes de interfaz y módulos funcionales
+├── data/fake/    Datos simulados pendientes de depuración
+├── lib/          Contexto de autenticación y utilidades compartidas
+├── services/     Acceso a la API por dominio
+└── utils/        Importación, reportes y utilidades auxiliares
+```
 
-## 📌 Estado actual del branch (abril 2026)
+Las rutas se organizan mediante grupos de App Router:
 
-Este branch alinea frontend con la refactorización de socios de negocio del backend.
+- `src/app/(public)`: portada y catálogo público.
+- `src/app/(admin)/admin`: panel protegido por autenticación y empresa seleccionada.
+- `src/app/login`: autenticación y selección de empresa.
 
-### Cambios funcionales principales
+## Autenticación y alcance
 
-1. **Clientes (Customer BC)**
-	- Ruta canónica consumida: `/customers`.
-	- Se removieron llamadas legacy a `/sales/customers`.
-	- Se removió el uso de `/v2/customers`.
+El inicio de sesión obtiene un token inicial y las empresas accesibles. Al seleccionar una empresa, el backend entrega un token con su alcance, roles y permisos. El contexto de autenticación también conserva la sucursal seleccionada.
 
-2. **Proveedores (Supplier BC)**
-	- Ruta canónica consumida: `/suppliers`.
-	- Servicio de proveedores unificado para list/search/get/create/update.
-	- Integración de partners para mantener compatibilidad de pantallas.
+La autorización del frontend controla la navegación y visibilidad, pero el backend debe validar cada operación protegida.
 
-3. **Movimientos de inventario (Entries/Exits)**
-	- `EXIT`: selector de cliente con buscador reutilizable (`CustomerSearchInput`).
-	- `ENTRY`: selector de proveedor migrado a buscador reutilizable (`SupplierSearchInput`).
-	- Se eliminó el prefetch masivo de socios para formularios de movimiento.
+## Integración con el backend
 
-## 🧱 Componentes reutilizables agregados
+La variable `NEXT_PUBLIC_API_V1_URL` define la URL base de `apudig_mvp`. Si no se configura, se utiliza `http://127.0.0.1:8000/api/v1`.
 
-- `src/components/ui/CustomerSearchInput.jsx`
-- `src/components/ui/SupplierSearchInput.jsx`
+La matriz de rutas, servicios, compatibilidad actual con `apudig_mvp` y dependencias simuladas se mantiene en [docs/integration-matrix.md](docs/integration-matrix.md).
 
-Ambos componentes usan búsqueda incremental con debounce y dropdown posicionado, para reducir carga inicial y mejorar UX.
+## Validación recomendada
 
-## 🔌 Servicios API relevantes
+Antes de integrar cambios:
 
-- `src/services/salesService.js` (clientes en ventas)
-- `src/services/partnersService.js` (compatibilidad de socios)
-- `src/services/customersService.js`
-- `src/services/suppliersService.js`
+```bash
+npm run lint
+npm run build
+```
 
-## 📂 Estructura de referencia
-
-- `src/app/(admin)/admin/inventory/entries` — registro de ingresos
-- `src/app/(admin)/admin/inventory/exits` — registro de salidas
-- `src/components/admin/movements` — formularios y detalle de movimientos
-- `src/components/admin/partners` — gestión de clientes/proveedores
-
-## ✅ Recomendación de validación manual
-
-1. Entrar a `admin/inventory/entries` y buscar proveedor por nombre o documento.
-2. Entrar a `admin/inventory/exits` y buscar cliente por nombre o documento.
-3. Crear/editar proveedor en `admin/partners/suppliers`.
-4. Confirmar que no existan llamadas a endpoints legacy en consola de red.
+Para cambios funcionales también deben validarse manualmente el inicio de sesión, la selección de empresa, el módulo modificado y sus permisos asociados.

@@ -3,34 +3,37 @@ import { getCategories } from "@/services/categoriesService";
 import { getBrands } from "@/services/brandsService";
 import { getUnits } from "@/services/unitService";
 
-export function useProductForm(open, product) {
-  const emptyForm = {
-    name: "",
-    sku: "",
-    price_sale: "",
-    barcode: "",
-    unit_id: "",
-    description: "",
-    image: "",
-    category_id: "",
-    price_purchase: "",
-    brand_id: "",
-    active: true,
-  };
+const EMPTY_FORM = {
+  name: "",
+  sku: "",
+  price_sale: "",
+  barcode: "",
+  unit_id: "",
+  description: "",
+  image: "",
+  category_id: "",
+  price_purchase: "",
+  brand_id: "",
+  active: true,
+};
 
-  const [formData, setFormData] = useState(emptyForm);
+function toStringValue(value) {
+  return value !== null && value !== undefined ? String(value) : "";
+}
+
+function normalizeList(list) {
+  return list.map((item) => ({
+    ...item,
+    id: toStringValue(item.id),
+  }));
+}
+
+export function useProductForm(open, product) {
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [units, setUnits] = useState([]);
   const [loaded, setLoaded] = useState(false);
-
-  const toStr = (v) => (v !== null && v !== undefined ? String(v) : "");
-
-  const normalizeList = (list) =>
-    list.map((item) => ({
-      ...item,
-      id: toStr(item.id),
-    }));
 
   const setField = (field, value) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -39,7 +42,7 @@ export function useProductForm(open, product) {
     setField(e.target.name, e.target.value);
 
   const resetAll = () => {
-    setFormData(emptyForm);
+    setFormData(EMPTY_FORM);
     setLoaded(false);
   };
 
@@ -62,15 +65,15 @@ export function useProductForm(open, product) {
 
       if (product) {
         setFormData({
-          ...emptyForm,
+          ...EMPTY_FORM,
           ...product,
-          unit_id: toStr(product.unit_id),
-          category_id: toStr(product.category_id),
-          brand_id: toStr(product.brand_id),
+          unit_id: toStringValue(product.unit_id),
+          category_id: toStringValue(product.category_id),
+          brand_id: toStringValue(product.brand_id),
           barcode: product.barcode || "",
         });
       } else {
-        setFormData(emptyForm);
+        setFormData(EMPTY_FORM);
       }
 
       setLoaded(true);
