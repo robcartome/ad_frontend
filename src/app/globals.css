@@ -1,4 +1,11 @@
 @import "tailwindcss";
+
+.storefront-shell h1,
+.storefront-shell h2,
+.storefront-shell h3,
+.storefront-shell h4 {
+  font-family: var(--site-heading-font, inherit);
+}
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));

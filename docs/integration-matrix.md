@@ -10,7 +10,10 @@ La API está montada bajo `/api/v1/`. La URL base del frontend se obtiene de `NE
 | --- | --- | --- | --- |
 | Autenticación | `authService.js` | `/auth/token`, `/refresh`, `/me`, `/my-companies`, `/select-company`, `/logout` | Disponible en `apps/api/v1/users/urls.py` |
 | Usuarios y permisos | `authService.js` | `/auth/users`, `/register`, `/roles`, `/roles/assign`, `/roles/remove`, `/permissions` | Disponible en `apps/api/v1/users/urls.py` |
-| Catálogo público | `productsService.js` | `/catalog/products`, `/catalog/products/{id}/detail` | Disponible en `apps/api/v1/catalog/urls.py` |
+| Sitio web CMS | `websiteService.js` | `/websites/current`, `/settings`, `/domains`, `/pages`, `/menus`, `/media`, `/publish`, `/preview-token` | Disponible, autenticado, versionado y aislado por la empresa del JWT en `apps/api/v1/websites/urls.py` |
+| Páginas públicas | `getStorefrontPage.js` | `/storefront/sites/{hostname}/pages/{slug}` | Disponible; sólo devuelve revisiones publicadas o una vista previa con token firmado y vigente |
+| ResoluciÃ³n de storefront | `resolveWebsite.js` | `/storefront/resolve?hostname=...` | Disponible; solo dominio activo/verificado y website publicado |
+| Catálogo público | `storefrontService.js` | `/storefront/sites/{hostname}/products`, `/products/{slug}`, `/categories`, `/brands` | Disponible; sólo `WebsiteProduct` publicados, con precio efectivo y disponibilidad derivada sin cantidades internas. `/catalog/products` queda deprecado y exige `site` |
 | Catálogo privado | `productsService.js` | `/catalog/private/products`, `/catalog/private/products/{id}/detail` | Disponible en `apps/api/v1/catalog/urls.py` |
 | Productos administrativos | `productsService.js` | `/products`, `/products/{id}` | Disponible en `apps/api/v1/inventory/urls.py`; verificar operaciones admitidas por las vistas antes de cambios funcionales |
 | Categorías | `categoriesService.js` | `/categories` | Disponible como listado; el frontend conserva un import fake sin uso |
@@ -69,10 +72,53 @@ La existencia de una ruta frontend no implica que su API esté disponible. Los m
 - Autenticación, reportes y parte del acceso a sucursales realizan llamadas directas con `fetch`; el resto utiliza `apiFetch`.
 - Clientes y proveedores tienen funciones equivalentes en más de un servicio. Su consolidación queda fuera de la Fase 1 para evitar cambios funcionales.
 - Todo cambio futuro de servicios debe contrastarse con `apps/api/v1/` de `apudig_mvp`.
+- `src/proxy.js` solo decide `next`, redirect o rewrite. No consulta Django ni autoriza usuarios.
+- Los hosts de tienda se reescriben internamente a `/sites/{hostname}`. El acceso externo directo a `/sites` devuelve 404.
+- `serverClient.js` no lee `localStorage` ni adjunta el JWT administrativo al storefront.
+- `APUDIG_CONTROL_HOSTS`, `APUDIG_ADMIN_ORIGIN` y `APUDIG_API_V1_URL` son variables server-only.
 
 ## Pendientes de la línea base
 
 - Validar mediante pruebas HTTP los métodos y esquemas exactos de productos y almacenes que el frontend necesita modificar.
 - Definir si los contratos faltantes se implementarán en `apudig_mvp` o si los módulos correspondientes se excluirán del alcance MVP.
 - `next` está en la versión 16.0.10 y `eslint-config-next` en 15.5.4. La actualización requiere regenerar el lockfile mediante npm; no se debe editar `package-lock.json` manualmente.
-- El entorno local inspeccionado no contiene `xlsx` dentro de `node_modules`, aunque está declarado en `package.json` y `package-lock.json`. Una instalación completa con `npm ci` debe restaurarlo antes del build.
+
+## Fase 2 — páginas web
+
+El editor está disponible en `/admin/website/pages` y `/admin/website/pages/{id}`. El storefront interno `/sites/{hostname}/[[...slug]]` consume instantáneas publicadas por hostname y el webhook `/api/revalidate` invalida únicamente etiquetas de sitio, página y host permitidas.
+
+## Fase 3 — tema, menús, medios y SEO
+
+Los módulos administrativos están disponibles bajo `/admin/website/themes`,
+`/menus`, `/media`, `/seo`, `/settings` y `/banners`. La identidad pública se
+obtiene del tenant resuelto, sin nombres, colores ni datos de contacto fijos en
+el frontend.
+
+El layout aplica variables CSS del tema y consume sólo snapshots publicados de
+los menús. Las páginas generan canonical, robots, Open Graph y JSON-LD; los
+hosts públicos exponen `/sitemap.xml` y `/robots.txt`. Un dominio alias conserva
+la ruta y los parámetros al redirigir permanentemente al dominio primario.
+
+## Fase 4 — storefront y catálogo multiempresa
+
+El catálogo tenant-aware vive en `/sites/{hostname}/catalog` y el detalle en
+`/sites/{hostname}/productos/{slug}`; el proxy los expone como `/catalog` y
+`/productos/{slug}` en cada dominio público. Ambos son Server Components y
+consumen `storefrontService.js` sin JWT administrativo.
+
+Búsqueda, categoría, marca, orden y paginación se procesan en Django. Las
+respuestas se cachean con `catalog:{website_id}` y `site:{website_id}`. La ruta
+heredada del host de control `/catalog` conserva su implementación anterior
+durante la ventana de compatibilidad.
+
+## Fase 5 — carrito y WhatsApp
+
+El storefront monta un `CartProvider` cliente dentro del layout resuelto en
+servidor. La persistencia se particiona por `website_id` y versión. `/cart`
+muestra cantidades, productos retirados y el resumen revalidado.
+
+El navegador envía sólo IDs y cantidades al Route Handler same-origin
+`/api/storefront/quote`; éste deriva el hostname de la solicitud y llama
+server-side a `/storefront/sites/{hostname}/cart/quote/`. El enlace WhatsApp se
+genera exclusivamente desde la respuesta vigente de Django y el número público
+del website. No se registra una venta ERP.

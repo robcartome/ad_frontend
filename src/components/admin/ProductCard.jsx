@@ -26,7 +26,9 @@ export default function ProductCard({ product, onClick, isAdmin = false }) {
           {product.name}
         </p>
         <div className="text-xs text-gray-500 flex flex-wrap gap-x-2">
-          <span>Stock: {product.stock}</span>
+          {product.stock !== undefined && product.stock !== null && (
+            <span>Stock: {product.stock}</span>
+          )}
           <span>Unidad: {product.unit}</span>
           <span>SKU: {product.sku}</span>
         </div>

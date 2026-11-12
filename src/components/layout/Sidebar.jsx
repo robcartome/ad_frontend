@@ -15,6 +15,7 @@ import {
   Notebook,
   ShoppingCart,
   Users,
+  Globe2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
@@ -86,6 +87,7 @@ export default function Sidebar({
     { name: "Marcas", href: "/admin/brands", icon: Tags },
     { name: "Almacenes", href: "/admin/warehouses", icon: Warehouse },
     { name: "Catalogo", href: "/admin/catalog_admin", icon: Notebook },
+    { name: "Sitio web", href: "/admin/website/dashboard", icon: Globe2 },
   ];
 
   return (
