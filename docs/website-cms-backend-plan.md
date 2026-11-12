@@ -2,6 +2,8 @@
 
 Actualización: 12/11/2026, America/Lima. Estado: frontend local implementado; backend **propuesto, no implementado**. Repositorio frontend `ad_frontend`; backend futuro `apudig_mvp`. Este documento complementa `storefront-plan-y-avances.md`.
 
+La navegación Next está dedicada a la web y catálogos. `/catalog` y `/admin/catalog_admin` se conservan para uso laboral; los productos comerciales se muestran en `/shop` y `/shop/[id]`. Ver `admin-web-y-catalogos.md`. No rediseñar ni sustituir los contratos del catálogo laboral al integrar el nuevo storefront.
+
 ## Decisión de producto
 
 Incorporar **Página web** al panel APUDIG, sin instalar otro CMS ni crear un segundo administrador. Edición de contenido estructurado: identidad, banners, campañas, orden/visibilidad de secciones, contacto y SEO. Sin HTML arbitrario, JavaScript editorial, editor drag-and-drop, motor de descuentos, pagos ni modificación de inventario.
@@ -42,7 +44,7 @@ Las campañas son mensajes y enlaces a productos, no reglas de descuento. Sus fe
 
 Interfaz asíncrona: `load(scope, initial)`, `saveDraft(scope, document, revision, initial)`, `publish(scope, revision, initial)`. `initial` se usa solo en local. Las capacidades distinguen modo local/API y disponibilidad futura de media/publicación. Para integrar, inyectar un cliente autenticado que conserve errores estructurados; el `apiFetch` actual necesita adaptación de errores para mapear status/campos sin cambiar su comportamiento para el resto del ERP.
 
-Documento JSON `schemaVersion: 1`:
+Documento JSON `schemaVersion: 2` (v1 local se adapta al leer para mover enlaces del storefront de `/catalog` a `/shop`):
 
 | Campo | Contenido / reglas |
 | --- | --- |
@@ -59,11 +61,11 @@ Respuesta editorial normalizada:
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "companyId": "uuid-servidor",
   "websiteId": "uuid-servidor",
   "revision": 4,
-  "draft": { "schemaVersion": 1 },
+  "draft": { "schemaVersion": 2 },
   "published": null,
   "updatedAt": "2026-11-12T15:00:00.000Z",
   "publishedAt": null,

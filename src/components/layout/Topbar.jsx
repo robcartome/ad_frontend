@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, PanelLeftClose, LogOut, ChevronDown, Building2, User } from "lucide-react";
+import { Menu, PanelLeftClose, LogOut, ChevronDown, Building2 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
 
@@ -80,13 +80,6 @@ export default function Topbar({
                 <div className="text-sm font-semibold text-gray-800 truncate">{displayName}</div>
                 <div className="text-xs text-gray-500 truncate">{user?.email}</div>
               </div>
-              <button
-                onClick={() => { setMenuOpen(false); router.push("/admin/administration"); }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-              >
-                <User size={14} />
-                Mi perfil
-              </button>
               <button
                 onClick={() => { setMenuOpen(false); handleLogout(); }}
                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"

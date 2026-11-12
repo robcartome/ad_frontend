@@ -33,7 +33,7 @@ export default function CartPage() {
       <ShoppingBag size={44}/>
       <h2>Tu próximo proyecto empieza con una lista</h2>
       <p>Agrega productos del catálogo para preparar tu cotización.</p>
-      <Link href="/catalog" className="sf-button sf-button-orange">Explorar productos 
+      <Link href="/shop" className="sf-button sf-button-orange">Explorar productos
         <ArrowRight size={17}/>
       </Link>
     </div> : <div className="sf-cart-layout">
@@ -42,12 +42,12 @@ export default function CartPage() {
           <span>{lines.length} productos diferentes</span>
           <button className="sf-text-button" onClick={clear}>Vaciar lista</button>
         </div>{lines.map(line => <article className="sf-cart-item" key={line.id}>
-          <Link href={`/catalog/${line.id}`} aria-label={`Ver ${line.name}`}>
+          <Link href={`/shop/${line.id}`} aria-label={`Ver ${line.name}`}>
             <ProductArt type={line.image}/>
           </Link>
           <div>
             <span className="sf-product-brand">{line.brand}</span>
-            <Link className="sf-product-name" href={`/catalog/${line.id}`}>{line.name}</Link>
+            <Link className="sf-product-name" href={`/shop/${line.id}`}>{line.name}</Link>
             <small>SKU: {line.sku} · Por {line.unit}</small>
             <strong>{hasPrice(line) ? money(line.price) : 'Consultar precio'}</strong>
           </div>
@@ -56,7 +56,7 @@ export default function CartPage() {
             <Trash2 size={19}/>
           </button>
         </article>)}
-        <Link className="sf-back-link" href="/catalog">← Seguir explorando productos</Link>
+        <Link className="sf-back-link" href="/shop">← Seguir explorando productos</Link>
       </section>
       <aside className="sf-cart-summary">
         <span className="sf-eyebrow">RESUMEN DE TU LISTA</span>

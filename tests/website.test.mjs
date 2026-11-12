@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWebsiteDocument, validateWebsite, isSafeLink, isSafeImage, visiblePromotions, previewStore, fromLimaInput, limaDateInput } from '../src/lib/website/content.mjs';
+import { createWebsiteDocument, upgradeWebsiteDocument, validateWebsite, isSafeLink, isSafeImage, visiblePromotions, previewStore, fromLimaInput, limaDateInput } from '../src/lib/website/content.mjs';
 import { createLocalWebsiteRepository, createDjangoWebsiteRepository, websiteKey } from '../src/services/websiteRepository.mjs';
 
 const scope = { companyId: 'company-one', websiteId: 'default' };
@@ -116,4 +116,28 @@ test('future Django repository sends revision preconditions and no client-select
   assert.equal(JSON.parse(calls[1][1].body).companyId, undefined);
   assert.equal(calls[2][0], '/websites/default/publish');
   assert.equal(calls[2][1].method, 'POST');
+});
+
+test('old editorial documents migrate storefront destinations without changing worker links authored under v2', async () => {
+  const storage = memory();
+  const repository = createLocalWebsiteRepository(storage, []);
+  const first = await repository.saveDraft(scope, initial, 0, initial);
+  const oldDocument = { ...structuredClone(initial), schemaVersion: 1 };
+  oldDocument.banners[0].title = 'Mensaje conservado';
+  oldDocument.banners[0].href = '/catalog?category=herramientas';
+  oldDocument.promotions[0].href = '/catalog/demo-taladro';
+  const raw = JSON.stringify({ ...first, schemaVersion: 1, draft: oldDocument, published: oldDocument });
+  storage.setItem(websiteKey(scope), raw);
+  const migrated = await repository.load(scope, initial);
+  assert.equal(migrated.draft.schemaVersion, 2);
+  assert.equal(migrated.draft.banners[0].title, 'Mensaje conservado');
+  assert.equal(migrated.draft.banners[0].href, '/shop?category=herramientas');
+  assert.equal(migrated.published.promotions[0].href, '/shop/demo-taladro');
+  assert.equal(migrated.revision, first.revision);
+  assert.equal(storage.getItem(websiteKey(scope)), raw, 'Reading does not overwrite the saved document');
+  const current = structuredClone(initial);
+  current.banners[0].href = '/catalog';
+  assert.equal(upgradeWebsiteDocument(current).banners[0].href, '/catalog');
+  oldDocument.banners[0].href = '/catalogue';
+  assert.equal(upgradeWebsiteDocument(oldDocument).banners[0].href, '/catalogue');
 });

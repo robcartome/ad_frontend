@@ -2,7 +2,7 @@
 
 Última actualización: 12 de noviembre de 2026 (America/Lima).
 
-**Estado actual:** storefront demo y editor de contenido en `/admin/website` implementados. El editor guarda borradores por empresa en este navegador y usa una vista previa protegida; no publica cambios en `/`. Leer la entrega 2 al final de este archivo y [el contrato y plan Django](website-cms-backend-plan.md) antes de continuar.
+**Estado actual:** el panel Next administra la web y mantiene los catálogos laborales. `/catalog` recupera su vista anterior; `/admin/catalog_admin` no se modifica; el storefront comercial usa `/shop` y `/shop/[id]`. El editor `/admin/website` comprueba permisos dentro de la página, guarda borradores locales y no publica en `/`. Leer la entrega 3 al final, [las decisiones de rutas](admin-web-y-catalogos.md) y [el plan Django](website-cms-backend-plan.md) antes de continuar.
 
 ## Cómo retomar desde otra PC
 
@@ -160,3 +160,42 @@ Plan detallado en `website-cms-backend-plan.md`: fase 0 recuperar/conciliar CMS 
 5. Conectar repositorio Django y SSR público solo después de pruebas de tenant. Entonces sustituir etiquetas demo, adaptar estados/errores/descubrimiento del website ID, habilitar media e indexación según publicación real.
 
 **Limitación vigente:** guardar/aplicar en el editor modifica únicamente datos de este navegador y su preview protegida. No modifica `/`, no sincroniza otros equipos y no publica en Internet. La funcionalidad editorial real compartida depende del backend planificado. Mantener esta distinción visible al usuario hasta integrar Django.
+
+## Entrega 3 — Admin web y conservación de catálogos (12/11/2026)
+
+### Solicitud y decisiones actuales
+
+El usuario aclara que el ERP se trabaja desde Django/apudig_mvp, pide limpiar el administrador Next, mostrar siempre el acceso al editor y controlar contenido por permisos dentro de la página. **No modificar `/admin/catalog_admin` ni sustituir la vista anterior de `/catalog`, usada en producción por trabajadores.** Crear otra ruta para productos del website.
+
+Implementado:
+- Sidebar reducido a Inicio, Administrar página web y Catálogo interno; accesos públicos separados a `/`, `/shop` y `/catalog`. Cierre móvil al navegar, indicador de ruta activa y etiquetas accesibles en modo compacto.
+- Entrada editorial visible para usuarios autenticados incluso sin permisos web; `WebsiteAccess` mantiene la restricción antes de montar editor o preview. Lectura/edición/aplicación conservan sus permisos separados.
+- Dashboard dedicado a contenido web y catálogos, sin tarjetas de Productos/Stock/Reportes ERP. Se retira el enlace de perfil que apuntaba al contexto de administración antiguo.
+- Los módulos ERP anteriores salen del menú. Sus archivos permanecen; el layout muestra una vista de transición a Django al visitar sus URLs, sin montar los formularios antiguos. `/admin/catalog_admin` y las rutas web están excluidas expresamente.
+- `/catalog` vuelve a usar página y layout anteriores copiados de HEAD, bajo `src/app/(catalog)/`. No hereda layout comercial ni noindex demo.
+- El catálogo comercial y sus fichas se trasladan a `src/app/(public)/shop/`, URLs `/shop` y `/shop/[id]`. Home, búsqueda, categorías, carrito, relacionados y enlaces del editor se actualizan a esa ruta.
+- Documento editorial `schemaVersion: 2`, con adaptación de versiones locales v1 para cambiar sus destinos de storefront antiguos a `/shop`. No se pierden textos, referencias o separación de borrador/aplicada. La lectura no sobrescribe localStorage; links laborales creados explícitamente en v2 se mantienen.
+
+### Archivos principales
+
+Nuevo layout/página laboral: `src/app/(catalog)/layout.js`, `src/app/(catalog)/catalog/page.js`. Rutas comerciales movidas: `src/app/(public)/shop/{page,layout,not-found}.js` y `[id]/{page,not-found}.js`.
+
+Nuevos: `src/lib/admin/routes.mjs`, `src/components/admin/ErpModuleNotice.jsx`, `tests/admin-routes.test.mjs`, `docs/admin-web-y-catalogos.md`.
+
+Actualizados: Sidebar, Topbar, AdminLayout, dashboard/metadata administrativos, entrada/estado de permisos del editor, enlaces de componentes storefront/commerce y páginas informativas, modelo/repositorio editorial, tests website/smoke, README, AGENTS y documentación.
+
+### Verificaciones
+
+- Comparación con HEAD confirma que **no cambiaron** la página `/admin/catalog_admin`, `CatalogPage`, `ProductCard`/`ProductDetailModal` administrativos ni `productsService.js`/`api.js`. La página y layout de `/catalog` son copias exactas de la base (normalizando solo finales de línea en la comprobación de archivos existentes).
+- `npm.cmd run lint`: correcto. `npm.cmd run build`: correcto, rutas `/catalog`, `/shop` y `/shop/[id]` separadas.
+- `node --test tests/commerce.test.mjs tests/website.test.mjs tests/admin-routes.test.mjs`: **17 pruebas correctas**. Incluyen compatibilidad de documentos editoriales v1 y exclusión de los catálogos de la transición ERP.
+- Smoke: **16 rutas/casos HTTP correctos**, con vista laboral y branding anteriores en `/catalog`, sin banner demo ni noindex, y catálogo comercial en `/shop`. No se prueba la respuesta real de la API de producción ni una sesión administrativa con estas comprobaciones HTTP.
+- No se realizó revisión visual/autenticada en navegador en esta entrega. Mantener pendiente responsive real, permisos de cuenta y verificación de precios con backend disponible.
+- No se cambió Django, autenticación, datos de productos, precios o almacenes. No se desplegó, no se cambió de rama ni se alteró el índice Git con los cambios que el usuario ya tenía preparados.
+
+### Próximo paso
+
+1. Validar con la sesión habitual el sidebar y permisos del editor; comprobar transición al abrir una URL ERP antigua.
+2. Con backend disponible, revisar precios/modal/filtros en `/catalog` y `/admin/catalog_admin`. No rediseñar ni mover sus APIs al integrar `/shop`.
+3. Revisar `/shop`, búsqueda, fichas y carrito, además de borradores locales previos con enlaces adaptados.
+4. Continuar el plan Django editorial recuperando primero sus fuentes históricas. La integración productiva corresponde al storefront nuevo, sin sustituir el catálogo laboral.

@@ -1,5 +1,6 @@
-import { WEBSITE_SCHEMA_VERSION, validateWebsite } from '../lib/website/content.mjs';
+import { WEBSITE_SCHEMA_VERSION, upgradeWebsiteDocument, validateWebsite } from '../lib/website/content.mjs';
 
+// Storage layout remains v1; the contained document has its own schemaVersion.
 export const websiteKey = scope => `apudig:website:v1:${encodeURIComponent(scope.companyId)}:${encodeURIComponent(scope.websiteId)}`;
 export const localWebsiteScope = companyId => ({ companyId, websiteId: 'default' });
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -12,6 +13,9 @@ export function createLocalWebsiteRepository(storage, productIds) {
     if (!raw) return { schemaVersion: WEBSITE_SCHEMA_VERSION, companyId: scope.companyId, websiteId: scope.websiteId, revision: 0, draft: clone(initial), published: null, updatedAt: null, publishedAt: null, events: [] };
     let record;
     try { record = JSON.parse(raw); } catch { throw fail('CORRUPT', 'No se pudo leer el contenido local. Los datos guardados no se sobrescribieron.'); }
+    if (record?.schemaVersion === 1) {
+      record = { ...record, schemaVersion: WEBSITE_SCHEMA_VERSION, draft: upgradeWebsiteDocument(record.draft), published: record.published === null ? null : upgradeWebsiteDocument(record.published) };
+    }
     if (!record || record.schemaVersion !== WEBSITE_SCHEMA_VERSION || record.companyId !== scope.companyId || record.websiteId !== scope.websiteId || !Number.isInteger(record.revision) || record.revision < 0 || !Array.isArray(record.events) || record.events.length > 20 || record.events.some(event => !event || !['save', 'apply-demo'].includes(event.action) || !Number.isInteger(event.revision) || !Number.isFinite(Date.parse(event.at))) || (record.updatedAt !== null && !Number.isFinite(Date.parse(record.updatedAt))) || (record.publishedAt !== null && !Number.isFinite(Date.parse(record.publishedAt))) || Object.keys(validateWebsite(record.draft, productIds)).length || (record.published !== null && Object.keys(validateWebsite(record.published, productIds)).length)) throw fail('CORRUPT', 'El contenido local no es compatible. Conserva una copia antes de restablecerlo.');
     return record;
   }

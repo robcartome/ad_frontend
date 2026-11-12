@@ -16,7 +16,7 @@ export default function ContactPage() {
         <br />hace la diferencia.
       </h1>
       <p>Prepara tu lista de materiales y consulta precios, disponibilidad y opciones de entrega antes de confirmar tu compra.</p>
-      <Link href="/catalog" className="sf-button sf-button-orange">Preparar una cotización 
+      <Link href="/shop" className="sf-button sf-button-orange">Preparar una cotización
         <ArrowRight size={18}/>
       </Link>
     </section>

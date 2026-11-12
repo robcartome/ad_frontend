@@ -16,7 +16,7 @@ export default function AboutPage() {
         <br />hay una gran idea.
       </h1>
       <p>Una tienda pensada para ayudarte a encontrar materiales, comparar opciones y organizar lo que necesitas para tu próximo proyecto.</p>
-      <Link href="/catalog" className="sf-button sf-button-dark">Explorar el catálogo 
+      <Link href="/shop" className="sf-button sf-button-dark">Explorar el catálogo
         <ArrowRight size={18}/>
       </Link>
     </section>

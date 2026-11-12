@@ -2,6 +2,8 @@
 
 Este documento registra la compatibilidad observada entre `ad_frontend`, rama `mvp_production`, y la API Django REST Framework de `apudig_mvp`.
 
+La navegación actual concentra Next en administración web y catálogos; los módulos ERP de esta matriz son antecedentes de integración y ahora muestran una transición a Django. `/catalog` y `/admin/catalog_admin` se conservan; los productos comerciales están en `/shop`. Ver [rutas y responsabilidades actuales](admin-web-y-catalogos.md). No usar esta matriz histórica como instrucción para reactivar módulos ERP en Next.
+
 La API está montada bajo `/api/v1/`. La URL base del frontend se obtiene de `NEXT_PUBLIC_API_V1_URL` y usa `http://127.0.0.1:8000/api/v1` como valor predeterminado.
 
 ## Estado de compatibilidad

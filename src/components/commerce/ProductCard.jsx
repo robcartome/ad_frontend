@@ -9,14 +9,14 @@ export default function ProductCard({ product }) {
     const { add, ready } = useCart();
     const [added, setAdded] = useState(false);
     return <article className="sf-product-card">
-    <Link href={`/catalog/${product.id}`} className="sf-product-image" aria-label={`Ver ${product.name}`}>
+    <Link href={`/shop/${product.id}`} className="sf-product-image" aria-label={`Ver ${product.name}`}>
       <span className="sf-product-tag">DEMO</span>
       <ProductArt type={product.image}/>
       <span className="sf-image-caption">Imagen ilustrativa</span>
     </Link>
     <div className="sf-product-info">
       <span className="sf-product-brand">{product.brand}</span>
-      <Link href={`/catalog/${product.id}`} className="sf-product-name">{product.name}</Link>
+      <Link href={`/shop/${product.id}`} className="sf-product-name">{product.name}</Link>
       <span className="sf-unit">Venta por {product.unit}</span>
       <div className="sf-product-price">{hasPrice(product) ? money(product.price) : <span className="sf-consult-price">Consultar precio</span>}</div>
       <span className="sf-reference">{hasPrice(product) ? 'Precio de demostración' : 'Precio por confirmar'}</span>

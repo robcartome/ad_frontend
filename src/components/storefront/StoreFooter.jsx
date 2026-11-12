@@ -14,13 +14,13 @@ export default function StoreFooter({ store, categories }) {
       </div>
       <div>
         <h2>Explora la tienda</h2>
-        <Link href="/catalog">Todos los productos</Link>
+        <Link href="/shop">Todos los productos</Link>
         <Link href="/cart">Mi cotización</Link>
         <Link href="/about">Conócenos</Link>
         <Link href="/contact">Contacto y atención</Link>
       </div>
       <div>
-        <h2>Para tu proyecto</h2>{categories.slice(0, 4).map(category => <Link key={category.id} href={`/catalog?category=${category.id}`}>{category.name}</Link>)}
+        <h2>Para tu proyecto</h2>{categories.slice(0, 4).map(category => <Link key={category.id} href={`/shop?category=${category.id}`}>{category.name}</Link>)}
       </div>
       <div>
         <h2>Construyamos juntos</h2>

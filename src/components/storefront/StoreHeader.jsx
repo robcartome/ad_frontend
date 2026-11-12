@@ -33,7 +33,7 @@ export default function StoreHeader({ store, categories }) {
             <em>{store.location}</em>
           </span>
         </Link>
-        <form action="/catalog" className="sf-search" role="search">
+        <form action="/shop" className="sf-search" role="search">
           <label className="sf-sr-only" htmlFor="store-search">Buscar productos</label>
           <input id="store-search" name="q" placeholder="¿Qué necesitas para tu proyecto?" type="search" maxLength={120}/>
           <button type="submit" aria-label="Buscar">
@@ -55,9 +55,9 @@ export default function StoreHeader({ store, categories }) {
       </div>
       <nav id="store-navigation" aria-label="Navegación comercial" className={`sf-nav ${open ? 'is-open' : ''}`}>
         <div className="sf-container">
-          <Link className="sf-all-categories" href="/catalog" onClick={() => setOpen(false)}>
+          <Link className="sf-all-categories" href="/shop" onClick={() => setOpen(false)}>
             <Menu size={18}/> Todas las categorías
-          </Link>{categories.slice(0, 4).map(category => <Link key={category.id} href={`/catalog?category=${category.id}`} onClick={() => setOpen(false)}>{category.name}</Link>)}
+          </Link>{categories.slice(0, 4).map(category => <Link key={category.id} href={`/shop?category=${category.id}`} onClick={() => setOpen(false)}>{category.name}</Link>)}
           <Link href="/about" onClick={() => setOpen(false)}>Nosotros</Link>
           <Link href="/contact" onClick={() => setOpen(false)}>Contacto</Link>
         </div>

@@ -1,7 +1,7 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 
 export const metadata = {
-  title: "Panel de Administración | ApuDig",
+  title: "Administración web | APUDIG",
 };
 
 export default function AdminRootLayout({ children }) {

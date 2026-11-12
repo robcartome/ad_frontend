@@ -18,7 +18,7 @@ export default function StoreCatalog({ products, categories, query }) {
             if (query[key])
                 params.set(key, query[key]);
         params.set('page', String(number));
-        return `/catalog?${params}`;
+        return `/shop?${params}`;
     }
     return <div className="sf-container sf-page">
     <nav className="sf-breadcrumb" aria-label="Ruta de navegación">
@@ -39,7 +39,7 @@ export default function StoreCatalog({ products, categories, query }) {
         <h2>
           <SlidersHorizontal size={18}/> Filtrar catálogo
         </h2>
-        <form action="/catalog">
+        <form action="/shop">
           <label htmlFor="catalog-query">Nombre o SKU</label>
           <div className="sf-filter-search">
             <input id="catalog-query" type="search" name="q" defaultValue={query.q} placeholder="Buscar producto" maxLength={120}/>
@@ -62,7 +62,7 @@ export default function StoreCatalog({ products, categories, query }) {
           <button className="sf-button sf-button-orange" type="submit">Aplicar filtros 
             <Search size={16}/>
           </button>
-          <Link className="sf-reset" href="/catalog">
+          <Link className="sf-reset" href="/shop">
             <X size={14}/> Limpiar filtros
           </Link>
         </form>
@@ -81,7 +81,7 @@ export default function StoreCatalog({ products, categories, query }) {
           <Search size={35}/>
           <h2>No encontramos productos</h2>
           <p>Prueba con otro nombre o modifica los filtros.</p>
-          <Link className="sf-button sf-button-dark" href="/catalog">Ver todo el catálogo</Link>
+          <Link className="sf-button sf-button-dark" href="/shop">Ver todo el catálogo</Link>
         </div>}
       </section>
     </div>

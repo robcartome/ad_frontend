@@ -45,7 +45,7 @@ export function CollectionEditor({ type, items, onChange, errors, products }) {
     onChange(next);
   }
   function add() {
-    const shared = { id: crypto.randomUUID(), enabled: false, eyebrow: isBanner ? 'NOVEDADES' : 'CAMPAÑA', title: isBanner ? 'Nuevo banner' : 'Nueva campaña', description: '', ctaLabel: 'Ver productos', href: '/catalog' };
+    const shared = { id: crypto.randomUUID(), enabled: false, eyebrow: isBanner ? 'NOVEDADES' : 'CAMPAÑA', title: isBanner ? 'Nuevo banner' : 'Nueva campaña', description: '', ctaLabel: 'Ver productos', href: '/shop' };
     onChange([...items, isBanner ? { ...shared, imageUrl: '', mobileImageUrl: '', imageAlt: '', art: 'drill' } : { ...shared, startsAt: '', endsAt: '', productIds: [] }]);
   }
   return <>
@@ -90,7 +90,7 @@ export function CollectionEditor({ type, items, onChange, errors, products }) {
       <div className="we-fields-grid">{field('eyebrow', 'Antetítulo', { maxLength: 60 })}{field('title', 'Título', { maxLength: 100 })}</div>
         {field('description', 'Descripción', { multiline: true, maxLength: 300, rows: 3 })}
         
-      <div className="we-fields-grid">{field('ctaLabel', 'Texto del botón', { maxLength: 40 })}{field('href', 'Enlace del botón', { placeholder: '/catalog', hint: 'Solo enlaces internos, por ejemplo /catalog?category=herramientas.' })}</div>
+      <div className="we-fields-grid">{field('ctaLabel', 'Texto del botón', { maxLength: 40 })}{field('href', 'Enlace del botón', { placeholder: '/shop', hint: 'Solo enlaces internos, por ejemplo /shop?category=herramientas.' })}</div>
         {isBanner ? <>
           
         <div className="we-fields-grid">{field('imageUrl', 'Imagen de escritorio (URL)', { hint: 'URL HTTPS o ruta local. Carga de archivos disponible al integrar Django.' })}{field('mobileImageUrl', 'Imagen de móvil (URL)', { hint: 'Opcional. Si se omite se usa la imagen de escritorio.' })}</div>

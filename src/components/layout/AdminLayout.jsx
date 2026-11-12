@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import AuthGuard from "@/components/auth/AuthGuard";
+import ErpModuleNotice from "@/components/admin/ErpModuleNotice";
+import { isErpRoute } from "@/lib/admin/routes.mjs";
 
 export default function AdminLayout({ children }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -47,7 +49,7 @@ export default function AdminLayout({ children }) {
           />
 
           {/* Contenido */}
-          <main className="flex-1 py-3 overflow-y-auto">{children}</main>
+          <main className="flex-1 py-3 overflow-y-auto">{isErpRoute(pathname) ? <ErpModuleNotice /> : children}</main>
         </div>
       </div>
     </AuthGuard>

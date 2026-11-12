@@ -19,9 +19,9 @@ export default async function ProductPage({ params }) {
     <nav className="sf-breadcrumb" aria-label="Ruta de navegación">
       <Link href="/">Inicio</Link>
       <span>/</span>
-      <Link href="/catalog">Catálogo</Link>
+      <Link href="/shop">Catálogo</Link>
       <span>/</span>
-      <Link href={`/catalog?category=${product.category}`}>{category?.name}</Link>
+      <Link href={`/shop?category=${product.category}`}>{category?.name}</Link>
     </nav>
     <section className="sf-product-detail">
       <div className="sf-detail-image">

@@ -1,6 +1,17 @@
-export const WEBSITE_SCHEMA_VERSION = 1;
+export const WEBSITE_SCHEMA_VERSION = 2;
 export const SECTION_TYPES = ['benefits', 'categories', 'featured', 'promotions', 'about'];
 export const ART_TYPES = ['drill', 'grinder', 'cement', 'paint', 'pipe', 'cable', 'helmet', 'brick'];
+
+// Version 1 used /catalog for storefront links. That URL now belongs exclusively
+// to the existing worker catalog. Preserve content while updating its old destinations.
+export function upgradeWebsiteDocument(document) {
+  if (!document || document.schemaVersion !== 1) return document;
+  const upgradeItems = items => Array.isArray(items) ? items.map(item => item && typeof item === 'object' ? {
+    ...item,
+    href: typeof item.href === 'string' ? item.href.replace(/^\/catalog(?=$|[/?#])/, '/shop') : item.href,
+  } : item) : items;
+  return { ...document, schemaVersion: WEBSITE_SCHEMA_VERSION, banners: upgradeItems(document.banners), promotions: upgradeItems(document.promotions) };
+}
 
 export function createWebsiteDocument(companyName = 'Ferretería Tolentino') {
   const name = typeof companyName === 'string' && companyName.trim() ? companyName.trim().slice(0, 100) : 'Mi empresa';
@@ -9,8 +20,8 @@ export function createWebsiteDocument(companyName = 'Ferretería Tolentino') {
     identity: { name, shortName: name === 'Ferretería Tolentino' ? 'TOLENTINO' : name.slice(0, 40), location: name === 'Ferretería Tolentino' ? 'La Soledad' : 'Zona de atención por configurar', primaryColor: '#FF8000', logoUrl: '', announcement: 'Materiales, herramientas y soluciones para tu proyecto' },
     contact: { phone: '', whatsapp: '', address: '', hours: '' },
     seo: { title: `${name} | Construye tus proyectos`.slice(0, 70), description: 'Herramientas, materiales y asesoría para construir tus proyectos.' },
-    banners: [{ id: 'banner-principal', enabled: true, eyebrow: 'MANOS A LA OBRA', title: 'Tu próximo proyecto empieza aquí.', description: 'Herramientas, materiales y soluciones. Todo para construir, renovar y hacer más.', ctaLabel: 'Explorar productos', href: '/catalog', imageUrl: '', mobileImageUrl: '', imageAlt: '', art: 'drill' }],
-    promotions: [{ id: 'campana-proyectos', enabled: true, eyebrow: 'DE LA IDEA A LA OBRA', title: 'Hagamos realidad lo que tienes en mente.', description: 'Reúne tus materiales y solicita orientación para tu proyecto.', ctaLabel: 'Preparar mi lista', href: '/catalog', startsAt: '', endsAt: '', productIds: [] }],
+    banners: [{ id: 'banner-principal', enabled: true, eyebrow: 'MANOS A LA OBRA', title: 'Tu próximo proyecto empieza aquí.', description: 'Herramientas, materiales y soluciones. Todo para construir, renovar y hacer más.', ctaLabel: 'Explorar productos', href: '/shop', imageUrl: '', mobileImageUrl: '', imageAlt: '', art: 'drill' }],
+    promotions: [{ id: 'campana-proyectos', enabled: true, eyebrow: 'DE LA IDEA A LA OBRA', title: 'Hagamos realidad lo que tienes en mente.', description: 'Reúne tus materiales y solicita orientación para tu proyecto.', ctaLabel: 'Preparar mi lista', href: '/shop', startsAt: '', endsAt: '', productIds: [] }],
     sections: [
       { type: 'benefits', enabled: true, title: 'A tu lado, de principio a fin' },
       { type: 'categories', enabled: true, title: 'Una solución para cada proyecto' },
@@ -69,7 +80,7 @@ export function validateWebsite(document, productIds = []) {
       optionalText(item.eyebrow, `${prefix}.eyebrow`, 'Antetítulo', 60);
       optionalText(item.description, `${prefix}.description`, 'Descripción', 300);
       requiredText(item.ctaLabel, `${prefix}.ctaLabel`, 'Texto del botón', 40);
-      if (!isSafeLink(item.href)) errors[`${prefix}.href`] = 'El enlace debe ser una ruta interna, por ejemplo /catalog.';
+      if (!isSafeLink(item.href)) errors[`${prefix}.href`] = 'El enlace debe ser una ruta interna, por ejemplo /shop.';
       if (collection === 'banners') {
         if (!ART_TYPES.includes(item.art)) errors[`${prefix}.art`] = 'Ilustración no compatible.';
         for (const key of ['imageUrl', 'mobileImageUrl']) if (!isSafeImage(item[key])) errors[`${prefix}.${key}`] = 'Usa una ruta local o URL HTTPS válida.';
