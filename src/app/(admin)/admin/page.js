@@ -1,10 +1,11 @@
-import ProductsTable from "@/components/admin/ProductsTable";
+import WebsiteAdminEntry from "@/components/admin/website/WebsiteAdminEntry";
 // Dashboard page for the admin panel
 
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold mb-6">Panel de Control</h1>
+      <WebsiteAdminEntry />
 
       <div className="grid md:grid-cols-3 gap-6">
         <div className="p-6 bg-white rounded-xl shadow">

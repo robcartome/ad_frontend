@@ -1,5 +1,11 @@
 # ApuDig Frontend
 
+## Continuidad del storefront
+
+Antes de continuar el desarrollo de la tienda pública, leer [plan y avances del storefront](docs/storefront-plan-y-avances.md). Incluye decisiones, archivos, verificaciones, límites de la demo y pasos para retomar desde otra PC. La tienda pública usa datos de demostración aislados; el panel administrativo conserva su integración existente.
+
+La gestión editorial está en `/admin/website` (Página web en el menú), con borradores, banners, campañas y vista previa local por empresa. Ver [contrato y plan de backend Django](docs/website-cms-backend-plan.md). Por ahora los cambios se guardan en este navegador y se reflejan en la vista previa protegida, sin publicar en la página pública. Pruebas de lógica: `node --test tests/commerce.test.mjs tests/website.test.mjs`.
+
 Panel web de ApuDig para catálogo, inventario, ventas, socios de negocio y administración de ferreterías. En la rama `mvp_production` consume la API Django REST Framework de `apudig_mvp`.
 
 ## Tecnologías

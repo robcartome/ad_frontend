@@ -15,6 +15,7 @@ import {
   Notebook,
   ShoppingCart,
   Users,
+  Globe,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
@@ -25,7 +26,7 @@ export default function Sidebar({
   desktopOpen,
 }) {
   const pathname = usePathname();
-  const { isSuperuser, hasRole } = useAuth();
+  const { isSuperuser, hasRole, hasPermission } = useAuth();
   const isAdmin = isSuperuser || hasRole("admin", "super_admin", "superadmin");
   const sidebarRef = useRef(null);
   const [inventoryOpen, setInventoryOpen] = useState(
@@ -86,6 +87,8 @@ export default function Sidebar({
     { name: "Marcas", href: "/admin/brands", icon: Tags },
     { name: "Almacenes", href: "/admin/warehouses", icon: Warehouse },
     { name: "Catalogo", href: "/admin/catalog_admin", icon: Notebook },
+    ...(isAdmin || hasPermission("websites.view_website") || hasPermission("websites.change_website") || hasPermission("websites.publish_website")
+      ? [{ name: "Página web", href: "/admin/website", icon: Globe }] : []),
   ];
 
   return (

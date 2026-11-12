@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -8,6 +9,12 @@ import AuthGuard from "@/components/auth/AuthGuard";
 export default function AdminLayout({ children }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+  const pathname = usePathname();
+
+  // Preview retains authentication and company checks, with no ERP chrome in the frame.
+  if (pathname === "/admin/website/preview") {
+    return <AuthGuard>{children}</AuthGuard>;
+  }
 
   return (
     <AuthGuard>
