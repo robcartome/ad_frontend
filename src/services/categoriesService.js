@@ -1,5 +1,5 @@
 import { apiFetch } from "./api";
-import { fakeCategories } from "@/data/fake/categories";
+export { createStorefrontCategoriesService } from './storefrontCategoriesService.mjs';
 
 export async function getCategories() {
   return apiFetch("/categories/");

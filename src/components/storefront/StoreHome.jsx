@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUpRight, Headphones, ClipboardList, PackageCheck, Truc
 import { createWebsiteDocument, visiblePromotions } from '@/lib/website/content.mjs';
 import ProductArt from './ProductArt';
 import StoreHero from './StoreHero';
+import CatalogImage from './CatalogImage';
 import ProductCard from '@/components/commerce/ProductCard';
 
 export default function StoreHome({ store, categories, products, content = createWebsiteDocument(store.name), now }) {
@@ -33,12 +34,13 @@ export default function StoreHome({ store, categories, products, content = creat
         </Link>
       </div>
 
-      <div className="sf-categories">{categories.map(category => <Link href={`/shop?category=${category.id}`} key={category.id} className="sf-category">
+      <div className="sf-categories">{categories.map(category => <Link href={`/shop?${new URLSearchParams({ category: category.id })}`} key={category.id} className="sf-category">
           <div>
-            <ProductArt type={category.icon}/>
+            <CatalogImage src={category.imageUrl} alt={category.name} type={category.icon}/>
           </div>
           <h3>{category.name}</h3>
           <span>{category.description}</span>
+          <small>Explorar <ArrowRight size={13}/></small>
         </Link>)}</div>
 
     </section>;

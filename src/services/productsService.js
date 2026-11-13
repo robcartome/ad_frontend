@@ -1,4 +1,5 @@
 import { apiFetch } from "./api";
+export { createStorefrontProductsService } from './storefrontProductsService.mjs';
 
 export async function getProductDetail(id) {
   return apiFetch(`/catalog/products/${id}/detail`);

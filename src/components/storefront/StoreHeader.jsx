@@ -2,12 +2,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Menu, X, Search, ShoppingBag, ArrowUpRight, Hammer, MapPin } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { Menu, X, Search, ShoppingBag, ArrowUpRight, Hammer, MapPin, ChevronRight, Drill, Paintbrush, Cable, HardHat, BrickWall, Pipette } from 'lucide-react';
 import { useCart } from '@/components/commerce/CartProvider';
 export default function StoreHeader({ store, categories }) {
     const { count } = useCart();
     const [open, setOpen] = useState(false);
-    return <>
+    const icons = { drill: Drill, brick: BrickWall, pipe: Pipette, cable: Cable, paint: Paintbrush, helmet: HardHat };
+    return <Dialog.Root open={open} onOpenChange={setOpen}>
     <div className="sf-demo">Vista de demostración · Productos y precios ilustrativos · Sin pedidos reales</div>
     <div className="sf-top">
       <div className="sf-container">
@@ -51,17 +53,29 @@ export default function StoreHeader({ store, categories }) {
           <span className="sf-cart-count">{count}</span>
           <span className="sf-cart-label">Mi cotización</span>
         </Link>
-        <button className="sf-menu-toggle" onClick={() => setOpen(!open)} aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls="store-navigation">{open ? <X /> : <Menu />}</button>
+        <Dialog.Trigger asChild><button className="sf-menu-toggle" aria-label="Abrir categorías"><Menu /></button></Dialog.Trigger>
       </div>
-      <nav id="store-navigation" aria-label="Navegación comercial" className={`sf-nav ${open ? 'is-open' : ''}`}>
+      <nav id="store-navigation" aria-label="Navegación comercial" className="sf-nav">
         <div className="sf-container">
-          <Link className="sf-all-categories" href="/shop" onClick={() => setOpen(false)}>
+          <Dialog.Trigger asChild><button className="sf-all-categories">
             <Menu size={18}/> Todas las categorías
-          </Link>{categories.slice(0, 4).map(category => <Link key={category.id} href={`/shop?category=${category.id}`} onClick={() => setOpen(false)}>{category.name}</Link>)}
+          </button></Dialog.Trigger>{categories.slice(0, 4).map(category => <Link key={category.id} href={`/shop?${new URLSearchParams({ category: category.id })}`}>{category.name}</Link>)}
           <Link href="/about" onClick={() => setOpen(false)}>Nosotros</Link>
           <Link href="/contact" onClick={() => setOpen(false)}>Contacto</Link>
         </div>
       </nav>
     </header>
-  </>;
+    <Dialog.Portal>
+      <Dialog.Overlay className="sf-drawer-overlay"/>
+      <Dialog.Content className="storefront sf-category-drawer">
+        <div className="sf-drawer-heading"><div><span className="sf-eyebrow">TODO PARA TU PROYECTO</span><Dialog.Title>Categorías</Dialog.Title></div><Dialog.Close asChild><button aria-label="Cerrar categorías"><X size={22}/></button></Dialog.Close></div>
+        <Dialog.Description className="sf-drawer-description">Encuentra lo que necesitas para construir, renovar y reparar.</Dialog.Description>
+        <nav aria-label="Todas las categorías" className="sf-drawer-links">
+          <Link href="/shop" onClick={() => setOpen(false)}><span className="sf-drawer-icon"><Menu size={22}/></span><span><strong>Ver todos los productos</strong><small>Explora el catálogo completo</small></span><ChevronRight size={17}/></Link>
+          {categories.map(category => { const Icon = icons[category.icon] || Hammer; return <Link key={category.id} href={`/shop?${new URLSearchParams({ category: category.id })}`} onClick={() => setOpen(false)}><span className="sf-drawer-icon"><Icon size={22}/></span><span><strong>{category.name}</strong><small>{category.description}</small></span><ChevronRight size={17}/></Link>; })}
+        </nav>
+        <Link href="/contact" className="sf-drawer-help" onClick={() => setOpen(false)}>¿No sabes cuál elegir? Te asesoramos <ArrowUpRight size={17}/></Link>
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>;
 }

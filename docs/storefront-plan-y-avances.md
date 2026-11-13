@@ -199,3 +199,13 @@ Actualizados: Sidebar, Topbar, AdminLayout, dashboard/metadata administrativos, 
 2. Con backend disponible, revisar precios/modal/filtros en `/catalog` y `/admin/catalog_admin`. No rediseñar ni mover sus APIs al integrar `/shop`.
 3. Revisar `/shop`, búsqueda, fichas y carrito, además de borradores locales previos con enlaces adaptados.
 4. Continuar el plan Django editorial recuperando primero sus fuentes históricas. La integración productiva corresponde al storefront nuevo, sin sustituir el catálogo laboral.
+
+## Entrega 4 — Tarjetas y categorías mobile first (12/11/2026)
+
+Rama observada: `mvp_website`, árbol limpio al inicio; no se cambió de rama. Nueva prioridad del usuario: contraste azul `#003366` sobre naranja `#FF8000` y blanco. Se actualizaron tarjetas, categorías, panel lateral Radix, imágenes con respaldo, ofertas en ficha y datos demo de descuentos. Catálogos laborales conservados.
+
+Se añadieron DTOs públicos y factorías de servicios reexportadas desde `productsService.js` y `categoriesService.js`. No se conectó la tienda a endpoints existentes ni se modificaron las funciones laborales. El contrato propuesto, archivos, límites y activación pendiente están en [storefront-catalog-api.md](storefront-catalog-api.md).
+
+Verificado: lint/build correctos, 21 pruebas correctas (incluidas 4 nuevas de DTO/transporte público), 16 casos HTTP correctos en puerto 3001. Advertencia preexistente de baseline-browser-mapping sin actualizar dependencias.
+
+Revisión visual NO completada: host de navegador no disponible y Computer Use detuvo el intento al no poder verificar la URL activa de Chrome. No afirmar validación visual móvil ni interacciones. Pendiente revisar 320/375/768/1024/1440 px, panel/Escape/foco, imágenes y carrito. API real, paginación remota, permisos, CMS Django y demás pendientes anteriores siguen abiertos. No hubo commit, push ni despliegue.

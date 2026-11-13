@@ -1,5 +1,8 @@
 import 'server-only';
 import { demoCategories, demoProducts } from '@/data/demo/storefront';
+import { normalizeCategory, normalizeProduct } from '@/lib/commerce/catalog.mjs';
+const products = demoProducts.map(normalizeProduct);
+const categories = demoCategories.map(normalizeCategory);
 const demoStore = {
     id: 'tolentino-soledad-demo', name: 'Ferretería Tolentino', shortName: 'TOLENTINO',
     location: 'La Soledad', template: 'ecommerce', mode: 'demo',
@@ -9,6 +12,6 @@ const demoStore = {
 };
 // Resolución explícita para desarrollo. No habilitar dominios ni API hasta tener contrato seguro.
 export function getStore() { return demoStore; }
-export function getStorefrontCategories() { return demoCategories; }
-export function getStorefrontProducts() { return demoProducts; }
-export function getStorefrontProduct(id) { return demoProducts.find(product => product.id === id) ?? null; }
+export function getStorefrontCategories() { return categories; }
+export function getStorefrontProducts() { return products; }
+export function getStorefrontProduct(id) { return products.find(product => product.id === id) ?? null; }
