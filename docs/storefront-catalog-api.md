@@ -41,3 +41,13 @@ Verificar endpoints, publicación por tienda, aislamiento y 404 entre empresas. 
 - Revisión visual e interacciones de navegador: **pendientes**. Browser host no disponible; Computer Use detuvo el intento porque no pudo verificar con suficiente confianza la URL activa de Chrome. No se capturaron pantallas ni se verificaron viewport, teclado, persistencia o consola.
 
 Referencias consultadas: [Promart](https://www.promart.pe/) y [Falabella](https://www.falabella.com.pe/falabella-pe), además de las imágenes aportadas. Se tomaron patrones de navegación, categorías y jerarquía comercial, sin copiar activos.
+
+## Descubrimiento comercial — entrega 10 (13/11/2026)
+
+`/shop` usa `shop-filters.mjs` para normalizar y aplicar `q`, `category`, `brand` repetible, `min`, `max`, `sort` y `page`. Mantiene compatibilidad con una sola marca. Las marcas seleccionadas se combinan con OR; búsqueda/categoría/marcas/precios se combinan con AND. Límites de precio inclusivos; sin filtro de precio se conservan productos sin precio, con rango se excluyen. Precios desconocidos al final al ordenar ascendente o descendente. `discount` ordena por porcentaje de oferta vigente en el producto (no ahorro absoluto). No hay datos suficientes para más vendidos/nuevos/mejor valorados.
+
+Orden frontend admitido: `name`, `name-desc`, `price-asc`, `price-desc`, `discount`. Página de 24. Cambiar filtro/orden vuelve a página 1. Interfaz: filtros laterales en desktop y drawer izquierdo móvil (hasta 900 px), orden en drawer derecho en todos los tamaños. Ambos se aplican expresamente con «Ver resultados».
+
+**Pendiente de acordar con Django:** mapear los nombres de query y orden al contrato API, incluir multimarcas, precio mínimo/máximo y orden por descuento; resolver filtros, facets/conteos y paginación sobre todos los productos publicables de la tienda en servidor. Los conteos por categoría/marca actuales proceden de la fuente demo completa. El cliente HTTP propuesto anterior no se modificó ni se activó en esta entrega. No se añade promesa de disponibilidad/entrega basada en datos inexistentes.
+
+Verificación actual: lint/build, 36 pruebas de lógica, smoke de 16 rutas y casos HTTP adicionales de rangos/marcas correctos. QA visual e interacción de paneles/rangos/teclado pendientes por limitaciones de Computer Use; consultar registro de avances.

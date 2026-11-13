@@ -35,10 +35,10 @@ function createAnnouncements() {
   return {
     ctaLabel: 'Ver más productos', href: '/shop',
     items: [
-      { id: 'aviso-herramientas', enabled: true, title: 'Equípate para tu proyecto', badge: 'DESTACADO', badgePosition: 'top-left', href: '/shop?category=herramientas', imageUrl: '', imageAlt: '', art: 'drill' },
-      { id: 'aviso-pinturas', enabled: true, title: 'Renueva tus espacios', badge: 'INSPÍRATE', badgePosition: 'top-left', href: '/shop?category=pinturas', imageUrl: '', imageAlt: '', art: 'paint' },
-      { id: 'aviso-construccion', enabled: true, title: 'Todo para empezar tu obra', badge: '', badgePosition: 'top-left', href: '/shop?category=construccion', imageUrl: '', imageAlt: '', art: 'brick' },
-      { id: 'aviso-seguridad', enabled: true, title: 'Trabaja con confianza', badge: 'SELECCIÓN', badgePosition: 'top-left', href: '/shop?category=seguridad', imageUrl: '', imageAlt: '', art: 'helmet' },
+      { id: 'aviso-herramientas', enabled: true, ctaLabel: 'Ver herramientas', description: '', title: 'Equípate para tu proyecto', badge: 'DESTACADO', badgePosition: 'top-left', href: '/shop?category=herramientas', imageUrl: '', imageAlt: '', art: 'drill' },
+      { id: 'aviso-pinturas', enabled: true, ctaLabel: 'Inspírate', description: '', title: 'Renueva tus espacios', badge: 'INSPÍRATE', badgePosition: 'top-left', href: '/shop?category=pinturas', imageUrl: '', imageAlt: '', art: 'paint' },
+      { id: 'aviso-construccion', enabled: true, ctaLabel: 'Prepara tu pedido', description: '', title: 'Todo para empezar tu obra', badge: '', badgePosition: 'top-left', href: '/shop?category=construccion', imageUrl: '', imageAlt: '', art: 'brick' },
+      { id: 'aviso-seguridad', enabled: true, ctaLabel: 'Conoce la selección', description: '', title: 'Trabaja con confianza', badge: 'SELECCIÓN', badgePosition: 'top-left', href: '/shop?category=seguridad', imageUrl: '', imageAlt: '', art: 'helmet' },
     ],
   };
 }
@@ -52,7 +52,12 @@ export function createWebsiteDocument(companyName = 'Ferretería Tolentino', pro
     seo: { title: `${name} | Construye tus proyectos`.slice(0, 70), description: 'Herramientas, materiales y asesoría para construir tus proyectos.' },
     announcements: createAnnouncements(),
     specials: { productIds: [...new Set(productIds)].slice(0, MAX_SPECIAL_PRODUCTS) },
-    banners: [{ id: 'banner-principal', enabled: true, eyebrow: 'MANOS A LA OBRA', title: 'Tu próximo proyecto empieza aquí.', description: 'Herramientas, materiales y soluciones. Todo para construir, renovar y hacer más.', ctaLabel: 'Explorar productos', href: '/shop', imageUrl: '', mobileImageUrl: '', imageAlt: '', art: 'drill' }],
+    heroSlider: { autoplay: true, intervalMs: 6000 },
+    banners: [
+      { id: 'banner-principal', enabled: true, eyebrow: 'MANOS A LA OBRA', title: 'Tu próximo proyecto empieza aquí.', description: 'Herramientas, materiales y soluciones. Todo para construir, renovar y hacer más.', ctaLabel: 'Explorar productos', href: '/shop', imageUrl: '', mobileImageUrl: '', imageAlt: '', art: 'drill' },
+      { id: 'banner-renueva', enabled: true, eyebrow: 'DALE VIDA A TUS IDEAS', title: 'Un nuevo color para tus espacios.', description: 'Encuentra pinturas y accesorios para darle un nuevo aire a tu hogar.', ctaLabel: 'Explorar pinturas', href: '/shop?category=pinturas', imageUrl: '', mobileImageUrl: '', imageAlt: '', art: 'paint' },
+      { id: 'banner-herramientas', enabled: true, eyebrow: 'PREPARA TU EQUIPO', title: 'Herramientas para hacerlo posible.', description: 'Elige lo que necesitas y agrégalo a tu lista de cotización.', ctaLabel: 'Ver herramientas', href: '/shop?category=herramientas', imageUrl: '', mobileImageUrl: '', imageAlt: '', art: 'drill' },
+    ],
     promotions: [{ id: 'campana-proyectos', enabled: true, eyebrow: 'DE LA IDEA A LA OBRA', title: 'Hagamos realidad lo que tienes en mente.', description: 'Reúne tus materiales y solicita orientación para tu proyecto.', ctaLabel: 'Preparar mi lista', href: '/shop', startsAt: '', endsAt: '', productIds: [] }],
     sections: [
       { type: 'benefits', enabled: true, title: 'A tu lado, de principio a fin' },
@@ -80,7 +85,7 @@ export function isSafeImage(value) {
   } catch { return false; }
 }
 
-// Inline files are restricted to this local demo's announcements, never SVG/HTML.
+// Inline files are restricted to editorial banners/announcements, never SVG/HTML.
 // Production must upload media separately and replace these values with asset URLs.
 export function isAnnouncementImage(value) {
   if (typeof value === 'string' && value.startsWith('data:')) {
@@ -127,8 +132,14 @@ export function validateWebsite(document, productIds = []) {
   requiredText(document.seo?.title, 'seo.title', 'Título SEO', 70);
   requiredText(document.seo?.description, 'seo.description', 'Descripción SEO', 180);
 
-  requiredText(document.announcements?.ctaLabel, 'announcements.ctaLabel', 'Texto del botón del slider', 40);
-  if (!isSafeLink(document.announcements?.href)) errors['announcements.href'] = 'El botón del slider debe enlazar a una ruta interna.';
+  if (document.heroSlider !== undefined) {
+    if (typeof document.heroSlider?.autoplay !== 'boolean') errors['banners.autoplay'] = 'La reproducción automática debe ser activada o desactivada.';
+    const interval = document.heroSlider?.intervalMs;
+    if (!Number.isInteger(interval) || interval < 3000 || interval > 15000) errors['banners.intervalMs'] = 'El intervalo debe estar entre 3 y 15 segundos.';
+  }
+
+  requiredText(document.announcements?.ctaLabel, 'announcements.ctaLabel', 'Texto del botón de productos por categoría', 40);
+  if (!isSafeLink(document.announcements?.href)) errors['announcements.href'] = 'El botón de productos por categoría debe enlazar a una ruta interna.';
   const notices = document.announcements?.items;
   if (!Array.isArray(notices) || notices.length > MAX_ANNOUNCEMENTS) errors.announcements = `Máximo ${MAX_ANNOUNCEMENTS} avisos en el slider.`;
   else {
@@ -138,6 +149,8 @@ export function validateWebsite(document, productIds = []) {
       if (!item || typeof item.id !== 'string' || !/^[\w-]{1,80}$/.test(item.id) || seen.has(item.id)) { errors[prefix] = 'Aviso inválido o duplicado.'; return; }
       seen.add(item.id);
       requiredText(item.title, `${prefix}.title`, 'Título del aviso', 100);
+      if (item.ctaLabel !== undefined) requiredText(item.ctaLabel, `${prefix}.ctaLabel`, 'Texto del botón del aviso', 40);
+      optionalText(item.description ?? '', `${prefix}.description`, 'Descripción del aviso', 180);
       optionalText(item.badge, `${prefix}.badge`, 'Badge del aviso', 40);
       optionalText(item.imageAlt, `${prefix}.imageAlt`, 'Descripción de imagen', 180);
       if (typeof item.enabled !== 'boolean') errors[`${prefix}.enabled`] = 'Visibilidad inválida.';
@@ -167,7 +180,7 @@ export function validateWebsite(document, productIds = []) {
       if (!isSafeLink(item.href)) errors[`${prefix}.href`] = 'El enlace debe ser una ruta interna, por ejemplo /shop.';
       if (collection === 'banners') {
         if (!ART_TYPES.includes(item.art)) errors[`${prefix}.art`] = 'Ilustración no compatible.';
-        for (const key of ['imageUrl', 'mobileImageUrl']) if (!isSafeImage(item[key])) errors[`${prefix}.${key}`] = 'Usa una ruta local o URL HTTPS válida.';
+        for (const key of ['imageUrl', 'mobileImageUrl']) if (!isAnnouncementImage(item[key])) errors[`${prefix}.${key}`] = 'Usa HTTPS, una ruta local o imagen optimizada de hasta 150 KB.';
         optionalText(item.imageAlt, `${prefix}.imageAlt`, 'Texto alternativo', 180);
         if ((item.imageUrl || item.mobileImageUrl) && !item.imageAlt?.trim()) errors[`${prefix}.imageAlt`] = 'Describe la imagen para accesibilidad.';
         if (item.mobileImageUrl && !item.imageUrl) errors[`${prefix}.imageUrl`] = 'Agrega primero la imagen de escritorio.';

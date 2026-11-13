@@ -12,13 +12,12 @@ export default function AnnouncementSlider({ title, content }) {
     <header className="sf-showcase-heading"><span className="sf-eyebrow">IDEAS, NOVEDADES Y OPORTUNIDADES</span><h2>{title}</h2></header>
     <HorizontalRail label="Avisos promocionales" className="sf-announcement-rail">
       {items.map(item => <article className="sf-announcement-card" key={item.id}>
-        <Link href={item.href} className="sf-announcement-image" aria-label={item.title}>
+        <Link href={item.href} className="sf-announcement-image" aria-label={`${item.title}: ${item.ctaLabel || 'Conoce más'}`}>
           <CatalogImage src={item.imageUrl} alt={item.imageAlt || item.title} type={item.art}/>
           {item.badge && <span className={`sf-announcement-badge ${item.badgePosition}`}>{item.badge}</span>}
+          <div className="sf-announcement-copy"><h3>{item.title}</h3>{item.description && <p>{item.description}</p>}<span className="sf-announcement-action">{item.ctaLabel || 'Conoce más'}<ArrowRight size={17}/></span></div>
         </Link>
-        <h3><Link href={item.href}>{item.title}</Link></h3>
       </article>)}
     </HorizontalRail>
-    <div className="sf-showcase-cta"><Link href={content.href} className="sf-button sf-button-orange">{content.ctaLabel}<ArrowRight size={18}/></Link></div>
   </section>;
 }

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ART_TYPES, limaDateInput, fromLimaInput } from '@/lib/website/content.mjs';
+import EditorialImageField from './EditorialImageField';
 
 export function Field({ label, path, value, onChange, errors = {}, hint, multiline, ...props }) {
   const id = `website-${path}`;
@@ -93,7 +94,8 @@ export function CollectionEditor({ type, items, onChange, errors, products }) {
       <div className="we-fields-grid">{field('ctaLabel', 'Texto del botón', { maxLength: 40 })}{field('href', 'Enlace del botón', { placeholder: '/shop', hint: 'Solo enlaces internos, por ejemplo /shop?category=herramientas.' })}</div>
         {isBanner ? <>
           
-        <div className="we-fields-grid">{field('imageUrl', 'Imagen de escritorio (URL)', { hint: 'URL HTTPS o ruta local. Carga de archivos disponible al integrar Django.' })}{field('mobileImageUrl', 'Imagen de móvil (URL)', { hint: 'Opcional. Si se omite se usa la imagen de escritorio.' })}</div>
+        <EditorialImageField item={item} path={`${path}.imageUrl`} label="Imagen de escritorio" errors={errors} onChange={value => update(index, 'imageUrl', value)}/>
+        <EditorialImageField item={{ ...item, imageUrl: item.mobileImageUrl }} path={`${path}.mobileImageUrl`} label="Imagen de móvil (opcional)" errors={errors} onChange={value => update(index, 'mobileImageUrl', value)}/>
           {field('imageAlt', 'Descripción accesible de la imagen', { maxLength: 180 })}
           
         <div className="we-field">

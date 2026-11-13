@@ -306,3 +306,73 @@ Archivos: StoreHeader, StoreFooter, nuevo `SocialIcon.jsx`, nuevo `storefront-co
 Verificaciones: lint/build correctos; **29 pruebas correctas** (incluye emails/links de teléfono, dominios HTTPS de redes, compatibilidad de borradores y selección explícita de campos); **16 casos HTTP correctos** y comprobación adicional de accesos de header/categorías/footer sin links ficticios. Comparación con HEAD mantiene páginas/layout/componentes/servicios laborales sin cambios. Servidor temporal cerrado. No se realizó validación visual en navegador; revisar alineación móvil 320/375/768, correo largo, 0/1/2 teléfonos y todas/algunas/ninguna red configurada. Se preservaron rama y cambios anteriores. Sin backend, autenticación, nuevas dependencias ni despliegues.
 
 Al retomar: introducir datos oficiales en Contacto, comprobar preview, guardar/aplicar y recargar; validar roles de lectura/edición. Integrar luego el DTO publicado de Django para que los datos reales aparezcan compartidos en `/`. La integración y límites de demo de entregas anteriores siguen vigentes.
+
+## Entrega 9 — Hero automático y avisos con CTA propio (13/11/2026)
+
+### Implementado
+
+- `sf-hero-main` pasa a ser cada diapositiva de un carrusel con scroll snap nativo. Reproducción automática (6 segundos por defecto), flechas, indicadores, pausa/reanudación y deslizamiento táctil. Solo usa banners visibles; con cero no se muestra y con uno no rota. No se añadió dependencia.
+- Se conserva la composición desktop junto a `sf-hero-side`. En móvil se usa un banner compacto con indicio de la siguiente diapositiva; si hay fotografía, ocupa el fondo y el mensaje/CTA se superponen con un degradado para contraste. Sin fotografía conserva la ilustración demo.
+- Cada banner mantiene su CTA naranja/blanco. La rotación se suspende al pasar el mouse, ocultar la pestaña o interactuar; después de navegación manual se reanuda expresamente. Se respeta movimiento reducido. Las diapositivas inactivas quedan fuera del foco/accesibilidad.
+- En Banners del admin: activar/desactivar autoplay e intervalo de 3 a 15 segundos. Imágenes de escritorio y móvil elegibles desde la PC o URL, texto alternativo, mensajes, CTA, destino, orden y visibilidad. Selector reutilizado con los avisos; prepara PNG/JPEG/WebP localmente, hasta 150 KB por imagen.
+- `sf-announcements`: título, descripción opcional, CTA propio y badge sobre cada imagen, con degradado para legibilidad. Etiqueta/destino del CTA editables por aviso; máximo 8 incluyendo ocultos. No se copian imágenes ni datos comerciales de las referencias.
+- `sf-showcase-cta` movido al encabezado de `sf-category-products`, reemplazando «Ver todos los productos». Conserva texto/destino configurados en `announcements.ctaLabel/href` para no perder borradores. En Avisos se explica que ese botón general se muestra en productos por categoría.
+- Panel lateral público: accesos rápidos a productos/cotización/nosotros/contacto, categorías en filas con icono y descripción, sección de ayuda. Conserva Radix, cierre al navegar y categorías de la fuente existente. No incorpora funcionalidades bancarias de la referencia ni modifica el sidebar ERP.
+- Documento sigue en v3: `heroSlider` y `announcements.items[].ctaLabel/description` opcionales para compatibilidad. Borradores sin esos campos siguen válidos (autoplay 6000 ms y CTA «Conoce más»). Nuevos documentos demo tienen 3 banners; no se inyectan banners en documentos existentes.
+
+### Archivos principales
+
+`src/components/storefront/StoreHero.jsx`, `AnnouncementSlider.jsx`, `CategoryProducts.jsx`, `StoreHeader.jsx`, `StoreHome.jsx` y `storefront-rails.css`; `src/components/admin/website/EditorialImageField.jsx`, `ShowcaseEditor.jsx`, `WebsiteFields.jsx`, `WebsiteEditor.jsx`; `src/lib/website/content.mjs`, nuevo `slider.mjs`; pruebas y contrato backend actualizado.
+
+### Verificación real
+
+- Lint y build de producción correctos.
+- **32 pruebas Node correctas**: incluye compatibilidad de opciones ausentes, límites de intervalo/textos, CTAs y conservación de media/opciones en borrador y snapshot aplicado.
+- **16 casos HTTP correctos** con servidor temporal de producción en 3110. Comprobación adicional del HTML: 3 diapositivas, 4 CTAs individuales y CTA general dentro del encabezado por categoría. Se corrigió el script de inspección para eliminar scripts HTML completos en lugar de truncar antes del contenido. Servidor temporal cerrado.
+- **8 archivos de catálogo protegidos comparados con HEAD sin cambios**, incluidos layouts/páginas laborales, componentes y servicios. Rama `mvp_website`; sin cambios de backend/auth, instalación de dependencias, commit/push ni despliegue.
+- Computer Use pudo leer el sitio en `localhost:3000` y capturar los avisos en escritorio: mensajes/CTAs superpuestos visibles y CTA general en su nueva sección. Se observaron distintas diapositivas activas entre lecturas. Se corrigió después el ancho de las imágenes de avisos para que no invadan el espacio entre tarjetas. **No se completó revisión móvil, interacción de controles ni revisión visual posterior al ajuste**, porque las acciones del control nativo no produjeron el cambio de vista esperado y el host de acceso browser está indisponible. No dar por validados esos casos.
+
+### Límites y siguiente paso
+
+El editor sigue usando almacenamiento local por empresa y preview protegido. **Guardar/aplicar no actualiza `/` ni sincroniza imágenes/configuración entre PC**. La home muestra defaults del servidor. El plan de Django documenta los nuevos campos; falta implementar API editorial/media/publicación. Las data URLs solo sirven a esta demo y deben sustituirse por archivos/IDs autorizados al conectar Django.
+
+Al retomar: probar en navegador móvil 320/375/640 y escritorio, con imágenes desktop/mobile reales; comprobar flechas, dots, swipe, pausa, reanudación, foco/teclado, movimiento reducido, pestaña oculta y cambios de tamaño. Probar 0/1/varios banners, títulos/descripciones largos y badges en cuatro esquinas; elegir archivos, guardar/aplicar/recargar con permisos de lectura/edición. Verificar cuota local con muchas imágenes. Continuar integración Django según el contrato sin alterar `/catalog` ni `/admin/catalog_admin`.
+
+## Entrega 10 — Filtros y ordenamiento de /shop (13/11/2026)
+
+### Cambios
+
+- Cuadrícula comercial más densa: 4 columnas en escritorio desde 1101 px, 5 desde 1500 px, 3 en tamaños intermedios y 2 hasta 600 px; contenedor de /shop ampliado hasta 1440 px. Página de hasta 24 productos (antes 6). Tarjetas compactas conservan CTA outline y carrito de cotización.
+- Botones con fondo naranja de /shop/paneles usan texto e iconos blancos; categoría activa en navegación usa naranja/blanco. Categoría seleccionada en filtros usa fondo naranja claro, radio y texto destacado.
+- Filtros desktop en columna izquierda; hasta 900 px se abren en un panel lateral izquierdo Radix. Ordenamiento siempre mediante panel derecho, tanto móvil como PC, con disparador en la parte superior izquierda de resultados.
+- Paneles con título accesible, descripción, cierre y botón «Ver resultados»; Radix conserva foco/modal/Escape. Cambiar opciones dentro de un panel no aplica hasta confirmar; cerrar cancela el orden pendiente. Los filtros de móvil se reinician desde la URL al abrir.
+- Filtros seleccionados como chips removibles, acción limpiar todo, búsqueda por nombre/SKU, categoría con selección marcada y cantidades, marcas/líneas con búsqueda y selección múltiple, rango de precio con campos desde/hasta y sliders accesibles (`FilterRange`). Restablecer limpia la selección pendiente; Ver resultados la aplica.
+- Orden: nombre A–Z/Z–A, menor/mayor precio y mayor descuento porcentual real. No se inventan ventas, fecha de incorporación, valoraciones ni un ranking de recomendados. Productos sin precio van al final en ambos órdenes de precio; al aplicar rango se omiten. Precio cero y extremos inclusivos contemplados.
+- URL conserva búsqueda, categoría, múltiples `brand`, `min`, `max`, `sort` y página. Cambiar filtros/orden reinicia página; los links de paginación mantienen filtros. Enlaces antiguos con una marca siguen válidos. Valores no válidos se normalizan; rangos invertidos recibidos por URL se intercambian. El formulario pide corregir rangos invertidos antes de aplicar.
+- Se tomó el patrón de grupos/chips/marcas/precio del HTML adjunto y capturas del usuario. No se incorporan promesas de entrega, stock por sede ni logos ajenos.
+
+### Archivos
+
+`src/components/commerce/StoreCatalog.jsx`, nuevos `FilterRange.jsx` y `shop.css`; `src/lib/commerce/shop-filters.mjs`; `src/app/(public)/shop/page.js`; `src/components/storefront/CategoryNavLink.jsx` y `StoreHeader.jsx`; `tests/shop-filters.test.mjs`. Categoría activa usa `useSearchParams` dentro de Suspense con fallback de enlace, sin convertir el layout completo a render dinámico.
+
+### Verificación
+
+- Lint y build de producción correctos.
+- **36 pruebas Node correctas**; 4 nuevas para combinación de filtros, cero/precio desconocido, orden/descuento, query inválida y conservación de URL/paginación.
+- **16 casos HTTP correctos** con servidor temporal 3110. Adicionales: categoría Herramientas + rango S/160–200 + precio descendente devuelve un producto, conserva chips y orden; dos marcas/líneas combinadas devuelven 3 productos. Servidor temporal cerrado.
+- 8 archivos protegidos de catálogos laborales, componentes y servicios comparados con HEAD, sin cambios. Se mantuvo rama `mvp_website` y trabajo previo. Sin backend/auth/dependencias/commit/push/despliegue.
+- Computer Use leyó la URL `localhost:3000/shop` y sus controles nuevos en accesibilidad. El intento de abrir Ordenar falló con `coordinate input geometry is unavailable`; el host de browser sigue indisponible. **No se comprobó visualmente la cuadrícula ni la interacción de paneles, foco, rangos o tamaños móviles**. Una lectura de controles/HTML no sustituye esas pruebas. El inspector tenía un contador de error previo cuyo contenido no se pudo inspeccionar; no afirmar consola limpia.
+
+### Continuidad
+
+El filtrado funciona sobre el catálogo demo completo en memoria, sin cambios del ERP. Marcas actuales son líneas ilustrativas de la fuente demo. Para Django: acordar facets, múltiples marcas con OR dentro del grupo y AND entre grupos, precios inclusivos, nulos al final, orden por descuento porcentual y paginación de 24. No filtrar una página aislada de API como si fuera el catálogo entero. Ver actualización de `storefront-catalog-api.md`.
+
+Pendiente: revisar 320/375/768/1024/1280/1600 px, cerrar/aplicar/cancelar paneles con teclado y Escape, retorno del foco, chips, cero/sin precio, rango inválido, back/forward, recarga y selección activa de categoría en navegación. Revisar botón orange/blanco y CTA de producto en sus estados. Mantener `/catalog` y `/admin/catalog_admin` sin cambios.
+
+## Entrega 11 — Ancho de tarjetas y selección naranja (13/11/2026)
+
+- Ajuste exclusivo de `src/components/commerce/shop.css`: filas seleccionadas de filtros y orden con fondo #FF8000 y texto blanco. Radios con apariencia CSS explícita naranja/blanco, conservando input nativo, teclado y foco visible; se elimina la apariencia azul del navegador.
+- Corregido el límite efectivo de `.sf-container`: /shop ahora amplía su ancho hasta 1920 px en escritorio, con margen lateral de 32 px. Cuadrícula auto-fill con mínimo de 230 px por tarjeta, sin imponer cinco columnas dentro de 1240 px. Aproximadamente 4 columnas a 1280/1440 px, 5 a 1600 y 6 a 1920, según espacio disponible. En tamaños menores se conservan reglas de 3/2 columnas. No se cambian estilos de catálogos laborales.
+- Paginación activa naranja con número blanco mediante regla específica de /shop.
+- Verificado: lint, build de producción y diff --check correctos. No se añadieron pruebas para este ajuste CSS ni se repitió la suite de lógica de la entrega 10. Revisión visual en navegador pendiente; limitaciones de Computer Use registradas en entrega 10. Al retomar, comprobar ancho real a 1280/1440/1600/1920, selección/foco y paginación activa.
+- Se preservan rama `mvp_website`, cambios locales e índice preexistentes; sin cambios de datos, backend, dependencias ni despliegue.

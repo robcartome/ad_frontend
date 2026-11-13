@@ -180,7 +180,7 @@ test('special products are limited to four owned IDs and retain the selected edi
 test('local announcement image validation rejects active formats and oversized payloads', () => {
   const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Yj4XFEAAAAASUVORK5CYII=';
   assert.equal(isAnnouncementImage(pixel), true);
-  assert.equal(isSafeImage(pixel), false, 'Inline demo media is confined to announcements');
+  assert.equal(isSafeImage(pixel), false, 'Inline demo media is confined to editorial banners and announcements');
   assert.equal(isAnnouncementImage('data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='), false);
   assert.equal(isAnnouncementImage('data:text/html;base64,AAAA'), false);
   assert.equal(isAnnouncementImage('data:image/png;base64,%%%'), false);
@@ -207,4 +207,54 @@ test('v2 drafts and applied versions gain the new sections without dropping cust
   assert.deepEqual(loaded.draft.specials.productIds, []);
   assert.equal(loaded.revision, saved.revision);
   assert.equal(storage.getItem(websiteKey(scope)), raw);
+});
+
+test('hero settings remain compatible and validate editorial autoplay limits', async () => {
+  const { heroSliderSettings, nextSlide } = await import('../src/lib/website/slider.mjs');
+  assert.deepEqual(heroSliderSettings(), { autoplay: true, intervalMs: 6000 });
+  assert.deepEqual(heroSliderSettings({ autoplay: false, intervalMs: 9000 }), { autoplay: false, intervalMs: 9000 });
+  assert.equal(heroSliderSettings({ intervalMs: 10 }).intervalMs, 6000);
+  assert.equal(nextSlide(2, 3), 0);
+  assert.equal(nextSlide(0, 3, -1), 2);
+  assert.equal(nextSlide(0, 0), 0);
+  const document = structuredClone(initial);
+  delete document.heroSlider;
+  assert.deepEqual(validateWebsite(document), {});
+  document.heroSlider = { autoplay: 'yes', intervalMs: 2999 };
+  assert.ok(validateWebsite(document)['banners.autoplay']);
+  assert.ok(validateWebsite(document)['banners.intervalMs']);
+  document.heroSlider = { autoplay: true, intervalMs: 15001 };
+  assert.ok(validateWebsite(document)['banners.intervalMs']);
+});
+
+test('notice CTA and descriptions accept old records and reject empty or oversized editorial copy', () => {
+  const document = structuredClone(initial);
+  const item = document.announcements.items[0];
+  delete item.ctaLabel; delete item.description;
+  assert.deepEqual(validateWebsite(document), {});
+  item.ctaLabel = '';
+  item.description = 'x'.repeat(181);
+  assert.ok(validateWebsite(document)['announcements.items.0.ctaLabel']);
+  assert.ok(validateWebsite(document)['announcements.items.0.description']);
+  item.ctaLabel = 'x'.repeat(41);
+  assert.ok(validateWebsite(document)['announcements.items.0.ctaLabel']);
+});
+
+test('local snapshots retain slider configuration, per-notice CTA and optimized hero media', async () => {
+  const repository = createLocalWebsiteRepository(memory(), []);
+  const document = structuredClone(initial);
+  document.heroSlider = { autoplay: false, intervalMs: 8000 };
+  document.announcements.items[0].ctaLabel = 'Haz tu pedido';
+  document.banners[0].imageUrl = 'data:image/webp;base64,AAAA';
+  document.banners[0].mobileImageUrl = 'data:image/webp;base64,AAAA';
+  document.banners[0].imageAlt = 'Banner editorial';
+  assert.deepEqual(validateWebsite(document), {});
+  const saved = await repository.saveDraft(scope, document, 0, initial);
+  await repository.publish(scope, saved.revision, initial);
+  const loaded = await repository.load(scope, initial);
+  assert.deepEqual(loaded.published.heroSlider, document.heroSlider);
+  assert.equal(loaded.published.announcements.items[0].ctaLabel, 'Haz tu pedido');
+  assert.equal(loaded.published.banners[0].mobileImageUrl, document.banners[0].mobileImageUrl);
+  document.banners[0].imageUrl = 'data:image/svg+xml;base64,PHN2Zz4=';
+  assert.ok(validateWebsite(document)['banners.0.imageUrl']);
 });
