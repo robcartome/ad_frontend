@@ -8,17 +8,20 @@ import { createWebsiteDocument, validateWebsite } from '@/lib/website/content.mj
 import { createLocalWebsiteRepository, websiteKey, localWebsiteScope } from '@/services/websiteRepository.mjs';
 import { demoProducts } from '@/data/demo/storefront';
 import { CollectionEditor, Field, SectionsEditor } from './WebsiteFields';
+import { AnnouncementsEditor, SpecialProductsEditor } from './ShowcaseEditor';
+import { SOCIAL_NETWORKS } from '@/lib/website/contact.mjs';
 
 const options = [
   ['overview', 'Resumen', Globe], ['identity', 'Identidad visual', Palette],
   ['banners', 'Banners', ImageIcon], ['promotions', 'Campañas', Megaphone],
+  ['announcements', 'Avisos (slider)', ImageIcon], ['specials', 'Ofertas especiales', Megaphone],
   ['sections', 'Secciones', LayoutTemplate], ['contact', 'Contacto', Phone], ['seo', 'SEO', Search],
 ];
 const stamp = value => value ? new Intl.DateTimeFormat('es-PE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Lima' }).format(new Date(value)) : 'Sin guardar';
 const copy = value => JSON.parse(JSON.stringify(value));
 
 export default function WebsiteEditor({ company, canEdit, canApply }) {
-  const initial = useMemo(() => createWebsiteDocument(company.name), [company.name]);
+  const initial = useMemo(() => createWebsiteDocument(company.name, demoProducts.map(product => product.id)), [company.name]);
   const scope = useMemo(() => localWebsiteScope(company.id), [company.id]);
   const [record, setRecord] = useState(null);
   const [document, setDocument] = useState(initial);
@@ -209,6 +212,8 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
               <div className="we-fields-grid">{field('identity', 'name', 'Nombre comercial', { maxLength: 100 })}{field('identity', 'shortName', 'Nombre corto del header', { maxLength: 40 })}{field('identity', 'location', 'Zona de atención', { maxLength: 100 })}{field('identity', 'primaryColor', 'Color principal', { placeholder: '#FF8000', hint: 'Color hexadecimal. Referencia de marca: #FF8000.' })}</div>{field('identity', 'logoUrl', 'Logo (URL)', { hint: 'Ruta local o URL HTTPS. Se mantiene el nombre como alternativa accesible.' })}{field('identity', 'announcement', 'Barra informativa', { maxLength: 180 })}
             </>}
             {['banners', 'promotions'].includes(tab) && <CollectionEditor type={tab} items={document[tab]} errors={errors} products={demoProducts} onChange={items => setDocument(previous => ({ ...previous, [tab]: items }))}/>}
+            {tab === 'announcements' && <AnnouncementsEditor value={document.announcements} errors={errors} onChange={announcements => setDocument(previous => ({ ...previous, announcements }))}/>}
+            {tab === 'specials' && <SpecialProductsEditor value={document.specials} products={demoProducts} errors={errors} onChange={specials => setDocument(previous => ({ ...previous, specials }))}/>}
             {tab === 'sections' && <SectionsEditor sections={document.sections} errors={errors} onChange={sections => setDocument(previous => ({ ...previous, sections }))}/>}
             {tab === 'contact' && <>
               <div className="we-section-intro">
@@ -217,7 +222,9 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
                   <p>Datos comerciales de esta tienda; no alteran la ficha fiscal del ERP.</p>
                 </div>
               </div>
-              <div className="we-fields-grid">{field('contact', 'phone', 'Teléfono comercial', { maxLength: 40 })}{field('contact', 'whatsapp', 'WhatsApp', { inputMode: 'numeric', hint: 'Código de país y número, sin + ni espacios. Permanecerá inactivo en la demo.' })}</div>{field('contact', 'address', 'Dirección', { multiline: true, maxLength: 300 })}{field('contact', 'hours', 'Horario de atención', { maxLength: 180 })}
+              <div className="we-fields-grid">{field('contact', 'phone', 'Teléfono comercial', { type: 'tel', maxLength: 40 })}{field('contact', 'secondaryPhone', 'Teléfono adicional', { type: 'tel', maxLength: 40 })}{field('contact', 'email', 'Correo comercial', { type: 'email', maxLength: 180 })}{field('contact', 'whatsapp', 'WhatsApp', { inputMode: 'numeric', hint: 'Código de país y número, sin + ni espacios. Permanecerá inactivo en la demo.' })}</div>{field('contact', 'address', 'Dirección', { multiline: true, maxLength: 300 })}{field('contact', 'hours', 'Horario de atención', { maxLength: 180 })}
+              <div className="we-section-intro"><div><h2>Redes sociales</h2><p>Agrega los perfiles oficiales de la tienda. Deja vacío lo que no uses; no se crean enlaces ficticios.</p></div></div>
+              {SOCIAL_NETWORKS.map(network => <Field key={network.id} label={network.label} path={`contact.socials.${network.id}`} value={document.contact.socials?.[network.id] ?? ''} maxLength={300} placeholder={`https://${network.hosts[0]}/…`} hint={`URL HTTPS de tu perfil de ${network.label}.`} errors={errors} onChange={value => setDocument(previous => ({ ...previous, contact: { ...previous.contact, socials: { ...previous.contact.socials, [network.id]: value } } }))}/>)}
             </>}
             {tab === 'seo' && <>
               <div className="we-section-intro">

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWebsiteDocument, upgradeWebsiteDocument, validateWebsite, isSafeLink, isSafeImage, visiblePromotions, previewStore, fromLimaInput, limaDateInput } from '../src/lib/website/content.mjs';
+import { WEBSITE_SCHEMA_VERSION, MAX_LOCAL_IMAGE_BYTES, createWebsiteDocument, upgradeWebsiteDocument, validateWebsite, isSafeLink, isSafeImage, isAnnouncementImage, specialProducts, visiblePromotions, previewStore, fromLimaInput, limaDateInput } from '../src/lib/website/content.mjs';
 import { createLocalWebsiteRepository, createDjangoWebsiteRepository, websiteKey } from '../src/services/websiteRepository.mjs';
 
 const scope = { companyId: 'company-one', websiteId: 'default' };
@@ -129,7 +129,7 @@ test('old editorial documents migrate storefront destinations without changing w
   const raw = JSON.stringify({ ...first, schemaVersion: 1, draft: oldDocument, published: oldDocument });
   storage.setItem(websiteKey(scope), raw);
   const migrated = await repository.load(scope, initial);
-  assert.equal(migrated.draft.schemaVersion, 2);
+  assert.equal(migrated.draft.schemaVersion, WEBSITE_SCHEMA_VERSION);
   assert.equal(migrated.draft.banners[0].title, 'Mensaje conservado');
   assert.equal(migrated.draft.banners[0].href, '/shop?category=herramientas');
   assert.equal(migrated.published.promotions[0].href, '/shop/demo-taladro');
@@ -140,4 +140,71 @@ test('old editorial documents migrate storefront destinations without changing w
   assert.equal(upgradeWebsiteDocument(current).banners[0].href, '/catalog');
   oldDocument.banners[0].href = '/catalogue';
   assert.equal(upgradeWebsiteDocument(oldDocument).banners[0].href, '/catalogue');
+});
+
+test('announcement slider enforces eight items, accessible images, safe links and badge configuration', () => {
+  const document = structuredClone(initial);
+  const template = document.announcements.items[0];
+  document.announcements.items = Array.from({ length: 8 }, (_, index) => ({ ...template, id: `notice-${index}`, badge: 'OFERTA POR DÍAS' }));
+  assert.deepEqual(validateWebsite(document), {});
+  document.announcements.items.push({ ...template, id: 'notice-nine' });
+  assert.ok(validateWebsite(document).announcements);
+  document.announcements.items.pop();
+  document.announcements.items[0].imageUrl = 'https://cdn.example.com/promo.webp';
+  document.announcements.items[0].imageAlt = '';
+  document.announcements.items[0].badgePosition = 'arbitrary-position';
+  document.announcements.items[0].href = 'javascript:alert(1)';
+  const errors = validateWebsite(document);
+  assert.ok(errors['announcements.items.0.imageAlt']);
+  assert.ok(errors['announcements.items.0.badgePosition']);
+  assert.ok(errors['announcements.items.0.href']);
+});
+
+test('special products are limited to four owned IDs and retain the selected editorial order', () => {
+  const products = Array.from({ length: 5 }, (_, index) => ({ id: `product-${index}` }));
+  const ids = products.map(product => product.id);
+  const document = createWebsiteDocument('Mi empresa', ids);
+  assert.equal(document.specials.productIds.length, 4);
+  assert.deepEqual(validateWebsite(document, ids), {});
+  document.specials.productIds = [ids[3], ids[1]];
+  assert.deepEqual(specialProducts(document, products).map(product => product.id), [ids[3], ids[1]]);
+  document.specials.productIds = ids;
+  assert.ok(validateWebsite(document, ids)['specials.productIds']);
+  assert.equal(specialProducts(document, products).length, 4);
+  document.specials.productIds = ['other-company'];
+  assert.ok(validateWebsite(document, ids)['specials.productIds']);
+  document.specials.productIds = [ids[0], ids[0]];
+  assert.ok(validateWebsite(document, ids)['specials.productIds']);
+});
+
+test('local announcement image validation rejects active formats and oversized payloads', () => {
+  const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Yj4XFEAAAAASUVORK5CYII=';
+  assert.equal(isAnnouncementImage(pixel), true);
+  assert.equal(isSafeImage(pixel), false, 'Inline demo media is confined to announcements');
+  assert.equal(isAnnouncementImage('data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='), false);
+  assert.equal(isAnnouncementImage('data:text/html;base64,AAAA'), false);
+  assert.equal(isAnnouncementImage('data:image/png;base64,%%%'), false);
+  assert.equal(isAnnouncementImage(`data:image/webp;base64,${Buffer.alloc(MAX_LOCAL_IMAGE_BYTES + 1).toString('base64')}`), false);
+});
+
+test('v2 drafts and applied versions gain the new sections without dropping custom content or writing on read', async () => {
+  const storage = memory();
+  const repository = createLocalWebsiteRepository(storage, []);
+  const saved = await repository.saveDraft(scope, initial, 0, initial);
+  const older = structuredClone(initial);
+  older.schemaVersion = 2;
+  older.sections = older.sections.filter(section => !['announcements', 'specials'].includes(section.type));
+  older.sections[0].title = 'Título anterior personalizado';
+  delete older.announcements;
+  delete older.specials;
+  const raw = JSON.stringify({ ...saved, schemaVersion: 2, draft: older, published: older });
+  storage.setItem(websiteKey(scope), raw);
+  const loaded = await repository.load(scope, initial);
+  assert.equal(loaded.draft.schemaVersion, WEBSITE_SCHEMA_VERSION);
+  assert.equal(loaded.draft.sections[0].title, 'Título anterior personalizado');
+  assert.equal(loaded.draft.sections.length, 7);
+  assert.equal(loaded.published.announcements.items.length, 4);
+  assert.deepEqual(loaded.draft.specials.productIds, []);
+  assert.equal(loaded.revision, saved.revision);
+  assert.equal(storage.getItem(websiteKey(scope)), raw);
 });

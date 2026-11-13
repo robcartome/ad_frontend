@@ -3,10 +3,11 @@ import { ArrowRight, ArrowUpRight, Headphones, ClipboardList, PackageCheck, Truc
 import { createWebsiteDocument, visiblePromotions } from '@/lib/website/content.mjs';
 import ProductArt from './ProductArt';
 import StoreHero from './StoreHero';
-import CatalogImage from './CatalogImage';
-import ProductCard from '@/components/commerce/ProductCard';
+import CategoryProducts from './CategoryProducts';
+import AnnouncementSlider from './AnnouncementSlider';
+import SpecialProducts from './SpecialProducts';
 
-export default function StoreHome({ store, categories, products, content = createWebsiteDocument(store.name), now }) {
+export default function StoreHome({ store, categories, products, content = createWebsiteDocument(store.name, products.map(product => product.id)), now }) {
   const promotions = visiblePromotions(content, now);
   return <>
 
@@ -22,45 +23,9 @@ export default function StoreHome({ store, categories, products, content = creat
       </div>)}
       </div>;
 
-      if (section.type === 'categories') return <section key={section.type} className="sf-container sf-section">
-
-      <div className="sf-section-heading">
-        <div>
-          <span className="sf-eyebrow">ENCUENTRA LO QUE NECESITAS</span>
-          <h2>{section.title}</h2>
-        </div>
-        <Link href="/shop">Ver categorías
-          <ArrowRight size={17}/>
-        </Link>
-      </div>
-
-      <div className="sf-categories">{categories.map(category => <Link href={`/shop?${new URLSearchParams({ category: category.id })}`} key={category.id} className="sf-category">
-          <div>
-            <CatalogImage src={category.imageUrl} alt={category.name} type={category.icon}/>
-          </div>
-          <h3>{category.name}</h3>
-          <span>{category.description}</span>
-          <small>Explorar <ArrowRight size={13}/></small>
-        </Link>)}</div>
-
-    </section>;
-
-      if (section.type === 'featured') return <section key={section.type} className="sf-container sf-section">
-
-      <div className="sf-section-heading">
-        <div>
-          <span className="sf-eyebrow">PREPARA TU CAJA DE HERRAMIENTAS</span>
-          <h2>{section.title}</h2>
-          <p>Explora una selección ilustrativa de nuestro futuro catálogo.</p>
-        </div>
-        <Link href="/shop">Ver todos los productos
-          <ArrowRight size={17}/>
-        </Link>
-      </div>
-
-      <div className="sf-product-grid">{products.slice(0, 4).map(product => <ProductCard key={product.id} product={product}/>)}</div>
-
-    </section>;
+      if (section.type === 'announcements') return <AnnouncementSlider key={section.type} title={section.title} content={content.announcements}/>;
+      if (section.type === 'specials') return <SpecialProducts key={section.type} title={section.title} document={content} products={products}/>;
+      if (section.type === 'featured') return <CategoryProducts key={section.type} title={section.title} categories={categories} products={products} demo={store.mode === 'demo'}/>;
 
       if (section.type === 'promotions') return <div key={section.type} aria-label={section.title}>
         {promotions.map(promotion => <section key={promotion.id} className="sf-container sf-project-banner">

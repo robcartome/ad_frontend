@@ -6,7 +6,7 @@ const categories = demoCategories.map(normalizeCategory);
 const demoStore = {
     id: 'tolentino-soledad-demo', name: 'Ferretería Tolentino', shortName: 'TOLENTINO',
     location: 'La Soledad', template: 'ecommerce', mode: 'demo',
-    whatsapp: null, phone: null, address: null, hours: null,
+    whatsapp: null, phone: null, secondaryPhone: null, email: null, address: null, hours: null, socials: {},
     colors: { primary: '#FF8000', background: '#f5f5f6', muted: '#F2F2F2' },
     description: 'Herramientas, materiales y asesoría para construir tus proyectos.',
 };

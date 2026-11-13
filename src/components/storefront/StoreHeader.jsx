@@ -3,12 +3,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Menu, X, Search, ShoppingBag, ArrowUpRight, Hammer, MapPin, ChevronRight, Drill, Paintbrush, Cable, HardHat, BrickWall, Pipette } from 'lucide-react';
+import { Menu, X, Search, ShoppingBag, ArrowUpRight, Hammer, MapPin, ChevronRight, UsersRound, Headphones } from 'lucide-react';
 import { useCart } from '@/components/commerce/CartProvider';
+import CategoryIcon from './CategoryIcon';
 export default function StoreHeader({ store, categories }) {
     const { count } = useCart();
     const [open, setOpen] = useState(false);
-    const icons = { drill: Drill, brick: BrickWall, pipe: Pipette, cable: Cable, paint: Paintbrush, helmet: HardHat };
     return <Dialog.Root open={open} onOpenChange={setOpen}>
     <div className="sf-demo">Vista de demostración · Productos y precios ilustrativos · Sin pedidos reales</div>
     <div className="sf-top">
@@ -42,26 +42,24 @@ export default function StoreHeader({ store, categories }) {
             <Search size={21}/>
           </button>
         </form>
-        <Link className="sf-header-contact" href="/contact">
-          <span>¿Necesitas ayuda?</span>
-          <strong>Te asesoramos 
-            <ArrowUpRight size={15}/>
-          </strong>
-        </Link>
+        <div className="sf-header-actions">
+          <Link href="/about" className="sf-header-quick-link"><UsersRound size={22} aria-hidden="true"/><span>Nosotros</span></Link>
+          <Link href="/contact" className="sf-header-quick-link"><Headphones size={22} aria-hidden="true"/><span>Contacto</span></Link>
         <Link href="/cart" className="sf-cart-link" aria-label={`Mi cotización, ${count} unidades`}>
           <ShoppingBag size={25}/>
           <span className="sf-cart-count">{count}</span>
           <span className="sf-cart-label">Mi cotización</span>
         </Link>
-        <Dialog.Trigger asChild><button className="sf-menu-toggle" aria-label="Abrir categorías"><Menu /></button></Dialog.Trigger>
+        </div>
       </div>
       <nav id="store-navigation" aria-label="Navegación comercial" className="sf-nav">
-        <div className="sf-container">
-          <Dialog.Trigger asChild><button className="sf-all-categories">
-            <Menu size={18}/> Todas las categorías
-          </button></Dialog.Trigger>{categories.slice(0, 4).map(category => <Link key={category.id} href={`/shop?${new URLSearchParams({ category: category.id })}`}>{category.name}</Link>)}
-          <Link href="/about" onClick={() => setOpen(false)}>Nosotros</Link>
-          <Link href="/contact" onClick={() => setOpen(false)}>Contacto</Link>
+        <div className="sf-container sf-nav-inner">
+          <Dialog.Trigger asChild><button className="sf-all-categories" aria-label="Todas las categorías">
+            <Menu size={18}/><span>Todas las categorías</span>
+          </button></Dialog.Trigger>
+          <div className="sf-categories sf-nav-categories" role="region" aria-label="Categorías de productos" tabIndex={0}>
+            {categories.map(category => <Link className="sf-nav-category" key={category.id} href={`/shop?${new URLSearchParams({ category: category.id })}`}><CategoryIcon type={category.icon} size={19}/><span>{category.name}</span></Link>)}
+          </div>
         </div>
       </nav>
     </header>
@@ -72,7 +70,7 @@ export default function StoreHeader({ store, categories }) {
         <Dialog.Description className="sf-drawer-description">Encuentra lo que necesitas para construir, renovar y reparar.</Dialog.Description>
         <nav aria-label="Todas las categorías" className="sf-drawer-links">
           <Link href="/shop" onClick={() => setOpen(false)}><span className="sf-drawer-icon"><Menu size={22}/></span><span><strong>Ver todos los productos</strong><small>Explora el catálogo completo</small></span><ChevronRight size={17}/></Link>
-          {categories.map(category => { const Icon = icons[category.icon] || Hammer; return <Link key={category.id} href={`/shop?${new URLSearchParams({ category: category.id })}`} onClick={() => setOpen(false)}><span className="sf-drawer-icon"><Icon size={22}/></span><span><strong>{category.name}</strong><small>{category.description}</small></span><ChevronRight size={17}/></Link>; })}
+          {categories.map(category => <Link key={category.id} href={`/shop?${new URLSearchParams({ category: category.id })}`} onClick={() => setOpen(false)}><span className="sf-drawer-icon"><CategoryIcon type={category.icon} size={22}/></span><span><strong>{category.name}</strong><small>{category.description}</small></span><ChevronRight size={17}/></Link>)}
         </nav>
         <Link href="/contact" className="sf-drawer-help" onClick={() => setOpen(false)}>¿No sabes cuál elegir? Te asesoramos <ArrowUpRight size={17}/></Link>
       </Dialog.Content>

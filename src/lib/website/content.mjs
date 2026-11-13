@@ -1,31 +1,65 @@
-export const WEBSITE_SCHEMA_VERSION = 2;
-export const SECTION_TYPES = ['benefits', 'categories', 'featured', 'promotions', 'about'];
+import { SOCIAL_NETWORKS, socialUrl, validEmail } from './contact.mjs';
+
+export const WEBSITE_SCHEMA_VERSION = 3;
+export const MAX_ANNOUNCEMENTS = 8;
+export const MAX_SPECIAL_PRODUCTS = 4;
+export const MAX_LOCAL_IMAGE_BYTES = 150 * 1024;
+export const BADGE_POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+export const SECTION_TYPES = ['benefits', 'categories', 'announcements', 'specials', 'featured', 'promotions', 'about'];
 export const ART_TYPES = ['drill', 'grinder', 'cement', 'paint', 'pipe', 'cable', 'helmet', 'brick'];
 
 // Version 1 used /catalog for storefront links. That URL now belongs exclusively
 // to the existing worker catalog. Preserve content while updating its old destinations.
 export function upgradeWebsiteDocument(document) {
-  if (!document || document.schemaVersion !== 1) return document;
+  if (!document) return document;
   const upgradeItems = items => Array.isArray(items) ? items.map(item => item && typeof item === 'object' ? {
     ...item,
     href: typeof item.href === 'string' ? item.href.replace(/^\/catalog(?=$|[/?#])/, '/shop') : item.href,
   } : item) : items;
-  return { ...document, schemaVersion: WEBSITE_SCHEMA_VERSION, banners: upgradeItems(document.banners), promotions: upgradeItems(document.promotions) };
+  const next = document.schemaVersion === 1 ? { ...document, schemaVersion: 2, banners: upgradeItems(document.banners), promotions: upgradeItems(document.promotions) } : document;
+  if (next.schemaVersion !== 2) return next;
+  let sections = next.sections;
+  if (Array.isArray(sections)) {
+    sections = sections.map(section => ({ ...section }));
+    const additions = [
+      { type: 'announcements', enabled: true, title: 'Encuentra tu próximo proyecto' },
+      { type: 'specials', enabled: true, title: 'Destacados y ofertas especiales' },
+    ].filter(section => !sections.some(existing => existing.type === section.type));
+    const position = sections.findIndex(section => section.type === 'categories');
+    sections.splice(position + 1, 0, ...additions);
+  }
+  return { ...next, schemaVersion: WEBSITE_SCHEMA_VERSION, sections, announcements: next.announcements ?? createAnnouncements(), specials: next.specials ?? { productIds: [] } };
 }
 
-export function createWebsiteDocument(companyName = 'Ferretería Tolentino') {
+function createAnnouncements() {
+  return {
+    ctaLabel: 'Ver más productos', href: '/shop',
+    items: [
+      { id: 'aviso-herramientas', enabled: true, title: 'Equípate para tu proyecto', badge: 'DESTACADO', badgePosition: 'top-left', href: '/shop?category=herramientas', imageUrl: '', imageAlt: '', art: 'drill' },
+      { id: 'aviso-pinturas', enabled: true, title: 'Renueva tus espacios', badge: 'INSPÍRATE', badgePosition: 'top-left', href: '/shop?category=pinturas', imageUrl: '', imageAlt: '', art: 'paint' },
+      { id: 'aviso-construccion', enabled: true, title: 'Todo para empezar tu obra', badge: '', badgePosition: 'top-left', href: '/shop?category=construccion', imageUrl: '', imageAlt: '', art: 'brick' },
+      { id: 'aviso-seguridad', enabled: true, title: 'Trabaja con confianza', badge: 'SELECCIÓN', badgePosition: 'top-left', href: '/shop?category=seguridad', imageUrl: '', imageAlt: '', art: 'helmet' },
+    ],
+  };
+}
+
+export function createWebsiteDocument(companyName = 'Ferretería Tolentino', productIds = []) {
   const name = typeof companyName === 'string' && companyName.trim() ? companyName.trim().slice(0, 100) : 'Mi empresa';
   return {
     schemaVersion: WEBSITE_SCHEMA_VERSION,
     identity: { name, shortName: name === 'Ferretería Tolentino' ? 'TOLENTINO' : name.slice(0, 40), location: name === 'Ferretería Tolentino' ? 'La Soledad' : 'Zona de atención por configurar', primaryColor: '#FF8000', logoUrl: '', announcement: 'Materiales, herramientas y soluciones para tu proyecto' },
-    contact: { phone: '', whatsapp: '', address: '', hours: '' },
+    contact: { phone: '', secondaryPhone: '', email: '', whatsapp: '', address: '', hours: '', socials: Object.fromEntries(SOCIAL_NETWORKS.map(network => [network.id, ''])) },
     seo: { title: `${name} | Construye tus proyectos`.slice(0, 70), description: 'Herramientas, materiales y asesoría para construir tus proyectos.' },
+    announcements: createAnnouncements(),
+    specials: { productIds: [...new Set(productIds)].slice(0, MAX_SPECIAL_PRODUCTS) },
     banners: [{ id: 'banner-principal', enabled: true, eyebrow: 'MANOS A LA OBRA', title: 'Tu próximo proyecto empieza aquí.', description: 'Herramientas, materiales y soluciones. Todo para construir, renovar y hacer más.', ctaLabel: 'Explorar productos', href: '/shop', imageUrl: '', mobileImageUrl: '', imageAlt: '', art: 'drill' }],
     promotions: [{ id: 'campana-proyectos', enabled: true, eyebrow: 'DE LA IDEA A LA OBRA', title: 'Hagamos realidad lo que tienes en mente.', description: 'Reúne tus materiales y solicita orientación para tu proyecto.', ctaLabel: 'Preparar mi lista', href: '/shop', startsAt: '', endsAt: '', productIds: [] }],
     sections: [
       { type: 'benefits', enabled: true, title: 'A tu lado, de principio a fin' },
       { type: 'categories', enabled: true, title: 'Una solución para cada proyecto' },
-      { type: 'featured', enabled: true, title: 'Ideas para empezar' },
+      { type: 'announcements', enabled: true, title: 'Encuentra tu próximo proyecto' },
+      { type: 'specials', enabled: true, title: 'Destacados y ofertas especiales' },
+      { type: 'featured', enabled: true, title: 'Encuentra lo mejor para tu proyecto' },
       { type: 'promotions', enabled: true, title: 'Para tu próximo proyecto' },
       { type: 'about', enabled: true, title: 'Construir también es contar con alguien.' },
     ],
@@ -46,6 +80,23 @@ export function isSafeImage(value) {
   } catch { return false; }
 }
 
+// Inline files are restricted to this local demo's announcements, never SVG/HTML.
+// Production must upload media separately and replace these values with asset URLs.
+export function isAnnouncementImage(value) {
+  if (typeof value === 'string' && value.startsWith('data:')) {
+    const match = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
+    if (!match || match[2].length % 4 !== 0) return false;
+    const padding = match[2].endsWith('==') ? 2 : match[2].endsWith('=') ? 1 : 0;
+    return match[2].length / 4 * 3 - padding <= MAX_LOCAL_IMAGE_BYTES;
+  }
+  return isSafeImage(value);
+}
+
+export function specialProducts(document, products) {
+  const byId = new Map(products.map(product => [product.id, product]));
+  return (document.specials?.productIds ?? []).slice(0, MAX_SPECIAL_PRODUCTS).map(id => byId.get(id)).filter(Boolean);
+}
+
 export function validateWebsite(document, productIds = []) {
   const errors = {};
   const requiredText = (value, key, label, max) => {
@@ -63,9 +114,42 @@ export function validateWebsite(document, productIds = []) {
   if (!/^#[0-9a-f]{6}$/i.test(document.identity?.primaryColor ?? '')) errors['identity.primaryColor'] = 'Usa un color hexadecimal de seis dígitos.';
   if (!isSafeImage(document.identity?.logoUrl)) errors['identity.logoUrl'] = 'Usa una ruta local o URL HTTPS válida.';
   for (const [key, max] of [['phone', 40], ['whatsapp', 15], ['address', 300], ['hours', 180]]) optionalText(document.contact?.[key], `contact.${key}`, 'Dato de contacto', max);
+  optionalText(document.contact?.secondaryPhone ?? '', 'contact.secondaryPhone', 'Teléfono adicional', 40);
+  optionalText(document.contact?.email ?? '', 'contact.email', 'Correo comercial', 180);
+  if (document.contact?.email && !validEmail(document.contact.email)) errors['contact.email'] = 'Ingresa un correo comercial válido.';
+  const socials = document.contact?.socials;
+  if (socials !== undefined && (!socials || typeof socials !== 'object' || Array.isArray(socials))) errors['contact.socials'] = 'La configuración de redes sociales no es válida.';
+  else SOCIAL_NETWORKS.forEach(network => {
+    optionalText(socials?.[network.id] ?? '', `contact.socials.${network.id}`, `Perfil de ${network.label}`, 300);
+    if (socials?.[network.id] && !socialUrl(socials[network.id], network.id)) errors[`contact.socials.${network.id}`] = `Usa la URL HTTPS de tu perfil de ${network.label}.`;
+  });
   if (document.contact?.whatsapp && !/^\d{8,15}$/.test(document.contact.whatsapp)) errors['contact.whatsapp'] = 'Incluye código de país y solo dígitos (8–15).';
   requiredText(document.seo?.title, 'seo.title', 'Título SEO', 70);
   requiredText(document.seo?.description, 'seo.description', 'Descripción SEO', 180);
+
+  requiredText(document.announcements?.ctaLabel, 'announcements.ctaLabel', 'Texto del botón del slider', 40);
+  if (!isSafeLink(document.announcements?.href)) errors['announcements.href'] = 'El botón del slider debe enlazar a una ruta interna.';
+  const notices = document.announcements?.items;
+  if (!Array.isArray(notices) || notices.length > MAX_ANNOUNCEMENTS) errors.announcements = `Máximo ${MAX_ANNOUNCEMENTS} avisos en el slider.`;
+  else {
+    const seen = new Set();
+    notices.forEach((item, index) => {
+      const prefix = `announcements.items.${index}`;
+      if (!item || typeof item.id !== 'string' || !/^[\w-]{1,80}$/.test(item.id) || seen.has(item.id)) { errors[prefix] = 'Aviso inválido o duplicado.'; return; }
+      seen.add(item.id);
+      requiredText(item.title, `${prefix}.title`, 'Título del aviso', 100);
+      optionalText(item.badge, `${prefix}.badge`, 'Badge del aviso', 40);
+      optionalText(item.imageAlt, `${prefix}.imageAlt`, 'Descripción de imagen', 180);
+      if (typeof item.enabled !== 'boolean') errors[`${prefix}.enabled`] = 'Visibilidad inválida.';
+      if (!BADGE_POSITIONS.includes(item.badgePosition)) errors[`${prefix}.badgePosition`] = 'Posición de badge inválida.';
+      if (!ART_TYPES.includes(item.art)) errors[`${prefix}.art`] = 'Ilustración inválida.';
+      if (!isSafeLink(item.href)) errors[`${prefix}.href`] = 'Usa un enlace interno, por ejemplo /shop.';
+      if (!isAnnouncementImage(item.imageUrl)) errors[`${prefix}.imageUrl`] = 'Usa HTTPS, una ruta local o una imagen local optimizada de hasta 150 KB.';
+      if (item.imageUrl && !item.imageAlt?.trim()) errors[`${prefix}.imageAlt`] = 'Describe la imagen para accesibilidad.';
+    });
+  }
+  const selected = document.specials?.productIds;
+  if (!Array.isArray(selected) || selected.length > MAX_SPECIAL_PRODUCTS || new Set(selected).size !== selected.length || selected.some(id => !productIds.includes(id))) errors['specials.productIds'] = `Selecciona hasta ${MAX_SPECIAL_PRODUCTS} productos válidos de esta tienda, sin duplicados.`;
 
   for (const collection of ['banners', 'promotions']) {
     const list = document[collection];
@@ -110,8 +194,9 @@ export function visiblePromotions(document, now = Date.now()) {
 
 export function previewStore(base, document) {
   const { name, shortName, location, logoUrl, announcement } = document.identity;
-  const { phone, whatsapp, address, hours } = document.contact;
-  return { ...base, name, shortName, location, logoUrl, announcement, phone, whatsapp, address, hours, description: document.seo.description, colors: { ...base.colors, primary: document.identity.primaryColor }, mode: 'demo' };
+  const { phone, secondaryPhone = '', email = '', whatsapp, address, hours, socials = {} } = document.contact;
+  const publicSocials = Object.fromEntries(SOCIAL_NETWORKS.map(network => [network.id, socialUrl(socials?.[network.id], network.id) ?? '']));
+  return { ...base, name, shortName, location, logoUrl, announcement, phone, secondaryPhone, email, whatsapp, address, hours, socials: publicSocials, description: document.seo.description, colors: { ...base.colors, primary: document.identity.primaryColor }, mode: 'demo' };
 }
 
 export function limaDateInput(iso) {

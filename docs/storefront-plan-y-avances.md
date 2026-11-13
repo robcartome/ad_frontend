@@ -1,6 +1,6 @@
 # APUDIG storefront — plan y continuidad
 
-Última actualización: 12 de noviembre de 2026 (America/Lima).
+Última actualización: 13 de noviembre de 2026 (America/Lima).
 
 **Estado actual:** el panel Next administra la web y mantiene los catálogos laborales. `/catalog` recupera su vista anterior; `/admin/catalog_admin` no se modifica; el storefront comercial usa `/shop` y `/shop/[id]`. El editor `/admin/website` comprueba permisos dentro de la página, guarda borradores locales y no publica en `/`. Leer la entrega 3 al final, [las decisiones de rutas](admin-web-y-catalogos.md) y [el plan Django](website-cms-backend-plan.md) antes de continuar.
 
@@ -209,3 +209,100 @@ Se añadieron DTOs públicos y factorías de servicios reexportadas desde `produ
 Verificado: lint/build correctos, 21 pruebas correctas (incluidas 4 nuevas de DTO/transporte público), 16 casos HTTP correctos en puerto 3001. Advertencia preexistente de baseline-browser-mapping sin actualizar dependencias.
 
 Revisión visual NO completada: host de navegador no disponible y Computer Use detuvo el intento al no poder verificar la URL activa de Chrome. No afirmar validación visual móvil ni interacciones. Pendiente revisar 320/375/768/1024/1440 px, panel/Escape/foco, imágenes y carrito. API real, paginación remota, permisos, CMS Django y demás pendientes anteriores siguen abiertos. No hubo commit, push ni despliegue.
+
+## Entrega 5 — Filas horizontales y CTA compactos (13/11/2026)
+
+### Prioridad visual actual
+
+El usuario reemplaza la indicación anterior de letras azul marino sobre naranja: **CTA naranja `#FF8000` con texto/iconos blancos `#FFFFFF`**. Mantener azul marino para texto sobre blanco o superficies claras. Referencias: capturas de Promart/Sodimac aportadas por el usuario; no se copiaron activos.
+
+Rama comprobada: `mvp_website`. Había un cambio local de formato en `src/app/(public)/page.js`; se conservó sin editar. No cambiar de rama ni atribuir ese cambio a esta entrega.
+
+### Cambios
+
+- Categorías de inicio más pequeñas y minimalistas: iconos Lucide con círculo claro y nombre, sin tarjetas grandes, descripción ni enlace redundante. Una sola fila con overflow horizontal tanto móvil como escritorio; scrollbar cuando el contenido supera el ancho disponible.
+- Nuevo `HorizontalRail`: scroll nativo, snap suave, flechas anterior/siguiente con límites, foco de teclado y navegación con flechas; respeta preferencia de movimiento reducido. Sin nueva biblioteca de carousel ni autoplay.
+- Sección destacada convertida a «Ofertas y recomendados» por defecto, filtrable por categoría. Productos en fila horizontal, móvil/escritorio. Las ofertas con precio anterior válido aparecen primero; no hay calificaciones, métricas de popularidad ni descuentos inventados. Estado vacío si una categoría no tiene productos.
+- Títulos personalizados, visibilidad y orden siguen bajo el documento editorial existente. No se agrega un segundo CMS ni se altera el esquema de datos guardados.
+- CTA naranja y buscador con texto/icono blanco. Marca/carrito con iconos/texto blancos cuando llevan fondo naranja. Hero lateral con fondo marino y texto claro, evitando el anterior título blanco sobre gris claro.
+- CTA de producto: contorno/texto `#FF8000` y fondo transparente en reposo; naranja/blanco al hover, foco o cuando el producto ya está en el carrito. Icono de carrito al agregar, confirmación cuando está incluido y etiqueta móvil «Cotizar». Estado derivado del carrito real, no de una selección visual aislada.
+- Tarjetas móviles más bajas: imágenes de 100 px, nombre de dos líneas, marca en una línea, espacios reducidos, sin alturas vacías para ahorro/precio anterior ausentes; conserva unidad, disponibilidad, precio y aviso demo.
+
+### Archivos
+
+Nuevos: `components/storefront/CategoryIcon.jsx`, `CategoryProducts.jsx`, `HorizontalRail.jsx` y `storefront-rails.css` (bajo `src/`).
+
+Actualizados: `StoreHome.jsx`, `components/commerce/ProductCard.jsx`, estilos públicos, layouts público y editorial para compartir estilos de preview, helper `lib/commerce/catalog.mjs`, título inicial en `lib/website/content.mjs`, prueba de selección por categoría y documentación.
+
+### Verificaciones
+
+- `npm.cmd run lint`: correcto.
+- `npm.cmd run build`: correcto.
+- `node --test tests/commerce.test.mjs tests/website.test.mjs tests/admin-routes.test.mjs tests/storefront-api.test.mjs`: **22 pruebas correctas**; nueva prueba de filtro por categoría, ofertas válidas, categoría vacía y fuente sin mutaciones.
+- Smoke de producción temporal en puerto 3110: **16 casos HTTP correctos**. Servidor temporal cerrado al terminar.
+- Comparación con HEAD: sin cambios en páginas/layout laboral `/catalog`, `/admin/catalog_admin`, `CatalogPage`, tarjetas/modal administrativos y servicios laborales de productos/categorías.
+- Revisión visual **no completada**: se intentó Computer Use; el control de Windows detuvo la operación al no poder verificar con suficiente confianza la URL activa de Chrome. No se continuó con acciones de navegador ni se eludió la restricción. No afirmar validación visual/interactiva de los carruseles.
+- Sin Django, dependencias nuevas, cambios de autenticación, commit/push ni despliegue. Continúa el aviso informativo preexistente de baseline-browser-mapping.
+
+### Próximo paso
+
+Revisar visualmente `/` y `/shop` en 320/375/768/1024/1440 px: una sola fila de categorías, overflow sin desbordamiento de página, navegación por categorías, flechas/scroll, CTA outline/hover/agregado y altura móvil. Comprobar con teclado y movimiento reducido; probar agregar desde el carrusel y su persistencia en `/cart`. La conexión de datos reales y los pendientes Django de entregas anteriores siguen sin activar.
+
+## Entrega 6 — Slider editable y especiales seleccionados (13/11/2026)
+
+### Funcionalidad
+
+- Nuevo bloque **Avisos (slider)**, independiente del banner hero: hasta 8 avisos, incluyendo ocultos. Tarjetas de imagen cuadrada, título, badge opcional superpuesto en cualquiera de las cuatro esquinas y enlace propio. Scroll horizontal y flechas con `HorizontalRail`; CTA centrado debajo «Ver más productos», editable junto con su destino.
+- Nuevo bloque **Destacados y ofertas especiales**, con hasta 4 productos elegidos del catálogo. Reutiliza la tarjeta comercial y sus precios/ofertas vigentes; selección y orden explícitos, sin inventar descuentos. Scroll horizontal si no caben. Sin selección, el bloque no aparece.
+- Nuevas opciones en `/admin/website`: **Avisos (slider)** y **Ofertas especiales**. Se mantienen permisos de lectura/edición/aplicación. En «Secciones» se controlan título, orden y visibilidad de ambos bloques.
+- Avisos: agregar/eliminar/ocultar/reordenar, elegir imagen de PC o URL, texto alternativo, badge libre (ej. OFERTA POR DÍAS) y posición. Los archivos PNG/JPEG/WebP de hasta 8 MB se optimizan localmente a un máximo de 150 KB antes de guardarse en el documento demo. No se suben a servidores.
+- La home de referencia muestra 4 avisos ilustrativos y 4 productos seleccionados por defecto. No se copian imágenes de las referencias del usuario. Los títulos/textos guardados anteriores se conservan.
+- Documento `schemaVersion: 3`. Las versiones v1/v2 se adaptan al leer, tanto borrador como snapshot aplicado, sin sobrescribir localStorage ni incrementar revisión. Se añaden los bloques nuevos; los documentos antiguos comienzan sin productos especiales elegidos, evitando asumir referencias de otra tienda.
+
+### Archivos de esta entrega
+
+Nuevos: `components/admin/website/ShowcaseEditor.jsx`, `components/storefront/AnnouncementSlider.jsx`, `components/storefront/SpecialProducts.jsx`, `lib/website/local-image.mjs` (todos bajo `src/`).
+
+Actualizados: modelo/validación editorial y repositorio local, WebsiteEditor/WebsitePreview/WebsiteFields, StoreHome, estilos de carruseles/editor y pruebas de límites, media y migración. Se amplía el contrato de `docs/website-cms-backend-plan.md` con avisos/especiales y pasos de subida de media en Django.
+
+### Verificaciones
+
+- `npm.cmd run lint`: correcto.
+- `npm.cmd run build`: correcto.
+- Suite Node de commerce/website/admin-routes/storefront-api: **26 pruebas correctas**. Nuevas pruebas para límites 8/4, IDs duplicados/ajenos, orden editorial, accesibilidad/enlaces/badges, formatos/tamaño inline y compatibilidad de borradores/aplicados v2.
+- Smoke de producción en puerto 3110: **16 casos HTTP correctos**. Comprobación adicional del HTML de `/`: 4 avisos, CTA «Ver más productos» y 4 tarjetas de especiales. Servidor temporal cerrado.
+- Comparación con HEAD confirma páginas/layout de `/catalog`, `/admin/catalog_admin`, componentes administrativos y servicios laborales sin cambios.
+- No se realizó revisión visual ni interacción con selector de archivos, canvas, editor o carruseles en navegador en esta entrega. Límite ya observado de Computer Use en la sesión; no afirmar validación visual por las pruebas HTTP.
+- Rama `mvp_website`. Se preservaron los cambios de la entrega 5 y el cambio de formato preexistente de `src/app/(public)/page.js`. Sin cambios en Django, autenticación, dependencias, commit/push o despliegue.
+
+### Alcance local y próximo paso
+
+El editor sigue guardando por empresa en este navegador y mostrando sus cambios en la vista previa protegida. **No actualiza automáticamente la página pública `/` ni sincroniza archivos entre PC** hasta implementar el backend editorial. La home usa defaults del servidor para mostrar la nueva composición.
+
+Al retomar: seleccionar archivo real, comprobar su preview/alt/badge, guardar/aplicar y recargar; probar límite 8 avisos y selección/reordenamiento de 4 productos; confirmar que el quinto no puede elegirse. Revisar móvil/escritorio y roles de solo lectura. Implementar media Django con ownership y sustituir data URLs por referencias autorizadas antes de conectar la API productiva. No modificar catálogos laborales.
+
+## Entrega 7 — Categorías en store-navigation (13/11/2026)
+
+- Título inicial de `sf-category-products`: **Encuentra lo mejor para tu proyecto**. Sigue editable desde Secciones; no se sobrescriben títulos personalizados guardados.
+- Categorías movidas a `#store-navigation`: icono Lucide y nombre en la misma línea. Se elimina `slice(0, 4)` y se renderiza todo el array recibido, preparado para el catálogo público futuro.
+- Barra visible en móvil/escritorio, una sola fila con overflow horizontal, scrollbar fino y categorías sin encogerse. En móvil el botón «Todas las categorías» se compacta a icono; conserva etiqueta accesible y apertura del panel Radix.
+- Se retira la fila independiente de categorías en Home. El tipo editorial `categories` permanece en el documento v3 por compatibilidad, pero ya no renderiza una sección ni controla la navegación. En el editor aparece una explicación en lugar de controles inactivos de título/visibilidad. No fue necesario cambiar versión de esquema ni borrar datos.
+- Iconos unificados entre navegación, panel lateral y filtros por categoría mediante `CategoryIcon`; fallback para tipos desconocidos. No se implementaron subcategorías ficticias ni llamadas nuevas al backend.
+- Archivos: StoreHeader, StoreHome, CategoryProducts, stylesheet de carruseles/navegación, título inicial del documento y WebsiteFields.
+
+Verificaciones: lint/build correctos, **26 pruebas correctas**, **16 casos HTTP correctos**. Comprobación adicional en HTML: 6 categorías con sus iconos dentro de `store-navigation`, nuevo título y ausencia de la fila independiente. Páginas/componentes/servicios laborales comparados con HEAD sin cambios. Servidor temporal cerrado. Sin revisión visual/interacciones de navegador; comprobar manualmente overflow/foco en móvil y con muchas categorías. Se mantuvieron rama `mvp_website` y cambios locales previos. Sin Django, despliegue ni cambios de autenticación.
+
+## Entrega 8 — Accesos en header y footer de contacto (13/11/2026)
+
+- **Nosotros** y **Contacto** pasan al header junto al carrito, con iconos y etiquetas visibles, también en móvil. Se retiran de la fila horizontal de categorías. Se conserva el acceso al panel de categorías desde la propia barra; se retira su trigger duplicado del header para dejar espacio en móvil.
+- Footer rediseñado: franja de atención comercial, identidad/ubicación/horarios, teléfonos y correo, enlaces de tienda/categorías, redes sociales y copyright. Enlaces de teléfono/correo cuando son válidos; WhatsApp continúa bloqueado en demo.
+- Redes con iconos: Facebook, Instagram, TikTok, YouTube y X. Solo perfiles HTTPS del proveedor indicado. Sin perfiles, la demo muestra iconos atenuados no interactivos y un texto de datos por confirmar. No se inventaron cuentas, números, correo, suscripciones, políticas ni métodos de pago.
+- `/admin/website` → **Contacto** incorpora teléfono adicional, correo comercial y URLs de redes sociales. Se conservan permisos y persistencia local. Nuevos campos opcionales dentro de documento v3; borradores anteriores sin esos campos siguen siendo válidos, sin nueva migración ni pérdida de contenido.
+- `previewStore` expone únicamente redes conocidas con URLs válidas. La fuente pública demo tiene campos vacíos; los datos locales del editor aparecen en preview protegida, no automáticamente en `/`.
+- `/contact` contempla teléfono adicional y correo comercial de la fuente de tienda, con enlaces seguros.
+
+Archivos: StoreHeader, StoreFooter, nuevo `SocialIcon.jsx`, nuevo `storefront-contact.css` compartido con preview, `lib/website/contact.mjs`, modelo editorial/fuente demo, campos de contacto del editor y página Contacto. Pruebas en `tests/contact.test.mjs`.
+
+Verificaciones: lint/build correctos; **29 pruebas correctas** (incluye emails/links de teléfono, dominios HTTPS de redes, compatibilidad de borradores y selección explícita de campos); **16 casos HTTP correctos** y comprobación adicional de accesos de header/categorías/footer sin links ficticios. Comparación con HEAD mantiene páginas/layout/componentes/servicios laborales sin cambios. Servidor temporal cerrado. No se realizó validación visual en navegador; revisar alineación móvil 320/375/768, correo largo, 0/1/2 teléfonos y todas/algunas/ninguna red configurada. Se preservaron rama y cambios anteriores. Sin backend, autenticación, nuevas dependencias ni despliegues.
+
+Al retomar: introducir datos oficiales en Contacto, comprobar preview, guardar/aplicar y recargar; validar roles de lectura/edición. Integrar luego el DTO publicado de Django para que los datos reales aparezcan compartidos en `/`. La integración y límites de demo de entregas anteriores siguen vigentes.

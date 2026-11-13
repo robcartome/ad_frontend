@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeProduct, normalizeCategory, productOffer } from '../src/lib/commerce/catalog.mjs';
+import { normalizeProduct, normalizeCategory, productOffer, categoryProducts } from '../src/lib/commerce/catalog.mjs';
 import { createStorefrontProductsService } from '../src/services/storefrontProductsService.mjs';
 import { createStorefrontCategoriesService } from '../src/services/storefrontCategoriesService.mjs';
 
@@ -20,6 +20,21 @@ test('Public DTO handles decimal strings, missing prices and strips private fiel
   assert.equal(productOffer({ price: 20, originalPrice: 10 }), null);
   assert.equal(normalizeProduct({ id: 1, name: 'PVC', image_url: 'javascript:alert(1)' }).imageUrl, null);
   assert.equal(normalizeCategory({ id: 1, name: 'Herramientas', parent_id: 4 }).parentId, '4');
+});
+
+test('Category rails filter the full selection without inventing offers or changing source order', () => {
+  const products = [
+    { id: 'a', category: 'tools', price: 10, originalPrice: null },
+    { id: 'b', category: 'paint', price: null, originalPrice: 100 },
+    { id: 'c', category: 'tools', price: 15, originalPrice: 20 },
+    { id: 'd', category: 'paint', price: 25, originalPrice: 25 },
+  ];
+  assert.deepEqual(categoryProducts(products).map(product => product.id), ['c', 'a', 'b', 'd']);
+  assert.deepEqual(categoryProducts(products, 'tools').map(product => product.id), ['c', 'a']);
+  assert.deepEqual(categoryProducts(products, 'paint').map(product => product.id), ['b', 'd']);
+  assert.deepEqual(categoryProducts(products, 'missing'), []);
+  assert.deepEqual(products.map(product => product.id), ['a', 'b', 'c', 'd']);
+  assert.equal(productOffer(categoryProducts(products, 'paint')[0]), null);
 });
 
 test('Public service scopes and encodes requests without admin credentials and maps pagination', async () => {

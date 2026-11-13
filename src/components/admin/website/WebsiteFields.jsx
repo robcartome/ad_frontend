@@ -18,9 +18,9 @@ export function Field({ label, path, value, onChange, errors = {}, hint, multili
   </div>;
 }
 
-export const sectionLabels = { benefits: 'Beneficios', categories: 'Categorías', featured: 'Productos destacados', promotions: 'Campañas', about: 'Presentación de la empresa' };
+export const sectionLabels = { benefits: 'Beneficios', categories: 'Categorías (navegación)', announcements: 'Slider de avisos', specials: 'Destacados y ofertas especiales', featured: 'Selección por categoría', promotions: 'Campañas', about: 'Presentación de la empresa' };
 
-function Reorder({ index, length, onMove, label }) {
+export function Reorder({ index, length, onMove, label }) {
   return <div className="we-reorder">
     
     <button type="button" disabled={index === 0} onClick={() => onMove(index, -1)} aria-label={`Subir ${label}`}>
@@ -142,7 +142,7 @@ export function SectionsEditor({ sections, onChange, errors }) {
       </div>
     </div>
     {errors.sections && <p className="we-field-error">{errors.sections}</p>}
-    {sections.map((section, index) => <article className="we-item" key={section.type}>
+    {sections.map((section, index) => section.type === 'categories' ? <article className="we-item" key={section.type}><h3>Categorías en la navegación</h3><p className="we-note">Las categorías aparecen con su icono en la barra superior de la tienda. Esta fila ya no es una sección del inicio; se conserva su configuración anterior por compatibilidad.</p></article> : <article className="we-item" key={section.type}>
       
       <header className="we-item-header">
         <span className="we-number">{index + 1}</span>

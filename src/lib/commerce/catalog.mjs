@@ -28,3 +28,10 @@ export function productOffer(product) {
   if (price === null || previous === null || previous <= price) return null;
   return { percent: Math.floor((previous - price) / previous * 100), savings: Math.round((previous - price) * 100) / 100 };
 }
+
+// A curated frontend selection, not a sales ranking. Existing valid offers lead
+// each category; products without a previous price remain ordinary products.
+export function categoryProducts(products, categoryId = null) {
+  const selected = categoryId === null ? [...products] : products.filter(product => product.category === categoryId);
+  return selected.sort((left, right) => Number(Boolean(productOffer(right))) - Number(Boolean(productOffer(left))));
+}

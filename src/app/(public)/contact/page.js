@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { MapPin, Clock, MessageCircle, ArrowRight } from 'lucide-react';
 import { getStore } from '@/lib/storefront/store';
+import { emailHref, phoneHref } from '@/lib/website/contact.mjs';
 export const metadata = { title: 'Contacto' };
 export default function ContactPage() {
     const store = getStore();
@@ -34,7 +35,9 @@ export default function ContactPage() {
       <article>
         <MessageCircle size={30}/>
         <h2>Atención comercial</h2>
-        <p>{store.phone ?? 'Teléfono y WhatsApp pendientes de verificación.'}</p>
+        <p>{phoneHref(store.phone) ? <a href={phoneHref(store.phone)}>{store.phone}</a> : store.phone || 'Teléfono pendiente de verificación.'}</p>
+        {store.secondaryPhone && <p>{phoneHref(store.secondaryPhone) ? <a href={phoneHref(store.secondaryPhone)}>{store.secondaryPhone}</a> : store.secondaryPhone}</p>}
+        <p>{emailHref(store.email) ? <a href={emailHref(store.email)}>{store.email}</a> : 'Correo comercial por confirmar.'}</p>
       </article>
     </div>
     <p className="sf-callout">Vista de demostración: los canales de contacto y envío de solicitudes aún no están activos.</p>

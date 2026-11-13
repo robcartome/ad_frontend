@@ -4,9 +4,11 @@ Entrega: 12/11/2026. La tienda continúa en modo demo. No se activaron endpoints
 
 ## Presentación
 
-Texto principal azul `#003366`, acciones naranja `#FF8000`, blanco y superficies claras. Tarjetas con precio anterior, porcentaje redondeado hacia abajo, ahorro, etiqueta opcional, unidad y disponibilidad. Los descuentos solo aparecen cuando el precio anterior supera al actual. Tres productos demo tienen precios anteriores ilustrativos; el aviso demo permanece visible. No se inventan reseñas ni disponibilidad.
+Texto principal azul `#003366` sobre blanco/superficies claras. Desde la mejora del 13/11/2026, los CTA con fondo naranja `#FF8000` usan texto/iconos blancos; el CTA de producto usa contorno y letras naranja en reposo y relleno naranja/blanco al interactuar o estar en cotización. Tarjetas con precio anterior, porcentaje redondeado hacia abajo, ahorro, etiqueta opcional, unidad y disponibilidad. Los descuentos solo aparecen cuando el precio anterior supera al actual. Tres productos demo tienen precios anteriores ilustrativos; el aviso demo permanece visible. No se inventan reseñas ni disponibilidad.
 
-Categorías en cuadrícula móvil de tres columnas y panel lateral accesible Radix Dialog en móvil/escritorio: Escape, foco contenido y retorno al botón. El panel muestra todas las categorías recibidas. Fotografías HTTPS opcionales de productos/categorías con respaldo SVG si fallan. Dos productos por fila en móvil; la ficha muestra la misma oferta que la tarjeta.
+Categorías en `#store-navigation`, en una sola fila horizontal para móvil y escritorio: icono Lucide + nombre, overflow y scrollbar fino. Se muestra todo el array recibido, sin limitarlo a cuatro. No se duplica la fila en el contenido de inicio. El panel lateral Radix existente se conserva. La sección destacada ofrece selección por categoría y una fila horizontal de productos; las ofertas válidas aparecen primero. Es una selección editorial, no un ranking de ventas. Fotografías HTTPS opcionales de productos con respaldo SVG si fallan. `/shop` conserva su cuadrícula (dos productos por fila en móvil), con tarjetas más compactas y CTA corto «Cotizar». La ficha muestra la misma oferta que la tarjeta.
+
+Los títulos/visibilidad de la sección destacada continúan bajo el documento editorial; su título inicial es «Encuentra lo mejor para tu proyecto». Los títulos personalizados guardados no se reemplazan. El helper `categoryProducts` no cambia el orden de la fuente ni inventa descuentos; el backend futuro deberá ofrecer filtrado/selección global cuando el catálogo esté paginado.
 
 ## Servicios preparados
 

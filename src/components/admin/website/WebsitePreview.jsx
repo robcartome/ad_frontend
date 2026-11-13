@@ -25,7 +25,7 @@ export default function WebsitePreview({ company }) {
     async function load() {
       try {
         const repository = createLocalWebsiteRepository(localStorage, demoProducts.map(product => product.id));
-        const record = await repository.load(scope, createWebsiteDocument(company.name));
+        const record = await repository.load(scope, createWebsiteDocument(company.name, demoProducts.map(product => product.id)));
         if (!active) return;
         setDocument(source === 'published' ? record.published : record.draft);
         setError(source === 'published' && !record.published ? 'Aún no hay una versión aplicada a la demo. Guarda y aplica una versión desde el editor.' : '');

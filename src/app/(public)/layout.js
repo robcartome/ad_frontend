@@ -1,4 +1,6 @@
 import './storefront.css';
+import '@/components/storefront/storefront-rails.css';
+import '@/components/storefront/storefront-contact.css';
 import { getStore, getStorefrontCategories, getStorefrontProducts } from '@/lib/storefront/store';
 import { CartProvider } from '@/components/commerce/CartProvider';
 import StoreHeader from '@/components/storefront/StoreHeader';

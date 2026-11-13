@@ -2,6 +2,8 @@
 
 Actualización: 12/11/2026, America/Lima. Estado: frontend local implementado; backend **propuesto, no implementado**. Repositorio frontend `ad_frontend`; backend futuro `apudig_mvp`. Este documento complementa `storefront-plan-y-avances.md`.
 
+Ampliación del 13/11/2026: documento editorial v3 con slider de avisos (máximo 8) y productos especiales seleccionados (máximo 4). Las versiones locales v1/v2 se adaptan sin escribir durante la lectura ni eliminar contenido existente.
+
 La navegación Next está dedicada a la web y catálogos. `/catalog` y `/admin/catalog_admin` se conservan para uso laboral; los productos comerciales se muestran en `/shop` y `/shop/[id]`. Ver `admin-web-y-catalogos.md`. No rediseñar ni sustituir los contratos del catálogo laboral al integrar el nuevo storefront.
 
 ## Decisión de producto
@@ -44,28 +46,40 @@ Las campañas son mensajes y enlaces a productos, no reglas de descuento. Sus fe
 
 Interfaz asíncrona: `load(scope, initial)`, `saveDraft(scope, document, revision, initial)`, `publish(scope, revision, initial)`. `initial` se usa solo en local. Las capacidades distinguen modo local/API y disponibilidad futura de media/publicación. Para integrar, inyectar un cliente autenticado que conserve errores estructurados; el `apiFetch` actual necesita adaptación de errores para mapear status/campos sin cambiar su comportamiento para el resto del ERP.
 
-Documento JSON `schemaVersion: 2` (v1 local se adapta al leer para mover enlaces del storefront de `/catalog` a `/shop`):
+Documento JSON `schemaVersion: 3` (v1/v2 locales se adaptan al leer; v1 también cambia enlaces de storefront de `/catalog` a `/shop`):
 
 | Campo | Contenido / reglas |
 | --- | --- |
 | `identity` | name (100), shortName (40), location (100), primaryColor (#RRGGBB), logoUrl, announcement (180) |
-| `contact` | phone, whatsapp (8–15 dígitos con país), address, hours |
+| `contact` | phone (40), secondaryPhone (40, opcional), email (180, opcional), whatsapp (8–15 dígitos con país), address, hours, socials (opcional) |
+| `contact.socials` | facebook, instagram, tiktok, youtube, x; URLs HTTPS (300) del proveedor correspondiente o vacío |
 | `seo` | title (70), description (180); indexación la controla estado publicado en servidor |
+| `announcements` | ctaLabel (40), href interno, items[] (máximo 8) |
+| `announcements.items[]` | id, enabled, title (100), badge (40, opcional), badgePosition (top-left/top-right/bottom-left/bottom-right), href interno, imageUrl, imageAlt, art |
+| `specials` | productIds[] únicos, máximo 4; orden del array define presentación; productos de la misma tienda |
 | `banners[]` | id, enabled, eyebrow (60), title (100), description (300), ctaLabel (40), href, imageUrl, mobileImageUrl, imageAlt, art |
 | `promotions[]` | id, enabled, eyebrow, title, description, ctaLabel, href, startsAt, endsAt, productIds[] |
-| `sections[]` | type, enabled, title; exactamente una de benefits/categories/featured/promotions/about; posición dada por el array |
+| `sections[]` | type, enabled, title; exactamente una de benefits/categories/announcements/specials/featured/promotions/about; posición dada por el array |
+
+Desde el 13/11/2026, `categories` permanece en el documento solo por compatibilidad. La fila real está en `store-navigation` y procede del array de categorías públicas de la tienda, no de ese bloque editorial. No conectar su antiguo título/visibilidad a la navegación ni volver a duplicarla en Home. En la próxima revisión de contrato se podrá retirar ese tipo mediante una migración explícita.
 
 Hasta 12 banners y 12 campañas; enlaces internos; imágenes de URL HTTPS o rutas locales; alt requerido si hay imagen. Texto plano. `art` es un fallback visual demo. Al integrar media, traducir `logoUrl`/`imageUrl` a referencias autorizadas y URLs públicas derivadas; no confiar en URLs enviadas por un editor como prueba de pertenencia del archivo.
+
+El slider de **avisos** es un bloque independiente del banner principal: máximo 8 elementos incluyendo ocultos, con badge libre superpuesto y CTA debajo. La sección **especiales** enlaza hasta 4 productos existentes, sin precios/stock copiados ni reglas de descuento propias. El servidor debe validar ambos límites, unicidad, referencias de tienda y posición del badge.
+
+Contacto ampliado el 13/11/2026: teléfono adicional, correo y redes son opcionales para mantener borradores v3 anteriores. Validar correo sin inyección de parámetros/cabeceras; perfiles sin credenciales y con HTTPS/hostname autorizado (Facebook/fb.com, Instagram, TikTok, YouTube/youtu.be, X/twitter.com y subdominios propios). Excluir claves desconocidas del DTO público. No publicar números ni perfiles ficticios como fallback. El footer público procede del bootstrap de tienda publicado; la configuración local del editor solo modifica preview hasta integrar ese contrato.
+
+En la demo, el selector de archivos de avisos acepta PNG/JPEG/WebP originales de hasta 8 MB y los ajusta en el navegador a una imagen de hasta 150 KB, almacenada localmente. Esto **no es una subida a Django**. Antes de activar el adaptador HTTP, implementar el endpoint de media, subir el archivo por ese canal y reemplazar imágenes inline por IDs/URLs autorizados. El backend de producción debe rechazar data URLs en documentos editoriales y aplicar su propia verificación de archivo, tamaño, ownership y permisos. La selección local no sincroniza imágenes entre equipos y puede fallar por cuota del navegador; el editor conserva el formulario y muestra el fallo de almacenamiento.
 
 Respuesta editorial normalizada:
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "companyId": "uuid-servidor",
   "websiteId": "uuid-servidor",
   "revision": 4,
-  "draft": { "schemaVersion": 2 },
+  "draft": { "schemaVersion": 3 },
   "published": null,
   "updatedAt": "2026-11-12T15:00:00.000Z",
   "publishedAt": null,
