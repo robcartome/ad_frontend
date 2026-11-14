@@ -21,6 +21,10 @@
   min-height:100vh;
   display:flex;
   flex-direction:column;
+  position:relative;
+  min-width:0;
+  max-width:100%;
+  overflow-x:clip;
 }
 .storefront main {
   flex:1;

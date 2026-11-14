@@ -8,7 +8,7 @@ import { useCart } from '@/components/commerce/CartProvider';
 import CategoryIcon from './CategoryIcon';
 import CategoryNavLink from './CategoryNavLink';
 export default function StoreHeader({ store, categories }) {
-    const { count } = useCart();
+    const { count, openCart, cartOpen } = useCart();
     const [open, setOpen] = useState(false);
     return <Dialog.Root open={open} onOpenChange={setOpen}>
     <div className="sf-demo">Vista de demostración · Productos y precios ilustrativos · Sin pedidos reales</div>
@@ -46,11 +46,11 @@ export default function StoreHeader({ store, categories }) {
         <div className="sf-header-actions">
           <Link href="/about" className="sf-header-quick-link"><UsersRound size={22} aria-hidden="true"/><span>Nosotros</span></Link>
           <Link href="/contact" className="sf-header-quick-link"><Headphones size={22} aria-hidden="true"/><span>Contacto</span></Link>
-        <Link href="/cart" className="sf-cart-link" aria-label={`Mi cotización, ${count} unidades`}>
+        <button type="button" className="sf-cart-link" aria-label={`Mi carrito, ${count} unidades`} aria-haspopup="dialog" aria-expanded={cartOpen} onClick={() => openCart()}>
           <ShoppingBag size={25}/>
           <span className="sf-cart-count">{count}</span>
-          <span className="sf-cart-label">Mi cotización</span>
-        </Link>
+          <span className="sf-cart-label">Mi carrito</span>
+        </button>
         </div>
       </div>
       <nav id="store-navigation" aria-label="Navegación comercial" className="sf-nav">

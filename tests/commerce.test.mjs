@@ -1,8 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { restoreCart, serializeCart, resolveCart, validQuantity, quotationUrl, buildQuotationMessage, cartKey } from '../src/lib/commerce/cart.mjs';
+import { restoreCart, serializeCart, resolveCart, validQuantity, quotationUrl, buildQuotationMessage, cartKey, cartTotals } from '../src/lib/commerce/cart.mjs';
 const products = [{ id: 'a', name: 'Taladro & brocas', sku: 'A-1', unit: 'unidad', price: 12.5 }, { id: 'b', name: 'Tubo', unit: 'unidad', price: null }];
 const items = [{ id: 'a', quantity: 2 }];
+
+test('optional item details survive reload and reach WhatsApp without persisting private fields', () => {
+    const detailed = [{ id: 'a', quantity: 2, notes: '  Color blanco, medida 1/2  ', cost: 99 }];
+    const restored = restoreCart(serializeCart(detailed, 'one'), 'one', products);
+    assert.deepEqual(restored, [{ id: 'a', quantity: 2, notes: 'Color blanco, medida 1/2' }]);
+    assert.match(buildQuotationMessage({ name: 'Tienda' }, restored, products), /Detalles solicitados: Color blanco, medida 1\/2/);
+    assert.equal(resolveCart([{ id: 'a', quantity: 1, notes: 'x'.repeat(300) }], products)[0].notes.length, 240);
+    assert.equal(resolveCart([{ id: 'a', quantity: 1, notes: 'Color ' }], products)[0].notes, 'Color ', 'preserves spaces while editing details');
+    assert.deepEqual(restoreCart(serializeCart([{ id: 'a', quantity: 1, notes: {} }], 'one'), 'one', products), [{ id: 'a', quantity: 1 }]);
+});
+
+test('summary totals use cents, actual discounts, quantities and partial prices', () => {
+    assert.deepEqual(cartTotals([{ price: 0.1, originalPrice: 0.3, quantity: 3 }, { price: 0, quantity: 2 }, { price: null, quantity: 1 }]), { subtotal: 0.3, savings: 0.6, beforeDiscount: 0.9, unpriced: true });
+    assert.deepEqual(cartTotals([{ price: 12.5, originalPrice: 10, quantity: 2 }]), { subtotal: 25, savings: 0, beforeDiscount: 25, unpriced: false });
+    assert.deepEqual(cartTotals([]), { subtotal: 0, savings: 0, beforeDiscount: 0, unpriced: false });
+});
 test('storage isolates tenants and rejects unsupported schema versions', () => {
     const raw = serializeCart(items, 'one');
     assert.deepEqual(restoreCart(raw, 'one', products), items);
