@@ -1,0 +1,16 @@
+﻿/* Radix Presence keeps panels mounted until their closing animation ends. */
+@keyframes ad-panel-in { from { transform:translate(var(--ad-panel-x,0),var(--ad-panel-y,0)); opacity:.6; } to { transform:translate(0,0); opacity:1; } }
+@keyframes ad-panel-out { from { transform:translate(0,0); opacity:1; } to { transform:translate(var(--ad-panel-x,0),var(--ad-panel-y,0)); opacity:.6; } }
+@keyframes ad-overlay-in { from { opacity:0; } to { opacity:1; } }
+@keyframes ad-overlay-out { from { opacity:1; } to { opacity:0; } }
+.storefront.sf-category-drawer, .storefront.sf-shop-filter-drawer { --ad-panel-x:-100%; }
+.storefront.sf-cart-drawer, .storefront.sf-shop-sort-drawer { --ad-panel-x:100%; }
+.storefront:is(.sf-category-drawer,.sf-shop-drawer,.sf-cart-drawer)[data-state=open] { animation:ad-panel-in .22s cubic-bezier(.2,.8,.2,1) both; }
+.storefront:is(.sf-category-drawer,.sf-shop-drawer,.sf-cart-drawer)[data-state=closed] { animation:ad-panel-out .18s ease-in both; pointer-events:none; }
+:is(.sf-drawer-overlay,.sf-shop-overlay,.sf-cart-overlay)[data-state=open] { animation:ad-overlay-in .2s ease-out both; }
+:is(.sf-drawer-overlay,.sf-shop-overlay,.sf-cart-overlay)[data-state=closed] { animation:ad-overlay-out .18s ease-in both; }
+@media(max-width:900px) { .storefront.sf-cart-drawer { --ad-panel-x:0; --ad-panel-y:100%; } }
+@media(prefers-reduced-motion:reduce) {
+  .storefront:is(.sf-category-drawer,.sf-shop-drawer,.sf-cart-drawer)[data-state], :is(.sf-drawer-overlay,.sf-shop-overlay,.sf-cart-overlay)[data-state] { animation:none; }
+  .we-animated-modal[data-state] { animation:none; }
+}

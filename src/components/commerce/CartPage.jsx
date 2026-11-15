@@ -1,5 +1,6 @@
 'use client';
-import Link from 'next/link';
+import LoadingIndicator from '@/components/feedback/LoadingIndicator';
+import Link from '@/components/feedback/LoadingLink';
 import { ArrowLeft, ArrowRight, ShoppingBag, MessageCircle } from 'lucide-react';
 import { useCart } from './CartProvider';
 import CartItem from './CartItem';
@@ -15,7 +16,7 @@ export default function CartPage() {
         <nav className="sf-breadcrumb" aria-label="Ruta de navegación"><Link href="/">Inicio</Link><span>/</span><span>Mi carrito</span></nav>
         <div className="sf-cart-page-heading"><div><h1>Mi carrito <span>({ready ? lines.length : 0} productos)</span></h1><p>Todo lo que necesitas para tu próximo proyecto.</p></div><Link className="sf-back-link" href="/shop"><ArrowLeft size={16}/> Seguir comprando</Link></div>
         {storageError && <p className="sf-callout" role="alert">El navegador no permite guardar el carrito. Puedes usarlo durante esta visita.</p>}
-        {!ready ? <div className="sf-empty" role="status">Recuperando tu carrito…</div> : !lines.length ? <div className="sf-empty"><ShoppingBag size={44}/><h2>Tu próximo proyecto empieza aquí</h2><p>Agrega productos para preparar tu pedido.</p><Link href="/shop" className="sf-button sf-button-orange">Explorar productos <ArrowRight size={17}/></Link></div> : <>
+        {!ready ? <LoadingIndicator label="Recuperando tu carrito…"/> : !lines.length ? <div className="sf-empty"><ShoppingBag size={44}/><h2>Tu próximo proyecto empieza aquí</h2><p>Agrega productos para preparar tu pedido.</p><Link href="/shop" className="sf-button sf-button-orange">Explorar productos <ArrowRight size={17}/></Link></div> : <>
             <div className="sf-cart-layout">
                 <section className="sf-cart-products" aria-label="Productos de tu carrito">
                     <div className="sf-cart-seller"><div><ShoppingBag size={18}/><span>Productos de <strong>{store.name}</strong></span></div><button type="button" className="sf-text-button" onClick={clear}>Vaciar carrito</button></div>

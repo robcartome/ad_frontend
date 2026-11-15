@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { MapPin, Clock, MessageCircle, ArrowRight } from 'lucide-react';
 import { getStore } from '@/lib/storefront/store';
 import { emailHref, phoneHref } from '@/lib/website/contact.mjs';

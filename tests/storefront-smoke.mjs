@@ -26,7 +26,7 @@ for (const path of paths) {
     assert.ok(!html.includes('noindex'), `${path}: preserves original indexing metadata`);
   }
   if (path.includes('ningunproducto')) assert.ok(html.includes('No encontramos productos'));
-  if (path.includes('category=herramientas')) assert.match(html, /2<\/strong> productos encontrados/);
+  if (path.includes('category=herramientas')) assert.match(html.replace(/<!--.*?-->/g, ''), /\+2<\/strong> Resultados/);
   if (missing) assert.ok(html.includes('Producto no encontrado'));
   console.log(`${response.status} ${path} OK`);
 }

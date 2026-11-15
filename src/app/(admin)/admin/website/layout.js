@@ -1,3 +1,4 @@
+import '@/components/feedback/panels.css';
 import './website-editor.css';
 import '@/app/(public)/storefront.css';
 import '@/components/storefront/storefront-rails.css';

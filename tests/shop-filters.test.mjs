@@ -48,3 +48,14 @@ test('shop URLs preserve all filters through ordering and pagination; changing f
   assert.equal(page.searchParams.get('max'),'100');
   assert.equal(page.searchParams.get('sort'),'discount');
 });
+
+test('multiple categories combine with OR while other filter groups narrow results', () => {
+  assert.deepEqual(ids({category:['tools','paint'],brand:'A'}),['a','c']);
+  assert.deepEqual(ids({category:['tools','paint'],brand:'A',min:'0'}),['a']);
+  assert.deepEqual(ids({category:['paint','paint',null]}),['d','c']);
+  const query=normalizeShopQuery({category:['tools','paint'],page:'2'});
+  const params=new URL(shopUrl(query,{sort:'price-asc'}),'http://localhost').searchParams;
+  assert.deepEqual(params.getAll('category'),['tools','paint']);
+  assert.deepEqual(normalizeShopQuery({category:'tools'}).category,['tools']);
+  assert.deepEqual(normalizeShopQuery({category:''}).category,[]);
+});

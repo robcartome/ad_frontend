@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { useState } from 'react';
 import { Plus, Check, MessageCircle } from 'lucide-react';
 import { useCart } from './CartProvider';

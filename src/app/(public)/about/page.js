@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { ArrowRight, Headphones, ClipboardList, Hammer } from 'lucide-react';
 import { getStore } from '@/lib/storefront/store';
 export const metadata = { title: 'Nosotros' };

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { ArrowUpRight, Clock3, Hammer, Headphones, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { SOCIAL_NETWORKS, emailHref, phoneHref, socialLinks } from '@/lib/website/contact.mjs';
 import SocialIcon from './SocialIcon';

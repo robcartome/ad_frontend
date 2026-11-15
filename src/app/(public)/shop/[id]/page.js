@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { notFound } from 'next/navigation';
 import { getStorefrontProduct, getStorefrontProducts, getStorefrontCategories } from '@/lib/storefront/store';
 import { hasPrice, money } from '@/lib/commerce/cart.mjs';

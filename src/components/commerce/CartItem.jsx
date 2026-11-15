@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import CatalogImage from '@/components/storefront/CatalogImage';

@@ -62,3 +62,9 @@ export function quotationUrl(store, items, products) {
     const message = buildQuotationMessage(store, items, products);
     return message ? `https://wa.me/${store.whatsapp}?text=${encodeURIComponent(message)}` : null;
 }
+
+// Present the newly added product first without changing stored cart order/data.
+export function prioritizeCartLines(lines, addedId) {
+    const selected = lines.find(line => line.id === addedId);
+    return selected ? [selected, ...lines.filter(line => line.id !== addedId)] : lines;
+}

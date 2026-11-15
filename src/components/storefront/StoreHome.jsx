@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { ArrowRight, ArrowUpRight, Headphones, ClipboardList, PackageCheck, Truck } from 'lucide-react';
 import { createWebsiteDocument, visiblePromotions } from '@/lib/website/content.mjs';
 import ProductArt from './ProductArt';

@@ -1,3 +1,4 @@
+import '@/components/feedback/panels.css';
 import './storefront.css';
 import '@/components/storefront/storefront-rails.css';
 import '@/components/storefront/storefront-contact.css';

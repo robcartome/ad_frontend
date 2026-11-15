@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { useState } from 'react';
 import { ArrowRight, Grid2X2, ShoppingBag } from 'lucide-react';
 import { categoryProducts } from '@/lib/commerce/catalog.mjs';

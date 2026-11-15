@@ -266,3 +266,15 @@
   .storefront .sf-footer-company { padding-bottom: 24px; border-bottom: 1px solid #d3dfe9; }
   .sf-footer-bottom > .sf-container { align-items: flex-start; gap: 9px; flex-direction: column; }
 }
+
+/* Compact mobile search; the main header stays sticky independently of categories. */
+@media(max-width:900px) {
+  .storefront .sf-header { position:sticky; }
+  .storefront .sf-search { height:36px; min-height:0; }
+  .storefront .sf-search input { min-height:0; padding-block:0; font-size:16px; }
+  .storefront .sf-search button { width:44px; min-height:0; }
+  .storefront .sf-search button svg { width:19px; height:19px; }
+}
+
+/* The main header hands off the top edge to shop filters when reached. */
+html[data-shop-toolbar-stuck] .storefront .sf-header { visibility:hidden; pointer-events:none; }

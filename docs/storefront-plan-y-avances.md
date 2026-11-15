@@ -401,3 +401,58 @@ Rama `mvp_website`, árbol inicialmente limpio. Catálogos laborales, servicios 
 - Verificación real contra `localhost:3000` usando Chromium headless/Playwright existente en el runtime, sin instalar dependencias: 320, 360, 375, 390, 640, 768, 1024 y 1440 px. En los ocho tamaños se comprobó ausencia de overflow horizontal en home y /cart, límites del panel y controles dentro de pantalla, aumento de cantidad, cierre, reapertura y navegación «Ir al carrito». Captura generada a 360 px revisada visualmente: título/cierre, producto/precio/cantidad/subtotal y botones inferiores completos. Los archivos temporales de diagnóstico/captura se eliminaron después de verificar. A 360 px, panel x=0/ancho=360 y body=360, sin compresión.
 - Lint, build de producción y diff --check correctos. Cambio de presentación exclusivamente en `storefront.css` y `commerce/cart.css`, conservando el trabajo previo. Sin cambios de backend, catálogos laborales, datos ni dependencias.
 - Sigue pendiente probar Safari/iOS y teclado virtual en dispositivo físico. Los límites de demo/WhatsApp de la entrega 12 se mantienen.
+
+## Entrega 14 — Categorías múltiples y barra móvil fija (14/11/2026)
+
+- Ordenar por se ubica a la derecha de la barra de resultados, con filtros/conteo a la izquierda.
+- Categorías con checkboxes y selección múltiple. OR entre categorías y AND con marcas/búsqueda/precio. «Todas las categorías» limpia el grupo. Chips individuales removibles, contador y navegación superior reflejan todas las categorías aplicadas. URLs con una sola categoría siguen válidas; varias se representan con `category` repetido y se conservan al ordenar/paginar.
+- Ambos drawers limitan su ancho a `min(420px, calc(100vw - 36px))`, dejando parte del fondo visible en móvil. Se conservan overlay, foco/Escape y scroll interno Radix.
+- Hasta 900 px, toolbar sticky debajo del header. ResizeObserver mide la altura real del encabezado para ajustar el offset al cambiar tamaño, sin altura fija asumida. Chips aplicados dentro de la barra fija, en una fila con scroll horizontal; siguen permitiendo quitar filtros mientras se recorren resultados. Paneles z81, header z30 y toolbar z25.
+- Archivos: StoreCatalog, shop.css, shop-filters.mjs, CategoryNavLink y tests/shop-filters.test.mjs. No se modifican catálogos laborales, backend ni autenticación.
+- Verificado: lint, build de producción, **39 pruebas Node** y **16 casos HTTP** correctos; petición multicategoría Herramientas/Pinturas devuelve 3 productos y ambos chips. Diff --check correcto. Servidor temporal 3110 detenido. Sin nuevas dependencias/commit/push/despliegue.
+- Revisión visual de sticky, ancho de paneles, teclado y scroll móvil pendiente en esta entrega; las pruebas HTTP/lógica no verifican geometría. Al retomar, probar 320/375/640/900 px, categorías múltiples, aplicar/cancelar, chips, back/forward y cambio de tamaño con header sticky. Mantener las correcciones de carrito de entregas 12/13.
+
+## Entrega 15 — Controles móviles compactos (14/11/2026)
+
+- Toolbar móvil (hasta 900 px): botón de filtros solo con icono/contador y nombre accesible; Ordenar en una línea con icono, sin repetir etiqueta y orden actual. Se conserva descripción accesible del orden elegido y detalle completo en el panel. Chips aplicados siguen en una fila horizontal; sin chips no ocupan una fila vacía.
+- Encabezado público móvil deja de ser sticky (incluye store-navigation): se desplaza con la página. Solo toolbar de /shop queda fija en top:0; retirado el ResizeObserver/offset anterior. Desktop conserva header sticky y etiquetas completas.
+- Búsqueda móvil reducida de 46 a 36 px, texto de 16 px para evitar zoom automático en iOS y botón de búsqueda de 44 px de ancho.
+- Conteo común móvil/escritorio de /shop pasa a «+N Resultados» usando el total real, incluido +0 para conjunto vacío; no se inventa el número 10. Catálogos laborales sin cambios.
+- Archivos: StoreCatalog.jsx, shop.css, storefront-contact.css, smoke y este registro. Se conservan categorías múltiples, drawers y correcciones del carrito.
+- Verificado: lint/build correctos, smoke de 16 rutas correcto en servidor temporal de producción 3110 (detenido). Se actualizó la comprobación de conteo para ignorar comentarios separadores de React al comprobar «+2 Resultados». No se añadieron pruebas de lógica para esta modificación de presentación. Revisión visual móvil/scroll pendiente en navegador en esta entrega.
+
+## Entrega 16 — Cotización como panel inferior móvil (14/11/2026)
+
+- Hasta 900 px, el panel de carrito/cotización se abre desde abajo con animación vertical, esquinas superiores redondeadas y una guía visual. Altura `min(85dvh,760px)` y máximo `100dvh - 48px`: deja parte de la tienda visible bajo el overlay en vez de ocupar toda la pantalla. Desktop conserva drawer lateral derecho.
+- Conserva Radix, cierre/Escape, foco, scroll interno del listado, cantidades/observaciones y footer con Ir al carrito/Seguir comprando. Encabezado/descripción no se encogen. Movimiento reducido desactiva la animación. No se agregan checkout ni recomendaciones comerciales falsas de la referencia.
+- Toolbar móvil de /shop ocupa todo el ancho de pantalla con extensión controlada sobre los márgenes del contenedor (20 px hasta 900; 16 px hasta 640). Controles mantienen margen interior y sticky top:0. Se conserva el recorte horizontal del storefront de la entrega 13.
+- Archivos: commerce/cart.css y commerce/shop.css. Lint, build de producción y diff --check correctos. No se añadieron pruebas de lógica para estos cambios CSS. Revisión visual del panel inferior y toolbar pendiente en navegador en esta entrega; validar 320/360/375/640/900, teclado virtual, muchos productos, cierre/reapertura y movimiento reducido. Las verificaciones geométricas de la entrega 13 corresponden al panel anterior y no validan esta nueva composición.
+- Se preservan trabajo local previo, catálogos laborales, lógica/datos de carrito y backend. Sin dependencias, commit/push ni despliegue.
+
+## Entrega 17 — Último producto agregado visible en cotización (14/11/2026)
+
+- El panel usa el `addedId` que ya proporciona CartProvider para mostrar primero la línea recién agregada, incluso si era un producto existente. El resto mantiene su orden relativo. Se conserva identidad, cantidad y observaciones de cada línea; no se reordena el almacenamiento ni la página del carrito.
+- Al abrir el panel o cambiar el producto agregado, el listado vuelve al inicio mediante ref/requestAnimationFrame cancelable. Cambiar cantidades dentro del panel no fuerza saltos de scroll. Al abrir desde el header sin un producto agregado conserva el orden habitual; IDs eliminados o carrito vacío no producen líneas falsas.
+- Archivos: CartDrawer.jsx, helper puro prioritizeCartLines en cart.mjs y prueba en commerce.test.mjs. Se conserva el panel inferior móvil de entrega 16.
+- Verificado: **40 pruebas Node correctas**, lint, build de producción y diff --check correctos. Prueba nueva cubre producto nuevo/existente, orden estable, conservación de objetos y ausencia del ID. Revisión interactiva pendiente en navegador: agregar A, B, A otra vez, editar cantidad/notas, eliminar el destacado, cerrar/reabrir y abrir desde header. No se afirma QA visual con estas pruebas de lógica.
+- Sin cambios de backend, catálogos laborales, dependencias, commit/push ni despliegue. Trabajo previo preservado.
+
+## Entrega 18 — Animaciones y estados de carga (14/11/2026)
+
+- Revisadas dependencias: Framer Motion 12, Radix Dialog y tailwindcss-animate ya instaladas. Los diálogos de `ui/dialog.jsx` ya tienen fade/zoom de apertura/cierre; no se cambia ese componente compartido con catálogos/ERP. Para los paneles comerciales se aprovechan data-state y Presence de Radix con keyframes CSS: entrada/salida izquierda (categorías/filtros), derecha (orden y carrito desktop), inferior (carrito móvil), y fade del overlay. Radix retrasa el desmontaje hasta terminar el cierre. Sin timers manuales para desmontar, sin dependencias nuevas. Preferencia de movimiento reducido respetada, incluida confirmación del editor.
+- Nuevos componentes reutilizables en `src/components/feedback/`: LoadingIndicator (pantalla completa/local/overlay/compacto), LoadingLink (useLinkStatus de Next), LoadingImage, feedback.css y panels.css. Los loaders muestran esperas reales, sin retrasos mínimos artificiales. Los enlaces resueltos en caché pueden no mostrar spinner porque no hay espera.
+- Navegación pública a través de LoadingLink con indicador a pantalla completa, búsqueda del header con indicador al enviar (se restablece al restaurar la página desde historial), loading.js del editor web e indicadores iniciales de editor/preview completos. No se añade loading.js sobre /shop/[id]: la prueba detectó que el streaming de ese fallback convertía la respuesta 404 de una ficha inexistente en 200; se retiró y se usa feedback cliente de navegación para conservar status correcto.
+- Resultados de filtros/orden con useTransition, aria-busy y spinner acotado a resultados. Carrito mientras restaura datos, imágenes de productos/avisos y banners mientras descargan, preparación de archivo local, procesamiento/guardado y carga del iframe de preview con indicadores locales. Errores de imagen terminan la espera; CatalogImage conserva ilustración de respaldo.
+- Imports/styles compartidos entre storefront y preview. Archivos que antes importaban Link público utilizan LoadingLink; se preservan hrefs/acciones. Autenticación y catálogos laborales no se modifican.
+- Verificado: lint/build de producción correctos, **40 pruebas Node correctas**, **16 casos HTTP correctos**, incluida ficha inexistente 404, y 8 archivos protegidos comparados con HEAD sin cambios. Servidor temporal 3110 detenido. Sin nuevas pruebas que repliquen CSS. Sin commit/push/despliegue. Aviso preexistente de baseline-browser-mapping permanece.
+- Pendiente en navegador: revisar apertura/cierre/reapertura rápida, backdrop, foco/Escape, teclado virtual y movimiento reducido; throttling de red para imágenes/páginas, navegación atrás/adelante y búsquedas, fallos de imagen, iframe/autorización y errores de carga. Las comprobaciones de build/HTTP no prueban animación visual ni tiempos reales de spinner.
+
+Referencia técnica consultada: https://www.radix-ui.com/primitives/docs/guides/animation (animación CSS en montaje/desmontaje y estados open/closed).
+
+## Entrega 19 — Cabecera fija con relevo de filtros (14/11/2026)
+
+- La cabecera principal sf-header-main queda en su header sticky, independiente de store-navigation. La navegación de categorías se desplaza normalmente con el documento. Se restaura sticky móvil; búsqueda compacta y controles anteriores se conservan.
+- /shop incorpora un marcador de 1 px antes de la toolbar, sin añadir espacio efectivo. IntersectionObserver detecta cuándo cruza el borde superior; entonces oculta visualmente/desactiva la cabecera y deja los filtros fijos en top:0. Al subir se restaura. La ocultación conserva la geometría para evitar saltos; no hay listeners de scroll por frame.
+- El atributo de estado se limpia al desmontar /shop, restaurando la cabecera en otras páginas. Toolbar sticky también en escritorio para mantener el relevo coherente en ambos tamaños.
+- Archivos: StoreHeader.jsx, StoreCatalog.jsx, storefront-contact.css, shop.css. Lint y build de producción correctos tras corregir el cierre JSX al separar nav/header. Revisión visual/interactiva de scroll, retorno a otras rutas, filtros/paginación y cambio de tamaño pendiente. No se añaden pruebas que repliquen implementación CSS.
+- Se preservan cambios anteriores, catálogos laborales, lógica de carrito y backend; sin dependencias ni despliegue.

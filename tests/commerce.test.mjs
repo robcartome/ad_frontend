@@ -56,3 +56,16 @@ test('WhatsApp blocks demo, invalid phones and empty carts; encodes message safe
     assert.equal(url.hostname, 'wa.me');
     assert.equal(url.searchParams.get('text'), buildQuotationMessage(store, items, products));
 });
+
+test('cart drawer prioritizes the last added line, including existing items, without mutating the cart', async () => {
+    const { prioritizeCartLines } = await import('../src/lib/commerce/cart.mjs');
+    const lines = [{ id: 'a', quantity: 2, notes: 'Blanco' }, { id: 'b', quantity: 3 }, { id: 'c', quantity: 1 }];
+    assert.deepEqual(prioritizeCartLines(lines, 'c').map(line => line.id), ['c', 'a', 'b']);
+    const existing = prioritizeCartLines(lines, 'b');
+    assert.deepEqual(existing.map(line => line.id), ['b', 'a', 'c']);
+    assert.equal(existing[0], lines[1]);
+    assert.deepEqual(lines.map(line => line.id), ['a', 'b', 'c']);
+    assert.deepEqual(prioritizeCartLines(lines, null), lines);
+    assert.deepEqual(prioritizeCartLines(lines, 'removed'), lines);
+    assert.deepEqual(prioritizeCartLines([], 'a'), []);
+});

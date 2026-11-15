@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { ArrowRight } from 'lucide-react';
 import { MAX_ANNOUNCEMENTS } from '@/lib/website/content.mjs';
 import CatalogImage from './CatalogImage';

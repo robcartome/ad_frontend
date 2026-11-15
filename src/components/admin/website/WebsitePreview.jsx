@@ -1,4 +1,5 @@
 'use client';
+import LoadingIndicator from '@/components/feedback/LoadingIndicator';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -53,7 +54,7 @@ export default function WebsitePreview({ company }) {
     <h1>Vista previa no disponible</h1>
     <p>{error}</p>
   </div>;
-  if (!document || !now) return <p className="we-loading" role="status">Preparando vista previa…</p>;
+  if (!document || !now) return <LoadingIndicator fullScreen label="Preparando vista previa…"/>;
   const store = previewStore({ id: `website-preview-${company.id}`, colors: { background: '#F5F5F6', muted: '#F2F2F2' } }, document);
   return <div className="storefront" style={{ '--sf-orange': document.identity.primaryColor }}>
     {!embedded && <div className="we-preview-notice">

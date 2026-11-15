@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import Link from '@/components/feedback/LoadingLink';
+import Image from '@/components/feedback/LoadingImage';
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, ClipboardList, Pause, Play, ShieldCheck } from 'lucide-react';
 import { heroSliderSettings, nextSlide } from '@/lib/website/slider.mjs';
 import ProductArt from './ProductArt';

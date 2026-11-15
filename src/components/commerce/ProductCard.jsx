@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import { ShoppingCart, Check, Package } from 'lucide-react';
 import CatalogImage from '@/components/storefront/CatalogImage';
 import { productOffer } from '@/lib/commerce/catalog.mjs';

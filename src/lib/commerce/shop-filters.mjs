@@ -1,4 +1,4 @@
-﻿import { productOffer } from './catalog.mjs';
+import { productOffer } from './catalog.mjs';
 
 export const SHOP_SORT_OPTIONS = [
   { value: 'name', label: 'Nombre A–Z' },
@@ -13,12 +13,14 @@ export function normalizeShopQuery(params = {}) {
   let min = price(params.min), max = price(params.max);
   if (min && max && Number(min) > Number(max)) [min, max] = [max, min];
   const brand = [...new Set((Array.isArray(params.brand) ? params.brand : [params.brand]).filter(value => typeof value === 'string' && value.trim()).map(value => value.trim().slice(0, 120)))];
-  return { q: text('q'), category: text('category'), brand, min, max, sort: SHOP_SORT_OPTIONS.some(option => option.value === params.sort) ? params.sort : 'name', page: Math.max(1, Number.parseInt(params.page, 10) || 1) };
+  const category = [...new Set((Array.isArray(params.category) ? params.category : [params.category]).filter(value => typeof value === 'string' && value.trim()).map(value => value.trim().slice(0, 120)))];
+  return { q: text('q'), category, brand, min, max, sort: SHOP_SORT_OPTIONS.some(option => option.value === params.sort) ? params.sort : 'name', page: Math.max(1, Number.parseInt(params.page, 10) || 1) };
 }
 export function shopUrl(query, patch = {}) {
   const next = { ...query, page: 1, ...patch };
   const params = new URLSearchParams();
-  for (const key of ['q', 'category', 'min', 'max', 'sort']) if (next[key] !== '' && next[key] != null) params.set(key, next[key]);
+  for (const key of ['q', 'min', 'max', 'sort']) if (next[key] !== '' && next[key] != null) params.set(key, next[key]);
+  for (const category of next.category || []) params.append('category', category);
   for (const brand of next.brand || []) params.append('brand', brand);
   if (next.page > 1) params.set('page', next.page);
   return `/shop${params.size ? `?${params}` : ''}`;
@@ -26,7 +28,7 @@ export function shopUrl(query, patch = {}) {
 export function filterShopProducts(products, query) {
   const needle = query.q.toLocaleLowerCase('es');
   const filtered = products.filter(product =>
-    (!query.category || product.category === query.category) &&
+    (!query.category.length || query.category.includes(product.category)) &&
     (!query.brand.length || query.brand.includes(product.brand)) &&
     `${product.name} ${product.sku}`.toLocaleLowerCase('es').includes(needle) &&
     ((query.min === '' && query.max === '') || (product.price !== null && Number.isFinite(product.price) &&

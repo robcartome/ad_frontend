@@ -1,16 +1,24 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/components/feedback/LoadingLink';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Menu, X, Search, ShoppingBag, ArrowUpRight, Hammer, MapPin, ChevronRight, UsersRound, Headphones } from 'lucide-react';
 import { useCart } from '@/components/commerce/CartProvider';
 import CategoryIcon from './CategoryIcon';
 import CategoryNavLink from './CategoryNavLink';
+import LoadingIndicator from '@/components/feedback/LoadingIndicator';
 export default function StoreHeader({ store, categories }) {
     const { count, openCart, cartOpen } = useCart();
     const [open, setOpen] = useState(false);
+    const [searchLoading, setSearchLoading] = useState(false);
+    useEffect(() => {
+      const restore = () => setSearchLoading(false);
+      window.addEventListener('pageshow', restore);
+      return () => window.removeEventListener('pageshow', restore);
+    }, []);
     return <Dialog.Root open={open} onOpenChange={setOpen}>
+    {searchLoading && <LoadingIndicator fullScreen label="Buscando productos…"/>}
     <div className="sf-demo">Vista de demostración · Productos y precios ilustrativos · Sin pedidos reales</div>
     <div className="sf-top">
       <div className="sf-container">
@@ -36,7 +44,7 @@ export default function StoreHeader({ store, categories }) {
             <em>{store.location}</em>
           </span>
         </Link>
-        <form action="/shop" className="sf-search" role="search">
+        <form action="/shop" onSubmit={() => setSearchLoading(true)} className="sf-search" role="search">
           <label className="sf-sr-only" htmlFor="store-search">Buscar productos</label>
           <input id="store-search" name="q" placeholder="¿Qué necesitas para tu proyecto?" type="search" maxLength={120}/>
           <button type="submit" aria-label="Buscar">
@@ -53,6 +61,7 @@ export default function StoreHeader({ store, categories }) {
         </button>
         </div>
       </div>
+    </header>
       <nav id="store-navigation" aria-label="Navegación comercial" className="sf-nav">
         <div className="sf-container sf-nav-inner">
           <Dialog.Trigger asChild><button className="sf-all-categories" aria-label="Todas las categorías">
@@ -63,7 +72,6 @@ export default function StoreHeader({ store, categories }) {
           </div>
         </div>
       </nav>
-    </header>
     <Dialog.Portal>
       <Dialog.Overlay className="sf-drawer-overlay"/>
       <Dialog.Content className="storefront sf-category-drawer">

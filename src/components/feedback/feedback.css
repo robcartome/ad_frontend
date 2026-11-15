@@ -1,0 +1,13 @@
+﻿.ad-loading { display:flex; align-items:center; justify-content:center; gap:10px; min-height:100px; padding:20px; font-size:13px; color:#003366; }
+.ad-loading-spinner { display:inline-block; width:26px; height:26px; flex-shrink:0; border:3px solid #ffdcb8; border-top-color:#ff8000; border-radius:50%; animation:ad-spin .8s linear infinite; }
+.ad-loading-page { position:fixed; inset:0; z-index:120; min-height:100dvh; background:#fffffff5; flex-direction:column; }
+.ad-loading-overlay { position:absolute; inset:0; z-index:5; background:#ffffffdb; border-radius:inherit; }
+.ad-loading-compact { display:inline-flex; min-height:0; padding:0; color:inherit; }
+.ad-loading-compact .ad-loading-spinner { width:17px; height:17px; border-width:2px; }
+.ad-loading-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.ad-image-loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:1; }
+.we-announcement-thumbnail { position:relative; }
+@keyframes ad-spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .ad-loading-spinner { animation:none; border-top-color:#ff8000; } }
+
+.sf-shop-results, .we-editing-area, .we-preview-canvas { position:relative; }

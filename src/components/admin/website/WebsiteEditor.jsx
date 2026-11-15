@@ -1,4 +1,5 @@
 'use client';
+import LoadingIndicator from '@/components/feedback/LoadingIndicator';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -34,6 +35,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
   const [confirmAction, setConfirmAction] = useState(null);
   const [viewport, setViewport] = useState('mobile');
   const frame = useRef(null);
+  const [previewLoading, setPreviewLoading] = useState(true);
   const repository = useRef(null);
   const errors = useMemo(() => validateWebsite(document, demoProducts.map(product => product.id)), [document]);
   const invalid = Object.keys(errors).length > 0;
@@ -160,9 +162,10 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
         </div>
       </nav>
       
-      <div className="we-editing-area">
+      <div className="we-editing-area" aria-busy={busy}>
+        {busy && ready && <LoadingIndicator overlay label="Procesando contenido…"/>}
         {!ready ? <div className="we-empty" role="status">
-          <FileText/>
+          {error ? <FileText/> : <LoadingIndicator fullScreen label="Cargando contenido…"/>}
           <h2>{error ? 'Contenido no disponible' : 'Cargando contenido…'}</h2>
           <p>{error ? 'Recarga el contenido o revisa el almacenamiento del navegador.' : 'Preparando el espacio de trabajo de esta empresa.'}</p>
         </div> : <form id="website-form" onSubmit={save} noValidate>
@@ -259,7 +262,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
             <RotateCcw size={15}/> Recuperar aplicada
           </button>
           <button form="website-form" type="submit" className="we-button we-primary" disabled={!ready || busy || !canEdit || !dirty || invalid}>
-            <Save size={16}/>{busy ? 'Procesando…' : 'Guardar borrador'}
+            {busy ? <LoadingIndicator compact label="Guardando borrador…"/> : <Save size={16}/>} {busy ? 'Procesando…' : 'Guardar borrador'}
           </button>
         </div>
       
@@ -283,7 +286,8 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
         <p>Último contenido válido del formulario. Los enlaces están desactivados.</p>
         <div className={`we-preview-canvas ${viewport}`}>
         
-          <iframe ref={frame} title={`Vista previa de ${company.name}`} src="/admin/website/preview?embedded=1" onLoad={sendPreview}/>
+          {previewLoading && <LoadingIndicator overlay label="Cargando vista previa…"/>}
+          <iframe ref={frame} title={`Vista previa de ${company.name}`} src="/admin/website/preview?embedded=1" onLoad={() => { setPreviewLoading(false); sendPreview(); }}/>
       
         </div>
         <div className="we-publication">
@@ -311,7 +315,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
     </section>
     
     <Dialog open={Boolean(confirmAction)} onOpenChange={open => { if (!open) setConfirmAction(null); }}>
-      <DialogContent>
+      <DialogContent className="we-animated-modal">
         <DialogHeader>
           <DialogTitle>{confirmAction === 'reload' ? '¿Recargar el contenido guardado?' : '¿Recuperar la versión aplicada?'}</DialogTitle>
           <DialogDescription>Se reemplazarán los cambios que tienes en el formulario. Esta acción no modifica la web pública.</DialogDescription>
