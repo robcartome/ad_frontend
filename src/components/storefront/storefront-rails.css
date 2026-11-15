@@ -1,6 +1,10 @@
 /* Compact storefront discovery. Imported after the base responsive rules. */
 .storefront .sf-nav {
   display: block;
+  background: #fff;
+  border-top: 1px solid #e7ebef;
+  border-bottom: 1px solid #dce3ea;
+  box-shadow: 0 3px 8px #00336608;
 }
 .storefront .sf-nav > .sf-nav-inner {
   display: flex;

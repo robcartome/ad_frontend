@@ -456,3 +456,8 @@ Referencia técnica consultada: https://www.radix-ui.com/primitives/docs/guides/
 - El atributo de estado se limpia al desmontar /shop, restaurando la cabecera en otras páginas. Toolbar sticky también en escritorio para mantener el relevo coherente en ambos tamaños.
 - Archivos: StoreHeader.jsx, StoreCatalog.jsx, storefront-contact.css, shop.css. Lint y build de producción correctos tras corregir el cierre JSX al separar nav/header. Revisión visual/interactiva de scroll, retorno a otras rutas, filtros/paginación y cambio de tamaño pendiente. No se añaden pruebas que repliquen implementación CSS.
 - Se preservan cambios anteriores, catálogos laborales, lógica de carrito y backend; sin dependencias ni despliegue.
+
+## Entrega 20 — Contraste de navegación (14/11/2026)
+
+- store-navigation con fondo blanco explícito, bordes gris claro y sombra sutil para separarlo del contenido. Cambio en storefront-rails.css, compartido con preview. Conserva selección naranja, scroll horizontal y comportamiento de cabecera/filtros.
+- Lint y diff --check correctos. Ajuste CSS de bajo impacto; sin pruebas nuevas ni nueva compilación. Revisión visual pendiente. Catálogos laborales y backend sin cambios.
