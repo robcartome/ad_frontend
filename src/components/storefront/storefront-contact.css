@@ -271,7 +271,7 @@
 @media(max-width:900px) {
   .storefront .sf-header { position:sticky; }
   .storefront .sf-search { height:36px; min-height:0; }
-  .storefront .sf-search input { min-height:0; padding-block:0; font-size:16px; }
+  .storefront .sf-search input { min-height:0; padding-block:0; font-size:14px; }
   .storefront .sf-search button { width:44px; min-height:0; }
   .storefront .sf-search button svg { width:19px; height:19px; }
 }
