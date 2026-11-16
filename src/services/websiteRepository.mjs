@@ -40,13 +40,27 @@ export function createLocalWebsiteRepository(storage, productIds) {
   };
 }
 
-// Proposed contract ONLY. Instantiate with authenticated apiFetch after Django implements it.
+
 export function createDjangoWebsiteRepository(request) {
   const path = scope => `/websites/${encodeURIComponent(scope.websiteId)}`;
+  const call = async (url, options = {}) => {
+    const response = await request(url, { ...options, cache: 'no-store', withResponse: true });
+    return response?.data !== undefined ? { ...response.data, etag: response.etag } : response;
+  };
   return {
-    capabilities: { mode: 'api', mediaUpload: true, realPublication: true },
-    load: scope => request(`${path(scope)}/editor`),
-    saveDraft: (scope, document, revision) => request(`${path(scope)}/draft`, { method: 'PUT', headers: { 'If-Match': `"${revision}"` }, body: JSON.stringify({ document }) }),
-    publish: (scope, revision) => request(`${path(scope)}/publish`, { method: 'POST', headers: { 'If-Match': `"${revision}"` } }),
+    discover: hostname => call(`/websites/current/?hostname=${encodeURIComponent(hostname)}`),
+    load: scope => call(`${path(scope)}/editor/`),
+    preview: scope => call(`${path(scope)}/preview/`),
+    revisions: (scope, offset = 0) => call(`${path(scope)}/revisions/?limit=100&offset=${offset}`),
+    saveDraft: (scope, document, revision) => call(`${path(scope)}/draft/`, { method: 'PUT', headers: { 'If-Match': `"${revision}"` }, body: JSON.stringify({ document }) }),
+    publish: (scope, revision) => call(`${path(scope)}/publish/`, { method: 'POST', headers: { 'If-Match': `"${revision}"` } }),
+    restore: (scope, revisionId, revision) => call(`${path(scope)}/restore/`, { method: 'POST', headers: { 'If-Match': `"${revision}"` }, body: JSON.stringify({ revisionId }) }),
+    media: scope => call(`${path(scope)}/media/`),
+    removeMedia: (scope, id) => call(`${path(scope)}/media/${encodeURIComponent(id)}/`, { method: 'DELETE' }),
+    uploadMedia: (scope, file, kind = 'IMAGE', altText = '') => {
+      if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) throw fail('VALIDATION', 'Usa PNG, JPEG o WebP de hasta 5 MiB.');
+      const body = new FormData(); body.append('file', file); body.append('kind', kind); body.append('altText', altText);
+      return call(`${path(scope)}/media/`, { method: 'POST', body });
+    },
   };
 }

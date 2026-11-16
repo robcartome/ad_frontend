@@ -1,5 +1,7 @@
 # Administración web — contrato frontend y plan Django
 
+Actualizacion B3: el modo real ya conecta E0/E1-E6/M0-M2 y SSR publicado P1. Los apartados historicos de demo local se conservan como referencia. Ver docs/storefront-plan-y-avances.md y el informe backend 11-entrega-b3.md; R2 real y QA en navegador pendientes.
+
 Actualización: 12/11/2026, America/Lima. Estado: frontend local implementado; backend **propuesto, no implementado**. Repositorio frontend `ad_frontend`; backend futuro `apudig_mvp`. Este documento complementa `storefront-plan-y-avances.md`.
 
 Ampliación del 13/11/2026: documento editorial v3 con slider de avisos (máximo 8) y productos especiales seleccionados (máximo 4). Las versiones locales v1/v2 se adaptan sin escribir durante la lectura ni eliminar contenido existente.

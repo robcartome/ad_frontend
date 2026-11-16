@@ -2,8 +2,8 @@ import Link from "@/components/feedback/LoadingLink";
 import { ArrowRight, Headphones, ClipboardList, Hammer } from "lucide-react";
 import { getStore } from "@/lib/storefront/store";
 export const metadata = { title: "Nosotros" };
-export default function AboutPage() {
-  const store = getStore();
+export default async function AboutPage() {
+  const store = await getStore();
   return (
     <div className="sf-container sf-page">
       <nav className="sf-breadcrumb" aria-label="Ruta de navegación">
@@ -55,8 +55,8 @@ export default function AboutPage() {
         ))}
       </section>
       <p className="sf-callout">
-        Esta presentación es de demostración. La historia, fotografías y datos
-        oficiales de la empresa se incorporarán con contenido autorizado.
+        Conoce nuestros canales de atención en la página de contacto.
+        El catálogo comercial estará disponible próximamente.
       </p>
     </div>
   );

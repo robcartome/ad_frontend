@@ -3,8 +3,8 @@ import { MapPin, Clock, MessageCircle, ArrowRight } from "lucide-react";
 import { getStore } from "@/lib/storefront/store";
 import { emailHref, phoneHref } from "@/lib/website/contact.mjs";
 export const metadata = { title: "Contacto" };
-export default function ContactPage() {
-  const store = getStore();
+export default async function ContactPage() {
+  const store = await getStore();
   return (
     <div className="sf-container sf-page">
       <nav className="sf-breadcrumb" aria-label="Ruta de navegación">
@@ -76,8 +76,8 @@ export default function ContactPage() {
         </article>
       </div>
       <p className="sf-callout">
-        Vista de demostración: los canales de contacto y envío de solicitudes
-        aún no están activos.
+        Los datos de contacto corresponden a la última revisión publicada.
+        Las cotizaciones comerciales estarán disponibles próximamente.
       </p>
     </div>
   );

@@ -2,16 +2,17 @@ import '@/components/feedback/panels.css';
 import './storefront.css';
 import '@/components/storefront/storefront-rails.css';
 import '@/components/storefront/storefront-contact.css';
-import { getStore, getStorefrontCategories, getStorefrontProducts } from '@/lib/storefront/store';
+import { getPublicWebsite, getStore, getStorefrontCategories, getStorefrontProducts } from '@/lib/storefront/store';
 import { CartProvider } from '@/components/commerce/CartProvider';
 import StoreHeader from '@/components/storefront/StoreHeader';
 import StoreFooter from '@/components/storefront/StoreFooter';
 export async function generateMetadata() {
-    const store = getStore();
-    return { title: { default: `${store.name} | Construye tus proyectos`, template: `%s | ${store.name}` }, description: store.description, robots: { index: false, follow: false } };
+    const store = await getStore();
+    const site = await getPublicWebsite();
+    return { title: { default: site.content.seo.title, template: `%s | ${store.name}` }, description: site.content.seo.description, robots: { index: false, follow: false }, alternates: { canonical: `https://${site.canonicalHostname}/` } };
 }
-export default function PublicLayout({ children }) {
-    const store = getStore();
+export default async function PublicLayout({ children }) {
+    const store = await getStore();
     const categories = getStorefrontCategories();
     return <div className="storefront" style={{ '--sf-orange': store.colors.primary, '--sf-background': store.colors.background, '--sf-muted': store.colors.muted }}>
     <CartProvider key={store.id} store={store} products={getStorefrontProducts()}>

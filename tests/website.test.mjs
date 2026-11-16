@@ -111,10 +111,11 @@ test('future Django repository sends revision preconditions and no client-select
   await api.load(scope);
   await api.saveDraft(scope, initial, 3);
   await api.publish(scope, 4);
-  assert.deepEqual(calls[0], ['/websites/default/editor']);
+  assert.equal(calls[0][0], '/websites/default/editor/');
+  assert.equal(calls[0][1].cache, 'no-store');
   assert.equal(calls[1][1].headers['If-Match'], '"3"');
   assert.equal(JSON.parse(calls[1][1].body).companyId, undefined);
-  assert.equal(calls[2][0], '/websites/default/publish');
+  assert.equal(calls[2][0], '/websites/default/publish/');
   assert.equal(calls[2][1].method, 'POST');
 });
 

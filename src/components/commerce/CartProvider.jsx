@@ -13,6 +13,7 @@ export function CartProvider({ store, products, children }) {
     const [addedId, setAddedId] = useState(null);
     const opener = useRef(null);
     function openCart(id = null) {
+        if (store.commerceEnabled === false) return;
         if (!cartOpen) opener.current = document.activeElement;
         setAddedId(id);
         setCartOpen(true);
@@ -45,7 +46,7 @@ export function CartProvider({ store, products, children }) {
         return () => window.removeEventListener('storage', sync);
     }, [store.id, products]);
     function add(id, quantity = 1) {
-        if (!ready || !validQuantity(quantity) || !products.some(product => product.id === id))
+        if (store.commerceEnabled === false || !ready || !validQuantity(quantity) || !products.some(product => product.id === id))
             return;
         setItems(previous => {
             const current = previous.find(item => item.id === id);

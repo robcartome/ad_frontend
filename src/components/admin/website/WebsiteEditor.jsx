@@ -6,11 +6,14 @@ import Link from 'next/link';
 import { ArrowUpRight, CheckCircle2, Eye, FileText, Globe, ImageIcon, LayoutTemplate, Megaphone, Palette, Phone, Save, Search, Smartphone, Monitor, RotateCcw, AlertCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { createWebsiteDocument, validateWebsite } from '@/lib/website/content.mjs';
-import { createLocalWebsiteRepository, websiteKey, localWebsiteScope } from '@/services/websiteRepository.mjs';
-import { demoProducts } from '@/data/demo/storefront';
+import { djangoWebsiteRepository } from './useWebsiteAccess';
+import { WebsiteMediaContext } from './WebsiteMediaContext';
+import EditorialImageField from './EditorialImageField';
+const editorialProducts = [];
 import { CollectionEditor, Field, SectionsEditor } from './WebsiteFields';
 import { AnnouncementsEditor, SpecialProductsEditor } from './ShowcaseEditor';
 import { SOCIAL_NETWORKS } from '@/lib/website/contact.mjs';
+import { websiteErrorMessage } from '@/lib/website/errors.mjs';
 
 const options = [
   ['overview', 'Resumen', Globe], ['identity', 'Identidad visual', Palette],
@@ -19,16 +22,18 @@ const options = [
   ['sections', 'Secciones', LayoutTemplate], ['contact', 'Contacto', Phone], ['seo', 'SEO', Search],
 ];
 const stamp = value => value ? new Intl.DateTimeFormat('es-PE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Lima' }).format(new Date(value)) : 'Sin guardar';
-const copy = value => JSON.parse(JSON.stringify(value));
 
-export default function WebsiteEditor({ company, canEdit, canApply }) {
-  const initial = useMemo(() => createWebsiteDocument(company.name, demoProducts.map(product => product.id)), [company.name]);
-  const scope = useMemo(() => localWebsiteScope(company.id), [company.id]);
+
+export default function WebsiteEditor({ company, canEdit, canApply, discovery, capabilities }) {
+  const initial = useMemo(() => createWebsiteDocument(company.name, editorialProducts.map(product => product.id)), [company.name]);
+  const scope = useMemo(() => ({ companyId: company.id, websiteId: discovery.id }), [company.id, discovery.id]);
   const [record, setRecord] = useState(null);
   const [document, setDocument] = useState(initial);
   const [tab, setTab] = useState('overview');
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [serverErrors, setServerErrors] = useState({});
+  const [mediaItems, setMediaItems] = useState([]);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [externalChange, setExternalChange] = useState(false);
@@ -37,7 +42,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
   const frame = useRef(null);
   const [previewLoading, setPreviewLoading] = useState(true);
   const repository = useRef(null);
-  const errors = useMemo(() => validateWebsite(document, demoProducts.map(product => product.id)), [document]);
+  const errors = useMemo(() => ({ ...validateWebsite(document, []), ...(serverErrors.document === JSON.stringify(document) ? serverErrors.fields : {}) }), [document, serverErrors]);
   const invalid = Object.keys(errors).length > 0;
   const dirty = Boolean(record && JSON.stringify(document) !== JSON.stringify(record.draft));
   const unapplied = Boolean(record && JSON.stringify(record.draft) !== JSON.stringify(record.published));
@@ -46,13 +51,14 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
     setBusy(true);
     setError('');
     try {
-      repository.current = createLocalWebsiteRepository(localStorage, demoProducts.map(product => product.id));
+      repository.current = djangoWebsiteRepository;
       const saved = await repository.current.load(scope, initial);
+      setServerErrors({});
       setRecord(saved);
       setDocument(saved.draft);
       setExternalChange(false);
       setReady(true);
-    } catch (cause) { setError(cause.message); }
+    } catch (cause) { setError(websiteErrorMessage(cause)); setServerErrors({}); }
     finally { setBusy(false); }
   }, [scope, initial]);
 
@@ -63,11 +69,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
-  useEffect(() => {
-    const changed = event => { if (event.key === websiteKey(scope) || event.key === null) setExternalChange(true); };
-    window.addEventListener('storage', changed);
-    return () => window.removeEventListener('storage', changed);
-  }, [scope]);
+
 
   const sendPreview = useCallback(() => {
     if (!invalid) frame.current?.contentWindow?.postMessage({ type: 'apudig:website-preview', companyId: company.id, document }, window.location.origin);
@@ -82,7 +84,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
   }, [sendPreview]);
 
   function updateGroup(group, key, value) {
-    setNotice('');
+    setNotice(''); setServerErrors({});
     setDocument(previous => ({ ...previous, [group]: { ...previous[group], [key]: value } }));
   }
   const field = (group, key, label, extra = {}) => <Field label={label} path={`${group}.${key}`} value={document[group][key]} onChange={value => updateGroup(group, key, value)} errors={errors} {...extra}/>;
@@ -94,8 +96,8 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
     try {
       const saved = await repository.current.saveDraft(scope, document, record.revision, initial);
       setRecord(saved); setDocument(saved.draft); setExternalChange(false);
-      setNotice('Borrador guardado en este navegador. La web pública no ha cambiado.');
-    } catch (cause) { setError(cause.message); }
+      setNotice('Borrador guardado en Django. La web publica no ha cambiado.');
+    } catch (cause) { setError(websiteErrorMessage(cause)); setServerErrors({ document: JSON.stringify(document), fields: cause.fields || {} }); if (cause.status === 412) setExternalChange(true); }
     finally { setBusy(false); }
   }
   async function apply() {
@@ -104,17 +106,31 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
     try {
       const saved = await repository.current.publish(scope, record.revision, initial);
       setRecord(saved); setExternalChange(false);
-      setNotice('Versión aplicada a la demo local. Ya puedes abrir su vista previa. No se publicó en Internet.');
-    } catch (cause) { setError(cause.message); }
+      setNotice('Revision publicada. El sitio publico ya puede mostrar esta version.');
+    } catch (cause) { setError(websiteErrorMessage(cause)); setServerErrors({ document: JSON.stringify(document), fields: cause.fields || {} }); if (cause.status === 412) setExternalChange(true); }
     finally { setBusy(false); }
   }
-  function confirm() {
+  async function confirm() {
     if (confirmAction === 'reload') load();
-    else if (record?.published) { setDocument(copy(record.published)); setNotice('Versión aplicada recuperada en el formulario. Guarda para reemplazar el borrador.'); }
+    else if (record?.published) {
+      setBusy(true);
+      try {
+        let history = await repository.current.revisions(scope);
+        let published = history.results.find(item => item.operation === 'PUBLISH');
+        for (let offset = 100; !published && offset < history.count; offset += 100) {
+          history = await repository.current.revisions(scope, offset);
+          published = history.results.find(item => item.operation === 'PUBLISH');
+        }
+        if (!published) throw new Error('No hay una publicacion restaurable en esta pagina de historial.');
+        const restored = await repository.current.restore(scope, published.id, record.revision);
+        setRecord(restored); setDocument(restored.draft); setNotice('Revision restaurada como borrador. La publicacion vigente se conserva.');
+      } catch (cause) { setError(websiteErrorMessage(cause)); }
+      finally { setBusy(false); }
+    }
     setConfirmAction(null);
   }
 
-  return <div className="web-editor">
+  return <WebsiteMediaContext.Provider value={{ canUpload: capabilities.mediaUpload, upload: (file, kind, alt) => djangoWebsiteRepository.uploadMedia(scope, file, kind, alt) }}><div className="web-editor">
     
     <header className="we-heading">
       <div>
@@ -122,7 +138,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
         <h1>Tu web, a tu manera.</h1>
         <p>Gestiona lo que tus clientes ven, desde un solo lugar.</p>
       </div>
-      <Link className="we-button we-secondary" href="/" target="_blank" rel="noopener noreferrer">Ver web de referencia 
+      <Link className="we-button we-secondary" href="/" target="_blank" rel="noopener noreferrer">Ver web publica
         <ArrowUpRight size={16}/>
       </Link>
     </header>
@@ -131,12 +147,12 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
       <span>
         <Globe size={17}/>
         <strong>{company.name}</strong>
-        <span className="we-chip">Demo local</span>
+        <span className="we-chip">CMS conectado</span>
       </span>
       <small>{dirty ? 'Cambios sin guardar' : record?.revision ? `Revisión ${record.revision} · Guardado ${stamp(record.updatedAt)} (Lima)` : 'Configuración inicial'}</small>
     </div>
     
-    <p className="we-note">Los cambios se guardan solo en este navegador y por empresa. La vista previa refleja tu contenido; la web pública y otros equipos recibirán los cambios cuando se integre Django.</p>
+    <p className="we-note">Los borradores se guardan por empresa. Solo Publicar actualiza el sitio. Los borradores locales anteriores no se importan ni se eliminan.</p>
     {!canEdit && <p className="we-note">Tienes acceso de lectura. La edición requiere el permiso de gestión de contenido web.</p>}
     {error && <div className="we-error" role="alert">
       <AlertCircle size={19}/>
@@ -176,7 +192,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
               <div className="we-section-intro">
                 <div>
                   <h2>Todo listo para dar el siguiente paso</h2>
-                  <p>Edita, guarda y revisa antes de aplicar una versión a la demo.</p>
+                  <p>Edita, guarda y revisa antes de publicar una revisión.</p>
                 </div>
               </div>
               
@@ -199,7 +215,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
                     <strong>Revisa la vista previa.</strong> Comprueba mensajes, enlaces y vigencias.
                   </li>
                   <li>
-                    <strong>Aplica a la demo local.</strong> La publicación real se habilitará con Django.
+                    <strong>Publica la revisión.</strong> El sitio muestra únicamente la versión publicada.
                   </li>
                 </ol>
               </article>
@@ -212,12 +228,12 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
                   <p>El nombre y los colores que darán la bienvenida a tus clientes.</p>
                 </div>
               </div>
-              <div className="we-fields-grid">{field('identity', 'name', 'Nombre comercial', { maxLength: 100 })}{field('identity', 'shortName', 'Nombre corto del header', { maxLength: 40 })}{field('identity', 'location', 'Zona de atención', { maxLength: 100 })}{field('identity', 'primaryColor', 'Color principal', { placeholder: '#FF8000', hint: 'Color hexadecimal. Referencia de marca: #FF8000.' })}</div>{field('identity', 'logoUrl', 'Logo (URL)', { hint: 'Ruta local o URL HTTPS. Se mantiene el nombre como alternativa accesible.' })}{field('identity', 'announcement', 'Barra informativa', { maxLength: 180 })}
+              <div className="we-fields-grid">{field('identity', 'name', 'Nombre comercial', { maxLength: 100 })}{field('identity', 'shortName', 'Nombre corto del header', { maxLength: 40 })}{field('identity', 'location', 'Zona de atención', { maxLength: 100 })}{field('identity', 'primaryColor', 'Color principal', { placeholder: '#FF8000', hint: 'Color hexadecimal. Referencia de marca: #FF8000.' })}</div><EditorialImageField item={{ imageUrl: document.identity.logoUrl, imageAlt: document.identity.name }} path="identity.logoUrl" label="Logo" errors={errors} onChange={value => updateGroup('identity', 'logoUrl', value)}/>{field('identity', 'announcement', 'Barra informativa', { maxLength: 180 })}
             </>}
             {tab === 'banners' && <div className="we-item"><h2>Reproducción del banner principal</h2><label className="we-toggle"><input type="checkbox" checked={document.heroSlider?.autoplay ?? true} onChange={event => setDocument(previous => ({ ...previous, heroSlider: { intervalMs: 6000, ...previous.heroSlider, autoplay: event.target.checked } }))}/> Pasar banners automáticamente</label><Field label="Segundos por banner (3 a 15)" path="banners.intervalMs" type="number" min={3} max={15} step={1} value={(document.heroSlider?.intervalMs ?? 6000) / 1000} onChange={value => setDocument(previous => ({ ...previous, heroSlider: { autoplay: true, ...previous.heroSlider, intervalMs: value === '' ? 0 : Number(value) * 1000 } }))} errors={errors}/><p className="we-note">Solo rotan los banners visibles. Cada uno mantiene su CTA. El carrusel se pausa al interactuar y respeta la preferencia de movimiento reducido.</p></div>}
-            {['banners', 'promotions'].includes(tab) && <CollectionEditor type={tab} items={document[tab]} errors={errors} products={demoProducts} onChange={items => setDocument(previous => ({ ...previous, [tab]: items }))}/>}
+            {['banners', 'promotions'].includes(tab) && <CollectionEditor type={tab} items={document[tab]} errors={errors} products={editorialProducts} onChange={items => setDocument(previous => ({ ...previous, [tab]: items }))}/>}
             {tab === 'announcements' && <AnnouncementsEditor value={document.announcements} errors={errors} onChange={announcements => setDocument(previous => ({ ...previous, announcements }))}/>}
-            {tab === 'specials' && <SpecialProductsEditor value={document.specials} products={demoProducts} errors={errors} onChange={specials => setDocument(previous => ({ ...previous, specials }))}/>}
+            {tab === 'specials' && <SpecialProductsEditor value={document.specials} products={editorialProducts} errors={errors} onChange={specials => setDocument(previous => ({ ...previous, specials }))}/>}
             {tab === 'sections' && <SectionsEditor sections={document.sections} errors={errors} onChange={sections => setDocument(previous => ({ ...previous, sections }))}/>}
             {tab === 'contact' && <>
               <div className="we-section-intro">
@@ -242,7 +258,7 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
                 <h3>{document.seo.title}</h3>
                 <p>{document.seo.description}</p>
               </div>
-              <p className="we-note">La demo mantiene noindex. Guardar estos datos no activa la indexación ni configura un dominio.</p>
+              <p className="we-note">La indexacion se mantiene desactivada durante la integracion. Guardar SEO no publica ni configura dominios.</p>
             </>}
           </fieldset>
           {invalid && <div className="we-validation" role="alert">
@@ -256,10 +272,10 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
         
         <div className="we-actions">
           <div>
-            <span className={`we-status-dot ${dirty ? 'is-dirty' : ''}`}/>{dirty ? 'Cambios sin guardar' : record?.publishedAt ? 'Versión local aplicada' : 'Borrador local'}
+            <span className={`we-status-dot ${dirty ? 'is-dirty' : ''}`}/>{dirty ? 'Cambios sin guardar' : record?.publishedAt ? 'Revision publicada' : 'Borrador'}
           </div>
           <button type="button" className="we-button we-secondary" onClick={() => setConfirmAction('restore')} disabled={!record?.published || !canEdit || busy}>
-            <RotateCcw size={15}/> Recuperar aplicada
+            <RotateCcw size={15}/> Restaurar publicada
           </button>
           <button form="website-form" type="submit" className="we-button we-primary" disabled={!ready || busy || !canEdit || !dirty || invalid}>
             {busy ? <LoadingIndicator compact label="Guardando borrador…"/> : <Save size={16}/>} {busy ? 'Procesando…' : 'Guardar borrador'}
@@ -291,12 +307,12 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
       
         </div>
         <div className="we-publication">
-          <h3>Versión de la demo</h3>
+          <h3>Publicación del Website</h3>
           <p>{record?.publishedAt ? `Aplicada ${stamp(record.publishedAt)} (Lima)` : 'Todavía no se aplicó una versión.'}</p>
-          <button type="button" className="we-button we-primary" onClick={apply} disabled={!ready || busy || !canApply || dirty || invalid || !unapplied}>Aplicar a demo local 
+          <button type="button" className="we-button we-primary" onClick={apply} disabled={!ready || busy || !canApply || dirty || invalid || !unapplied}>Publicar revision
             <CheckCircle2 size={16}/>
           </button>{dirty && <small>Guarda el borrador antes de aplicar.</small>}{!canApply && <small>Necesitas permiso de publicación para aplicar una versión.</small>}
-          <Link href="/admin/website/preview?source=published" target="_blank" rel="noopener noreferrer">Abrir versión aplicada 
+          <Link href="/admin/website/preview?source=published" target="_blank" rel="noopener noreferrer">Revisar última publicación
             <ArrowUpRight size={14}/>
           </Link>
           <Link href="/admin/website/preview" target="_blank" rel="noopener noreferrer">Abrir borrador guardado 
@@ -306,10 +322,22 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
       </aside>
     </div>
     
+    <section className="we-history"><h2>Imagenes del Website</h2>
+      {capabilities.mediaUpload && <label className="we-file-picker">Subir imagen a la biblioteca (PNG/JPEG/WebP, máximo 5 MiB)<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={async event => {
+        const file = event.target.files?.[0]; event.target.value = '';
+        if (!file) return;
+        setBusy(true);
+        try { await djangoWebsiteRepository.uploadMedia(scope, file); setMediaItems((await djangoWebsiteRepository.media(scope)).results); }
+        catch (cause) { setError(websiteErrorMessage(cause)); }
+        finally { setBusy(false); }
+      }}/></label>}
+      <button type="button" className="we-button we-secondary" onClick={async () => { try { const page = await djangoWebsiteRepository.media(scope); setMediaItems(page.results); } catch (cause) { setError(websiteErrorMessage(cause)); } }}>Consultar biblioteca</button>
+      {mediaItems.map(item => <p key={item.id}><a href={item.url} target="_blank" rel="noopener noreferrer">{item.altText || item.kind}</a>{capabilities.mediaUpload && <button type="button" onClick={async () => { try { await djangoWebsiteRepository.removeMedia(scope, item.id); setMediaItems(items => items.filter(asset => asset.id !== item.id)); } catch (cause) { setError(websiteErrorMessage(cause)); } }}>Desactivar imagen</button>}</p>)}
+    </section>
     <section className="we-history">
-      <h2>Actividad local</h2>
-      <p>Registro orientativo de este navegador. La auditoría centralizada se incorporará en Django.</p>{record?.events.length ? <ol>{record.events.slice(0, 5).map(event => <li key={event.revision}>
-          <span>{event.action === 'save' ? 'Borrador guardado' : 'Versión aplicada a demo'}</span>
+      <h2>Historial de revisiones</h2>
+      <p>Actividad registrada en Django.</p>{record?.events.length ? <ol>{record.events.slice(0, 5).map(event => <li key={event.revision}>
+          <span>{({ save: 'Borrador guardado', publish: 'Revision publicada', restore: 'Borrador restaurado' })[event.action] || event.action}</span>
           <small>Revisión {event.revision} · {stamp(event.at)} (Lima)</small>
         </li>)}</ol> : <p>No hay cambios guardados todavía.</p>}
     </section>
@@ -326,5 +354,5 @@ export default function WebsiteEditor({ company, canEdit, canApply }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  </div>;
+  </div></WebsiteMediaContext.Provider>;
 }

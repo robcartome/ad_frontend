@@ -1,5 +1,17 @@
 # APUDIG storefront — plan y continuidad
 
+Actualización 16/11/2026: `WEBSITE_DEV_HOSTNAME` permite resolver `localhost` exclusivamente con Next en desarrollo y un dominio publicado configurado de forma explícita. Guía y preparación aislada: [Website local](website-desarrollo-local.md). Las pruebas Node y lint pasan; la validación de navegador y R2 real sigue pendiente.
+
+## Entrega B3 (15/11/2026): CMS Django y contenido publicado
+
+Estado vigente: editor conectado a Website descubierto por JWT/empresa; borrador/publicacion/preview/restauracion y biblioteca de medios usan Django. Publico SSR por hostname, snapshot publicado, no-store y comercio deshabilitado hasta B4. No se importan ni eliminan borradores locales previos. Se conserva el diseno y los catalogos laborales.
+
+Archivos: servicios websiteRepository/api, WebsiteAccess/useWebsiteAccess/WebsiteEditor/WebsitePreview/EditorialImageField, WebsiteMediaContext, errors.mjs, storefront/store.js y public-website.mjs, layouts/paginas publicas y guards de carrito/header; tests Website/publico/HTTP/smoke. Configuracion: NEXT_PUBLIC_API_V1_URL (cliente/build) y WEBSITE_API_V1_URL (solo servidor), mismo backend autorizado; no secretos en Next publico.
+
+Verificacion: lint/build correctos, 43 pruebas Node correctas, smoke de 16 casos y flujo HTTP Next-Django-PostgreSQL con dos empresas correctos. Backend: 102 pruebas Website correctas; global 669 vs baseline B2 659, mismos 84 fallos y 36 errores heredados. No es una suite ERP global aprobada.
+
+Pendiente: Computer Use se detuvo al no poder verificar la URL de Chrome; no se valido interaccion visual, responsive, teclado ni dos navegadores. R2 fue simulado por instruccion expresa; falta CDN/carga real. B3 tiene aceptacion parcial y no debe iniciarse B4 hasta resolver esos puntos. Sin commits, push ni despliegue; base habitual intacta. Informe completo: apudig_mvp/docs/architecture/website-integration/11-entrega-b3.md. Las entregas locales historicas siguientes describen el estado anterior y no sustituyen esta actualizacion.
+
 Última actualización: 13 de noviembre de 2026 (America/Lima).
 
 **Estado actual:** el panel Next administra la web y mantiene los catálogos laborales. `/catalog` recupera su vista anterior; `/admin/catalog_admin` no se modifica; el storefront comercial usa `/shop` y `/shop/[id]`. El editor `/admin/website` comprueba permisos dentro de la página, guarda borradores locales y no publica en `/`. Leer la entrega 3 al final, [las decisiones de rutas](admin-web-y-catalogos.md) y [el plan Django](website-cms-backend-plan.md) antes de continuar.

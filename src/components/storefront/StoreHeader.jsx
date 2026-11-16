@@ -33,10 +33,7 @@ export default function StoreHeader({ store, categories }) {
       {searchLoading && (
         <LoadingIndicator fullScreen label="Buscando productos…" />
       )}
-      <div className="sf-demo">
-        Vista de demostración · Productos y precios ilustrativos · Sin pedidos
-        reales
-      </div>
+      <div className="sf-demo">{store.mode === 'demo' ? 'Vista de demostracion' : 'Sitio informativo. Catalogo y cotizaciones aun no disponibles.'}</div>
       <div className="sf-top">
         <div className="sf-container">
           <span>
@@ -95,8 +92,9 @@ export default function StoreHeader({ store, categories }) {
               placeholder="¿Qué necesitas para tu proyecto?"
               type="search"
               maxLength={120}
+              disabled={store.commerceEnabled === false}
             />
-            <button type="submit" aria-label="Buscar">
+            <button type="submit" aria-label="Buscar" disabled={store.commerceEnabled === false}>
               <Search size={21} />
             </button>
           </form>
@@ -112,6 +110,7 @@ export default function StoreHeader({ store, categories }) {
             <button
               type="button"
               className="sf-cart-link"
+              disabled={store.commerceEnabled === false}
               aria-label={`Mi carrito, ${count} unidades`}
               aria-haspopup="dialog"
               aria-expanded={cartOpen}

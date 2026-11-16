@@ -1,5 +1,7 @@
 # Matriz de integración con `apudig_mvp`
 
+Actualizacion B3: Website editorial E0/E1-E6/M0-M2 y lectura publica P0/P1 implementados e integrados. Ver docs/storefront-plan-y-avances.md y apudig_mvp/docs/architecture/website-integration/11-entrega-b3.md; R2 real y revision visual siguen pendientes. Los contratos comerciales B4/B5 contin?an pendientes.
+
 Este documento registra la compatibilidad observada entre `ad_frontend`, rama `mvp_production`, y la API Django REST Framework de `apudig_mvp`.
 
 La navegación actual concentra Next en administración web y catálogos; los módulos ERP de esta matriz son antecedentes de integración y ahora muestran una transición a Django. `/catalog` y `/admin/catalog_admin` se conservan; los productos comerciales están en `/shop`. Ver [rutas y responsabilidades actuales](admin-web-y-catalogos.md). No usar esta matriz histórica como instrucción para reactivar módulos ERP en Next.
