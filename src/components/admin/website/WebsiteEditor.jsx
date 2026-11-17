@@ -96,7 +96,7 @@ export default function WebsiteEditor({ company, canEdit, canApply, discovery, c
     try {
       const saved = await repository.current.saveDraft(scope, document, record.revision, initial);
       setRecord(saved); setDocument(saved.draft); setExternalChange(false);
-      setNotice('Borrador guardado en Django. La web publica no ha cambiado.');
+      setNotice('Borrador guardado en APUDIG. La página pública no ha cambiado.');
     } catch (cause) { setError(websiteErrorMessage(cause)); setServerErrors({ document: JSON.stringify(document), fields: cause.fields || {} }); if (cause.status === 412) setExternalChange(true); }
     finally { setBusy(false); }
   }
@@ -336,7 +336,7 @@ export default function WebsiteEditor({ company, canEdit, canApply, discovery, c
     </section>
     <section className="we-history">
       <h2>Historial de revisiones</h2>
-      <p>Actividad registrada en Django.</p>{record?.events.length ? <ol>{record.events.slice(0, 5).map(event => <li key={event.revision}>
+      <p>Actividad registrada en APUDIG.</p>{record?.events.length ? <ol>{record.events.slice(0, 5).map(event => <li key={event.revision}>
           <span>{({ save: 'Borrador guardado', publish: 'Revision publicada', restore: 'Borrador restaurado' })[event.action] || event.action}</span>
           <small>Revisión {event.revision} · {stamp(event.at)} (Lima)</small>
         </li>)}</ol> : <p>No hay cambios guardados todavía.</p>}

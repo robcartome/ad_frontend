@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/lib/AuthContext";
+import { canAccessAdministrationRoute, getAdministrationAccess } from "@/lib/admin/access.mjs";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -12,9 +15,13 @@ export default function AdminLayout({ children }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const pathname = usePathname();
+  const { user, selectedCompany } = useAuth();
+  const access = getAdministrationAccess(user, selectedCompany);
+
+  const canAccess = canAccessAdministrationRoute(pathname, access);
 
   // Preview retains authentication and company checks, with no ERP chrome in the frame.
-  if (pathname === "/admin/website/preview") {
+  if (pathname === "/admin/website/preview" && canAccess) {
     return <AuthGuard>{children}</AuthGuard>;
   }
 
@@ -49,7 +56,11 @@ export default function AdminLayout({ children }) {
           />
 
           {/* Contenido */}
-          <main className="flex-1 py-3 overflow-y-auto">{isErpRoute(pathname) ? <ErpModuleNotice /> : children}</main>
+          <main className="flex-1 py-3 overflow-y-auto">{!canAccess ? <section className="mx-auto max-w-xl space-y-4 px-6 py-12">
+            <h1 className="text-2xl font-semibold">Acceso no disponible</h1>
+            <p className="text-gray-600">Tu cuenta no tiene permisos para esta sección.</p>
+            <Link href="/admin" className="inline-flex rounded-md bg-green-700 px-4 py-3 text-white">Volver al inicio</Link>
+          </section> : isErpRoute(pathname) ? <ErpModuleNotice /> : children}</main>
         </div>
       </div>
     </AuthGuard>

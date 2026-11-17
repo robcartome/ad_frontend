@@ -33,7 +33,7 @@ for (const path of paths) {
   if (!missing) assert.equal(html.includes('sf-header-main'), commercial, `${path}: layout`);
   if (commercial) assert.ok(html.includes('noindex'), `${path}: demo must not be indexed`);
   if (legacyCatalog) {
-    assert.ok(html.includes('Productos MFT'), `${path}: original catalog view`);
+    assert.ok(html.includes('Verificando sesi'), `${path}: worker catalog requires existing authentication`);
     assert.ok(html.includes('Mega Ferretero Tolentino'), `${path}: original layout`);
     assert.ok(!html.includes('Vista de demostración'), `${path}: no storefront demo banner`);
     assert.ok(!html.includes('noindex'), `${path}: preserves original indexing metadata`);

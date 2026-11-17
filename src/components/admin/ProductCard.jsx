@@ -31,7 +31,7 @@ export default function ProductCard({ product, onClick, isAdmin = false }) {
           <span>SKU: {product.sku}</span>
         </div>
         <div className="flex flex-wrap gap-x-2">
-          {isAdmin && (
+          {isAdmin && product.price_purchase != null && (
             <span className="text-blue-600 font-semibold text-sm mt-1">
               P.C. {formatPrice(product.price_purchase) ? `S/ ${formatPrice(product.price_purchase)}` : "S/ 0.00"}
             </span>

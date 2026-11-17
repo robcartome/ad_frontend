@@ -60,7 +60,7 @@ export function CollectionEditor({ type, items, onChange, errors, products }) {
         <Plus size={16}/> Agregar {singular}
       </button>
     </div>
-    {!isBanner && <p className="we-note">Las fechas se ingresan en hora de Lima (UTC−05:00). La vista previa calcula la vigencia; la programación real dependerá de Django. No se aplican descuentos al catálogo.</p>}
+    {!isBanner && <p className="we-note">Las fechas se ingresan en hora de Lima (UTC−05:00). La vista previa muestra la vigencia de la campaña; la publicación programada aún no está disponible. No se aplican descuentos al catálogo.</p>}
     {errors[type] && <p className="we-field-error">{errors[type]}</p>}
     {!items.length && <div className="we-empty">{isBanner ? <ImageIcon/> : <Megaphone/>}
       <h3>Aún no hay {isBanner ? 'banners' : 'campañas'}</h3>

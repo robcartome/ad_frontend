@@ -1,5 +1,11 @@
 # Separación del administrador web, ERP y catálogos
 
+Dashboard compartido (17/11/2026): todos los usuarios con sesión/contexto autorizado conservan Inicio, sidebar y cabecera en `/admin`. Solo se ocultan las entradas/tarjetas restringidas: gestión de página web según permisos CMS y catálogo interno para ADMIN de empresa/superusuario. El dashboard adapta su contenido; una URL denegada conserva el panel y permite volver al inicio. Textos visibles usan APUDIG, sin tecnologías o nombres de repositorio. El registro comercial, datos de cliente y pedidos WhatsApp son el siguiente flujo previsto, aún no implementado: [detalle y validación](dashboard-y-registro-clientes.md).
+
+Política vigente posterior al ajuste P0 (17/11/2026): `/catalog` está disponible para todos los miembros activos de la empresa, sin exigir rol, con login y empresa seleccionada. AdminLayout y Sidebar no muestran vistas/accesos administrativos de empresa a usuarios comunes, incluso por URL directa. Los permisos CMS explícitos siguen separados. Catálogo privado solo ADMIN de empresa/superusuario. El futuro registro de clientes verificados y sus precios mayoristas/distribución aún no está implementado; ver informe backend18.
+
+Actualización P0 (17/11/2026): se conservan las rutas y presentación laboral; `/catalog` ahora exige el login existente y empresa seleccionada. `/admin/catalog_admin` obtiene datos privados únicamente para superusuario/administrador de empresa, verificados por Django. Se eliminó la caché compartida del detalle y se reinician solicitudes/datos al cambiar contexto. Los párrafos históricos siguientes describen la separación original, no una autorización anónima vigente. Entrega: `apudig_mvp/docs/architecture/website-integration/17-remediacion-p0-catalogos.md`. B4-B y comercio siguen pendientes.
+
 Fecha: 12/11/2026 (America/Lima). Decisión solicitada por el usuario: `apudig_mvp` administra el ERP desde Django; Next.js administra la web y conserva ambos catálogos existentes.
 
 ## Responsabilidad de cada vista

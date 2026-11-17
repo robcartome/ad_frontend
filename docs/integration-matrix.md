@@ -1,5 +1,9 @@
 # Matriz de integración con `apudig_mvp`
 
+Política vigente (ajuste posterior17/11/2026): las lecturas básicas `catalog/products` y detalle permiten todos los miembros activos de la empresa, sin rol ni permiso ERP de productos. `products` conserva su permiso ERP; privado conserva ADMIN de empresa/superusuario. JWT, Company activa, membresía y sucursal vigente siguen obligatorios. La navegación administrativa se filtra por perfil del servidor. Ver informe backend18; no hay acceso mayorista de clientes implementado.
+
+Actualización P0 (17/11/2026): `/catalog` ahora requiere sesión y empresa. Las seis lecturas `catalog/products`, `catalog/private/products` y `products` (listado/detalle) exigen JWT, empresa activa y acceso vigente. Los campos privados requieren superusuario/administrador de empresa; el catálogo básico los omite. Las URLs y paginación se conservan. El antiguo nombre «catálogo público» corresponde al catálogo laboral básico, **ya no anónimo**. El público comercial Website sigue pendiente; ver informe backend17. Validación visual autenticada pendiente; lint/build,45 tests Node y smoke16 rutas correctos.
+
 Actualizacion B3: Website editorial E0/E1-E6/M0-M2 y lectura publica P0/P1 implementados e integrados. Ver docs/storefront-plan-y-avances.md y apudig_mvp/docs/architecture/website-integration/11-entrega-b3.md; R2 real y revision visual siguen pendientes. Los contratos comerciales B4/B5 contin?an pendientes.
 
 Este documento registra la compatibilidad observada entre `ad_frontend`, rama `mvp_production`, y la API Django REST Framework de `apudig_mvp`.
@@ -14,8 +18,8 @@ La API está montada bajo `/api/v1/`. La URL base del frontend se obtiene de `NE
 | --- | --- | --- | --- |
 | Autenticación | `authService.js` | `/auth/token`, `/refresh`, `/me`, `/my-companies`, `/select-company`, `/logout` | Disponible en `apps/api/v1/users/urls.py` |
 | Usuarios y permisos | `authService.js` | `/auth/users`, `/register`, `/roles`, `/roles/assign`, `/roles/remove`, `/permissions` | Disponible en `apps/api/v1/users/urls.py` |
-| Catálogo público | `productsService.js` | `/catalog/products`, `/catalog/products/{id}/detail` | Disponible en `apps/api/v1/catalog/urls.py` |
-| Catálogo privado | `productsService.js` | `/catalog/private/products`, `/catalog/private/products/{id}/detail` | Disponible en `apps/api/v1/catalog/urls.py` |
+| Catálogo laboral básico | `productsService.js` | `/catalog/products`, `/catalog/products/{id}/detail` | JWT + empresa + membresía vigente, sin rol; sin campos privados |
+| Catálogo laboral privado | `productsService.js` | `/catalog/private/products`, `/catalog/private/products/{id}/detail` | JWT + empresa + superusuario/administrador de empresa |
 | Productos administrativos | `productsService.js` | `/products`, `/products/{id}` | Disponible en `apps/api/v1/inventory/urls.py`; verificar operaciones admitidas por las vistas antes de cambios funcionales |
 | Categorías | `categoriesService.js` | `/categories` | Disponible como listado; el frontend conserva un import fake sin uso |
 | Marcas | `brandsService.js` | `/brands` | Disponible como listado; el frontend conserva un import fake sin uso |
@@ -45,7 +49,8 @@ Los namespaces `/api/v1/sales/` y `/api/v1/companies/` no contienen endpoints en
 
 | Módulo | Rutas principales |
 | --- | --- |
-| Público | `/`, `/catalog`, `/login` |
+| Público | `/`, `/login` |
+| Catálogo laboral autenticado | `/catalog`, `/admin/catalog_admin` |
 | Productos | `/admin/products`, `/admin/catalog_admin` |
 | Inventario | `/admin/inventory/entries`, `/admin/inventory/exits`, `/admin/inventory/adjustments`, `/admin/inventory/movements`, `/admin/inventory/transfers` |
 | Socios de negocio | `/admin/partners/customers`, `/admin/partners/suppliers` |

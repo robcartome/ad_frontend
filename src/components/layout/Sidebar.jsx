@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ExternalLink, Globe, LayoutDashboard, Notebook, ShoppingBag, X } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { getAdministrationAccess } from "@/lib/admin/access.mjs";
 
 // The ERP belongs to Django. Keep Next navigation focused on website content
 // and the existing internal catalog. Website permissions are checked at the destination.
@@ -14,11 +16,14 @@ const menuItems = [
 const publicLinks = [
   { name: "Ver página web", href: "/", icon: ExternalLink },
   { name: "Productos del website", href: "/shop", icon: ShoppingBag },
-  { name: "Catálogo para trabajadores", href: "/catalog", icon: Notebook },
+  { name: "Catálogo de productos", href: "/catalog", icon: Notebook },
 ];
 
 export default function Sidebar({ mobileOpen, setMobileOpen, desktopOpen }) {
   const pathname = usePathname();
+  const { user, selectedCompany } = useAuth();
+  const access = getAdministrationAccess(user, selectedCompany);
+  const visibleItems = menuItems.filter(entry => entry.href === '/admin' || (entry.href === '/admin/website' ? access.website : access.companyAdmin));
   const labelClass = desktopOpen ? "" : "lg:hidden";
 
   function item({ name, href, icon: Icon }, external = false) {
@@ -50,14 +55,14 @@ export default function Sidebar({ mobileOpen, setMobileOpen, desktopOpen }) {
     </div>
     <nav aria-label="Administración web" className={`space-y-1 ${desktopOpen ? "p-4" : "p-2"}`}>
       <p className={`px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-500 ${labelClass}`}>Contenido y catálogos</p>
-      {menuItems.map(entry => item(entry))}
+      {visibleItems.map(entry => item(entry))}
     </nav>
     <nav aria-label="Consultar vistas públicas" className={`border-t ${desktopOpen ? "p-4" : "p-2"}`}>
       <p className={`px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-500 ${labelClass}`}>Abrir en otra pestaña</p>
       {publicLinks.map(entry => item(entry, true))}
     </nav>
     <div className={`mt-auto border-t px-6 py-5 text-xs leading-relaxed text-gray-500 ${labelClass}`}>
-      Productos, inventario, ventas y gestión ERP se administran en Django, con apudig_mvp.
+      {access.companyAdmin ? 'Productos, inventario, ventas y gestión empresarial se administran en APUDIG.' : 'Tu cuenta y los catálogos de la empresa en APUDIG.'}
     </div>
   </aside>;
 }

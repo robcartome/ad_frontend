@@ -13,10 +13,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getCatalogProducts, getCatalogProductsPrivate } from "@/services/productsService";
 import { ArrowUpCircle } from "lucide-react";
 
+import { useAuth } from "@/lib/AuthContext";
+import AuthGuard from "@/components/auth/AuthGuard";
 import ProductCard from "@/components/admin/ProductCard";
 import ProductDetailModal from "@/components/admin/ProductDetailModal";
 
 export default function CatalogPage({isAdmin = false}) {
+  const { user, selectedCompany, selectedStore } = useAuth();
+  const scope = JSON.stringify([user?.id, selectedCompany?.company_id, selectedStore?.store_id, isAdmin]);
+  return <AuthGuard><CatalogWorkspace key={scope} isAdmin={isAdmin}/></AuthGuard>;
+}
+
+function CatalogWorkspace({isAdmin}) {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -24,7 +32,9 @@ export default function CatalogPage({isAdmin = false}) {
   const [loading, setLoading] = useState(true);
 
   // INFINITE SCROLL
-  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ search: "", page: 1 });
+  const [error, setError] = useState("");
+  const inFlight = useRef(false);
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef(null);
 
@@ -44,76 +54,50 @@ export default function CatalogPage({isAdmin = false}) {
 
   const debouncedSearch = useDebounce(search);
 
-  // ---------------------------
-  // 📌 Cargar productos por página (API)
-  // ---------------------------
-  const loadProducts = useCallback(
-    async (reset = false) => {
-      setLoading(true);
-
-      const currentPage = reset ? 1 : page;
-      const res = isAdmin
-        ? await getCatalogProductsPrivate(currentPage, 50, debouncedSearch)
-        : await getCatalogProducts(currentPage, 50, debouncedSearch);
-
-      const normalized = res.results.map((p) => ({
-        ...p,
-        brand: p.brand || "Sin marca",
-        category: p.category || "Sin categoría",
-        sku: p.sku || "",
-        name: p.name || "",
-      }));
-
-      if (reset) {
-        setProducts(normalized);
-      } else {
-        setProducts((prev) => [...prev, ...normalized]);
-      }
-
-      setHasMore(res.results.length > 0);
-      setLoading(false);
-    },
-    [page, debouncedSearch]
-  );
-
-  // ---------------------------
-  // 🧨 Ejecutar carga cuando cambia búsqueda
-  // ---------------------------
+  const page = pagination.search === debouncedSearch ? pagination.page : 1;
   useEffect(() => {
-    setPage(1);
-    loadProducts(true);
-  }, [debouncedSearch]);
+    const controller = new AbortController();
+    let active = true;
+    inFlight.current = true;
+    setLoading(true);
+    setError("");
+    if (page === 1) { setProducts([]); setSelectedProduct(null); }
+    const load = isAdmin ? getCatalogProductsPrivate : getCatalogProducts;
+    load(page, 50, debouncedSearch, { signal: controller.signal }).then(res => {
+      if (!active) return;
+      const rows = res.results.map(product => ({ ...product, brand: product.brand || 'Sin marca', category: product.category || 'Sin categoria', sku: product.sku || '', name: product.name || '' }));
+      setProducts(previous => page === 1 ? rows : [...previous, ...rows]);
+      setHasMore(res.offset + rows.length < res.total);
+    }).catch(cause => {
+      if (!active) return;
+      setProducts([]);
+      setHasMore(false);
+      setSelectedProduct(null);
+      setError(cause.status === 401 ? 'Tu sesion caduco. Inicia sesion nuevamente.' : cause.status === 403 ? 'No tienes permiso para este catalogo o contexto de empresa.' : cause.message);
+    }).finally(() => {
+      if (active) { inFlight.current = false; setLoading(false); }
+    });
+    return () => { active = false; controller.abort(); };
+  }, [page, debouncedSearch, isAdmin]);
 
-  // ---------------------------
-  // 🚀 Infinite Scroll Observer
-  // ---------------------------
   const lastItemRef = useCallback(
     (node) => {
-      if (loading) return;
+      if (loading || inFlight.current) return;
 
       if (observerRef.current) observerRef.current.disconnect();
 
       observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setPage((prev) => prev + 1);
+        if (entries[0].isIntersecting && hasMore && !inFlight.current) {
+          inFlight.current = true;
+          setPagination({ search: debouncedSearch, page: page + 1 });
         }
       });
 
       if (node) observerRef.current.observe(node);
     },
-    [loading, hasMore]
+    [loading, hasMore, page, debouncedSearch]
   );
 
-  // ---------------------------
-  // 📌 Cargar siguiente página cuando page cambia
-  // ---------------------------
-  useEffect(() => {
-    if (page !== 1) loadProducts(false);
-  }, [page]);
-
-  // ---------------------------
-  // 🧪 Filtros locales
-  // ---------------------------
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesCategory =
@@ -162,6 +146,7 @@ export default function CatalogPage({isAdmin = false}) {
 
   return (
     <div className="px-4 sm:px-6 md:px-8 space-y-6">
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-4">{error} <a href="/login" className="underline">Revisar sesion y empresa</a></div>}
       {/* 🔍 Filtros */}
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
         <h2 className="text-xl font-semibold w-full sm:w-auto text-center">Productos MFT</h2>
@@ -258,6 +243,7 @@ export default function CatalogPage({isAdmin = false}) {
       {/* 🪟 Modal */}
       {selectedProduct && (
         <ProductDetailModal
+          key={selectedProduct}
           productId={selectedProduct}
           onClose={() => setSelectedProduct(null)}
           isAdmin={isAdmin}

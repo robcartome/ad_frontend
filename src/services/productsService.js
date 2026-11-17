@@ -1,12 +1,12 @@
 import { apiFetch } from "./api";
 export { createStorefrontProductsService } from './storefrontProductsService.mjs';
 
-export async function getProductDetail(id) {
-  return apiFetch(`/catalog/products/${id}/detail`);
+export async function getProductDetail(id, options = {}) {
+  return apiFetch(`/catalog/products/${id}/detail`, { ...options, cache: "no-store" });
 }
 
-export async function getPrivateProductDetail(id) {
-  return apiFetch(`/catalog/private/products/${id}/detail`);
+export async function getPrivateProductDetail(id, options = {}) {
+  return apiFetch(`/catalog/private/products/${id}/detail`, { ...options, cache: "no-store" });
 }
 
 
@@ -15,14 +15,14 @@ export async function getProducts(page=1, limit=10, nameFilter="") {
   return apiFetch(`/products/?search=${nameFilter}&limit=${limit}&offset=${offset}`);
 }
 
-export async function getCatalogProducts(page = 1, limit = 50, search = "") {
+export async function getCatalogProducts(page = 1, limit = 50, search = "", options = {}) {
   const offset = (page - 1) * limit;
-  return apiFetch(`/catalog/products?search=${search}&limit=${limit}&offset=${offset}`);
+  return apiFetch(`/catalog/products?search=${encodeURIComponent(search)}&limit=${limit}&offset=${offset}`, { ...options, cache: "no-store" });
 }
 
-export async function getCatalogProductsPrivate(page = 1, limit = 50, search = "") {
+export async function getCatalogProductsPrivate(page = 1, limit = 50, search = "", options = {}) {
   const offset = (page - 1) * limit;
-  return apiFetch(`/catalog/private/products?search=${search}&limit=${limit}&offset=${offset}`);
+  return apiFetch(`/catalog/private/products?search=${encodeURIComponent(search)}&limit=${limit}&offset=${offset}`, { ...options, cache: "no-store" });
 }
 
 export async function createProduct(data) {

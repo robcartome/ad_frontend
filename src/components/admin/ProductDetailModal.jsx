@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,49 +10,33 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getProductDetail, getPrivateProductDetail } from "@/services/productsService";
 
-// MEMO CACHE (global en este módulo)
-const productDetailCache = {};
+
 
 function formatPrice(value) {
-  if (!value) return "—";
+  if (value === null || value === undefined) return "—";
   const n = Number(value);
   return Number.isFinite(n) ? `S/ ${n.toFixed(2)}` : "—";
 }
 
 export default function ProductDetailModal({ productId, onClose, isAdmin = false }) {
   const [detail, setDetail] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // ================================
-  //   Cargar detalle + MEMO CACHE
-  // ================================
-  const fetchDetail = useCallback(async () => {
-    if (!productId) return;
-
-    // 1️⃣ Si existe en cache → úsalo
-    if (productDetailCache[productId]) {
-      setDetail(productDetailCache[productId]);
-      return;
-    }
-
-    // 2️⃣ Sino, fetch al backend
-    setLoading(true);
-    try {
-      const data = isAdmin
-        ? await getPrivateProductDetail(productId)
-        : await getProductDetail(productId);
-      productDetailCache[productId] = data; // guardar en cache
-      setDetail(data);
-    } catch (err) {
-      console.error("Error loading detail:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [productId, isAdmin]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchDetail();
-  }, [fetchDetail]);
+    const controller = new AbortController();
+    let active = true;
+    setDetail(null);
+    setLoading(true);
+    setError("");
+    const load = isAdmin ? getPrivateProductDetail : getProductDetail;
+    load(productId, { signal: controller.signal }).then(data => {
+      if (active) setDetail(data);
+    }).catch(cause => {
+      if (active) setError(cause.status === 403 ? 'No tienes permiso para consultar este detalle.' : cause.message);
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; controller.abort(); };
+  }, [productId, isAdmin]);
 
   if (!productId) return null;
 
@@ -68,7 +52,7 @@ export default function ProductDetailModal({ productId, onClose, isAdmin = false
         {/* ==========================
             LOADING STATE
         ========================== */}
-        {!detail || loading ? (
+        {error ? <p role="alert" className="text-red-700">{error}</p> : !detail || loading ? (
           <div className="space-y-4">
             <Skeleton className="w-full h-40" />
             <Skeleton className="h-4 w-2/4" />
@@ -100,7 +84,7 @@ export default function ProductDetailModal({ productId, onClose, isAdmin = false
             ========================== */}
             <div className="border-t pt-3 text-sm space-y-1">
               <strong>Precios</strong>
-              { isAdmin && (<p><strong>Compra:</strong> {formatPrice(detail.price_purchase)}</p>) }
+              { isAdmin && detail.price_purchase != null && (<p><strong>Compra:</strong> {formatPrice(detail.price_purchase)}</p>) }
               <p><strong>Venta:</strong> {formatPrice(detail.price_sale)}</p>
 
               {detail.price_list?.length > 0 && (
