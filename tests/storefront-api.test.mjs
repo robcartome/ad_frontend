@@ -40,36 +40,38 @@ test('Category rails filter the full selection without inventing offers or chang
 test('Public service scopes and encodes requests without admin credentials and maps pagination', async () => {
   let called;
   const controller = new AbortController();
-  const service = createStorefrontProductsService({ baseUrl: 'https://example.com/api/public/', storeId: 'store/a', fetchImpl: async (url, options) => {
+  const service = createStorefrontProductsService({ baseUrl: 'https://example.com/api/v1/', hostname: 'a.example.com', websiteId: 'site-a', fetchImpl: async (url, options) => {
     called = { url, options };
-    return { ok: true, json: async () => ({ store_id: 'store/a', count: 42, results: [{ id: 1, name: 'Taladro', price: '20' }] }) };
+    return { ok: true, json: async () => ({ websiteId: 'site-a', count: 42, limit: 6, offset: 12, facets: { categories: [], brands: [] }, results: [{ id: 1, name: 'Taladro', price: '20', currency: 'PEN', unitId: 'unit-a' }] }) };
   } });
   const page = await service.list({ search: 'broca & acero', category: 'a/b', limit: 6, offset: 12, signal: controller.signal });
-  assert.equal(called.url.pathname, '/api/public/stores/store%2Fa/products/');
+  assert.equal(called.url.pathname, '/api/v1/storefront/sites/a.example.com/products/');
   assert.equal(called.url.searchParams.get('search'), 'broca & acero');
   assert.equal(called.url.searchParams.get('offset'), '12');
   assert.equal(called.options.credentials, 'omit');
   assert.equal(called.options.cache, 'no-store');
-  assert.equal(called.options.signal, controller.signal);
+  assert.equal(called.options.signal.aborted, false);
+  controller.abort();
+  assert.equal(called.options.signal.aborted, true);
   assert.deepEqual(called.options.headers, { Accept: 'application/json' });
   assert.equal(page.count, 42);
   assert.equal(page.results[0].price, 20);
 });
 
 test('Public service rejects cross-store data, malformed pages and HTTP errors without demo fallback', async () => {
-  for (const body of [{ store_id: 'other', count: 0, results: [] }, { store_id: 'a', results: [] }, { store_id: 'a', count: 0, results: [{}] }]) {
-    const service = createStorefrontCategoriesService({ baseUrl: 'https://example.com', storeId: 'a', fetchImpl: async () => ({ ok: true, json: async () => body }) });
+  for (const body of [{ websiteId: 'other', count: 0, results: [] }, { websiteId: 'a', results: [] }, { websiteId: 'a', count: 0, results: [{}] }]) {
+    const service = createStorefrontCategoriesService({ baseUrl: 'https://example.com', hostname: 'a.example.com', websiteId: 'a', fetchImpl: async () => ({ ok: true, json: async () => body }) });
     await assert.rejects(service.list());
   }
-  const service = createStorefrontProductsService({ baseUrl: 'https://example.com', storeId: 'a', fetchImpl: async () => ({ ok: false, status: 503 }) });
-  await assert.rejects(service.list(), /503/);
+  const service = createStorefrontProductsService({ baseUrl: 'https://example.com', hostname: 'a.example.com', websiteId: 'a', fetchImpl: async () => ({ ok: false, status: 503, json: async () => ({ code: 'UNAVAILABLE', message: 'Temporalmente no disponible' }) }) });
+  await assert.rejects(service.list(), error => error.status === 503 && error.code === 'UNAVAILABLE');
 });
 
 test('Product details validate identity and categories support paginated responses', async () => {
-  const config = { baseUrl: 'https://example.com', storeId: 'a', fetchImpl: async () => ({ ok: true, json: async () => ({ store_id: 'a', product: { id: 3, name: 'Taladro' } }) }) };
+  const config = { baseUrl: 'https://example.com', hostname: 'a.example.com', websiteId: 'a', fetchImpl: async () => ({ ok: true, json: async () => ({ websiteId: 'a', product: { id: 3, name: 'Taladro', currency: 'PEN', unitId: 'unit-a', price: null, saleUnits: [{ unitId: 'unit-a', unit: 'Unidad', price: null }] } }) }) };
   const service = createStorefrontProductsService(config);
   assert.equal((await service.detail(3)).id, '3');
-  await assert.rejects(service.detail(4), /Identificador/);
-  const categories = createStorefrontCategoriesService({ ...config, fetchImpl: async () => ({ ok: true, json: async () => ({ store_id: 'a', count: 1, results: [{ id: 3, name: 'Herramientas' }] }) }) });
+  await assert.rejects(service.detail(4), error => error.status === 502);
+  const categories = createStorefrontCategoriesService({ ...config, fetchImpl: async () => ({ ok: true, json: async () => ({ websiteId: 'a', count: 1, limit: 100, offset: 0, results: [{ id: 3, name: 'Herramientas' }] }) }) });
   assert.equal((await categories.list()).results[0].id, '3');
 });

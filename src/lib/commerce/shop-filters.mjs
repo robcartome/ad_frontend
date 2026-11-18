@@ -5,21 +5,14 @@ export const SHOP_SORT_OPTIONS = [
   { value: "name-desc", label: "Nombre Z–A" },
   { value: "price-asc", label: "Precio más bajo" },
   { value: "price-desc", label: "Precio más alto" },
-  { value: "discount", label: "Mayor descuento" },
+  { value: "featured", label: "Destacados" },
 ];
-const price = (value) =>
-  typeof value === "string" &&
-  value.trim() !== "" &&
-  Number.isFinite(Number(value)) &&
-  Number(value) >= 0
-    ? String(Number(value))
-    : "";
+const price = value => typeof value === 'string' ? value.trim().slice(0, 40) : '';
 export function normalizeShopQuery(params = {}) {
   const text = (key) =>
     typeof params[key] === "string" ? params[key].trim().slice(0, 120) : "";
   let min = price(params.min),
     max = price(params.max);
-  if (min && max && Number(min) > Number(max)) [min, max] = [max, min];
   const brand = [
     ...new Set(
       (Array.isArray(params.brand) ? params.brand : [params.brand])

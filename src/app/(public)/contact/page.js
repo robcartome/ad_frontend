@@ -20,11 +20,10 @@ export default async function ContactPage() {
           hace la diferencia.
         </h1>
         <p>
-          Prepara tu lista de materiales y consulta precios, disponibilidad y
-          opciones de entrega antes de confirmar tu compra.
+          Consulta nuestros productos y los datos de contacto de la empresa.
         </p>
         <Link href="/shop" className="sf-button sf-button-orange">
-          Preparar una cotización
+          Ver productos
           <ArrowRight size={18} />
         </Link>
       </section>

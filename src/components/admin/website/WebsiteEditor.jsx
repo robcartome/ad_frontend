@@ -9,27 +9,38 @@ import { createWebsiteDocument, validateWebsite } from '@/lib/website/content.mj
 import { djangoWebsiteRepository } from './useWebsiteAccess';
 import { WebsiteMediaContext } from './WebsiteMediaContext';
 import EditorialImageField from './EditorialImageField';
-const editorialProducts = [];
+import { apiFetch } from '@/services/api';
+import { createWebsiteCatalogRepository } from '@/services/websiteCatalogRepository.mjs';
 import { CollectionEditor, Field, SectionsEditor } from './WebsiteFields';
 import { AnnouncementsEditor, SpecialProductsEditor } from './ShowcaseEditor';
 import { SOCIAL_NETWORKS } from '@/lib/website/contact.mjs';
 import { websiteErrorMessage } from '@/lib/website/errors.mjs';
+import WebsiteCatalogPanel from './WebsiteCatalogPanel';
 
 const options = [
   ['overview', 'Resumen', Globe], ['identity', 'Identidad visual', Palette],
   ['banners', 'Banners', ImageIcon], ['promotions', 'Campañas', Megaphone],
   ['announcements', 'Avisos (slider)', ImageIcon], ['specials', 'Ofertas especiales', Megaphone],
   ['sections', 'Secciones', LayoutTemplate], ['contact', 'Contacto', Phone], ['seo', 'SEO', Search],
+  ['catalog', 'Productos del Website', LayoutTemplate],
 ];
 const stamp = value => value ? new Intl.DateTimeFormat('es-PE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Lima' }).format(new Date(value)) : 'Sin guardar';
 
 
-export default function WebsiteEditor({ company, canEdit, canApply, discovery, capabilities }) {
-  const initial = useMemo(() => createWebsiteDocument(company.name, editorialProducts.map(product => product.id)), [company.name]);
+export default function WebsiteEditor({ company, canEdit, canApply, discovery, capabilities, canReadCatalog }) {
+  const initial = useMemo(() => createWebsiteDocument(company.name, []), [company.name]);
+  const [editorialProducts, setEditorialProducts] = useState([]);
+  const [referencesError, setReferencesError] = useState('');
+  const refreshReferences = useCallback(async () => {
+    try { setEditorialProducts(await createWebsiteCatalogRepository(apiFetch, discovery.id).publishedReferences()); setReferencesError(''); }
+    catch (error) { setReferencesError(websiteErrorMessage(error)); }
+  }, [discovery.id]);
+  useEffect(() => { if (canEdit || canApply) refreshReferences(); }, [canEdit, canApply, refreshReferences]);
   const scope = useMemo(() => ({ companyId: company.id, websiteId: discovery.id }), [company.id, discovery.id]);
   const [record, setRecord] = useState(null);
   const [document, setDocument] = useState(initial);
   const [tab, setTab] = useState('overview');
+  const [catalogOpened, setCatalogOpened] = useState(false);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [serverErrors, setServerErrors] = useState({});
@@ -42,7 +53,7 @@ export default function WebsiteEditor({ company, canEdit, canApply, discovery, c
   const frame = useRef(null);
   const [previewLoading, setPreviewLoading] = useState(true);
   const repository = useRef(null);
-  const errors = useMemo(() => ({ ...validateWebsite(document, []), ...(serverErrors.document === JSON.stringify(document) ? serverErrors.fields : {}) }), [document, serverErrors]);
+  const errors = useMemo(() => ({ ...validateWebsite(document, editorialProducts.map(product => product.id)), ...(serverErrors.document === JSON.stringify(document) ? serverErrors.fields : {}) }), [document, serverErrors, editorialProducts]);
   const invalid = Object.keys(errors).length > 0;
   const dirty = Boolean(record && JSON.stringify(document) !== JSON.stringify(record.draft));
   const unapplied = Boolean(record && JSON.stringify(record.draft) !== JSON.stringify(record.published));
@@ -168,7 +179,7 @@ export default function WebsiteEditor({ company, canEdit, canApply, discovery, c
     
     <div className="we-workspace">
       
-      <nav className="we-navigation" aria-label="Opciones de administración web">{options.map(([id, label, Icon]) => <button type="button" key={id} aria-pressed={tab === id} className={tab === id ? 'is-active' : ''} onClick={() => setTab(id)}>
+      <nav className="we-navigation" aria-label="Opciones de administración web">{options.filter(([id]) => id !== 'catalog' || canReadCatalog).map(([id, label, Icon]) => <button type="button" key={id} aria-pressed={tab === id} className={tab === id ? 'is-active' : ''} onClick={() => { setTab(id); if (id === 'catalog') setCatalogOpened(true); }}>
           <Icon size={18}/>{label}{['banners', 'promotions'].includes(id) && <small>{document[id].length}</small>}
         </button>)}
         <div className="we-navigation-foot">
@@ -180,6 +191,8 @@ export default function WebsiteEditor({ company, canEdit, canApply, discovery, c
       
       <div className="we-editing-area" aria-busy={busy}>
         {busy && ready && <LoadingIndicator overlay label="Procesando contenido…"/>}
+        {canReadCatalog && catalogOpened && <div hidden={tab !== 'catalog'}><WebsiteCatalogPanel key={scope.websiteId} websiteId={scope.websiteId} canEdit={canEdit} canPublish={canEdit && canApply} onPublicationChange={refreshReferences}/></div>}
+        <div hidden={tab === 'catalog'}>
         {!ready ? <div className="we-empty" role="status">
           {error ? <FileText/> : <LoadingIndicator fullScreen label="Cargando contenido…"/>}
           <h2>{error ? 'Contenido no disponible' : 'Cargando contenido…'}</h2>
@@ -187,6 +200,7 @@ export default function WebsiteEditor({ company, canEdit, canApply, discovery, c
         </div> : <form id="website-form" onSubmit={save} noValidate>
           
           <fieldset disabled={!canEdit || busy} className="we-form-fieldset">
+            {['specials', 'promotions'].includes(tab) && <><p className="we-note">Solo se pueden seleccionar productos publicados en el catálogo. Sus precios se consultan al visitar la página.</p>{referencesError && <p role="alert">{referencesError}</p>}<button type="button" className="we-button we-secondary" onClick={refreshReferences}>Actualizar productos disponibles</button></>}
             {tab === 'overview' && <>
               
               <div className="we-section-intro">
@@ -272,7 +286,7 @@ export default function WebsiteEditor({ company, canEdit, canApply, discovery, c
         
         <div className="we-actions">
           <div>
-            <span className={`we-status-dot ${dirty ? 'is-dirty' : ''}`}/>{dirty ? 'Cambios sin guardar' : record?.publishedAt ? 'Revision publicada' : 'Borrador'}
+            <span className={`we-status-dot ${dirty ? 'is-dirty' : ''}`}/>{dirty ? 'Cambios sin guardar' : unapplied ? 'Borrador pendiente de publicación' : record?.publishedAt ? 'Revisión publicada' : 'Borrador'}
           </div>
           <button type="button" className="we-button we-secondary" onClick={() => setConfirmAction('restore')} disabled={!record?.published || !canEdit || busy}>
             <RotateCcw size={15}/> Restaurar publicada
@@ -280,6 +294,7 @@ export default function WebsiteEditor({ company, canEdit, canApply, discovery, c
           <button form="website-form" type="submit" className="we-button we-primary" disabled={!ready || busy || !canEdit || !dirty || invalid}>
             {busy ? <LoadingIndicator compact label="Guardando borrador…"/> : <Save size={16}/>} {busy ? 'Procesando…' : 'Guardar borrador'}
           </button>
+        </div>
         </div>
       
       </div>

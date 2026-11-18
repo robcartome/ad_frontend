@@ -52,6 +52,7 @@ export function SpecialProductsEditor({ value, onChange, products, errors }) {
   return <>
     <div className="we-section-intro"><div><h2>Destacados y ofertas especiales</h2><p>Elige hasta 4 productos existentes. Se mostrarán con sus imágenes y precios del catálogo, sin crear descuentos nuevos.</p></div><span className="we-chip">{selected.length}/{MAX_SPECIAL_PRODUCTS} seleccionados</span></div>
     <p className="we-note">Puedes cambiar el título y la visibilidad desde «Secciones». Sin productos seleccionados, el bloque no aparece.</p>
+    {value.productIds.filter(id => !products.some(product => product.id === id)).map(id => <p key={id}>Producto no disponible: {id} <button type="button" onClick={() => onChange({ productIds: value.productIds.filter(value => value !== id) })}>Quitar selección</button></p>)}
     <fieldset className="we-product-picker"><legend>Seleccionar productos</legend>{products.map(product => {
       const checked = value.productIds.includes(product.id);
       return <label key={product.id}><input type="checkbox" checked={checked} disabled={!checked && selected.length >= MAX_SPECIAL_PRODUCTS} onChange={event => onChange({ productIds: event.target.checked ? [...value.productIds, product.id] : value.productIds.filter(id => id !== product.id) })}/><span>{product.name}</span></label>;

@@ -37,7 +37,13 @@
 .we-navigation-foot strong { display: block; font-size: 11px; margin: 7px 0; }
 .we-navigation-foot small { color: #717171; font-size: 10px; }
 .we-editing-area { background: white; border: 1px solid #e2e2e2; border-radius: 9px; min-width: 0; overflow: hidden; }
-.we-editing-area > form { padding: 25px; }
+.we-editing-area > form, .we-editing-area > div > form, .we-catalog { padding: 25px; }
+.we-catalog { min-width: 0; overflow-wrap: anywhere; }
+.we-catalog ul { list-style: none; padding: 0; display: grid; gap: 8px; margin: 16px 0; }
+.we-catalog :is(nav,.we-item) > button { margin: 6px 6px 6px 0; }
+.we-catalog select { max-width: 100%; min-height: 42px; border: 1px solid #dcdcdc; border-radius: 6px; padding: 8px; background: white; }
+.we-catalog .we-field { display: grid; gap: 8px; }
+.we-catalog .we-button { white-space: normal; text-align: left; }
 .we-form-fieldset { border: 0; min-width: 0; padding: 0; margin: 0; }
 .we-section-intro { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
 .we-section-intro h2 { font-size: 19px; font-weight: 700; line-height: 1.35; letter-spacing: -.35px; margin: 0 0 9px; }

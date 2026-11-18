@@ -3,6 +3,7 @@ export default function ProductArt({ type = 'drill', className = '' }) {
     return <svg className={className} viewBox="0 0 240 180" fill="none" aria-hidden="true">
     
     <ellipse cx="120" cy="153" rx="75" ry="9" fill="#202020" opacity=".07"/>
+    {type === 'package' && <g stroke="#9CA3AF" strokeWidth="3" strokeLinejoin="round"><path d="m60 65 60-30 60 30v65l-60 30-60-30z" fill="#F3F4F6"/><path d="m60 65 60 30 60-30M120 95v65M90 50l60 30v25"/></g>}
     {type === 'drill' && <g transform="rotate(-12 120 90)">
       <path d="M43 48h105l17 22-18 27H48z" fill="#FF8000"/>
       <path d="M65 89h47l-9 48H72z" fill="#30343A"/>

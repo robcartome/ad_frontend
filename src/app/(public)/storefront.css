@@ -1720,8 +1720,8 @@
 .sf-saving { display:block; min-height:22px; color:#156047; font-size:11px; font-weight:600; }
 .sf-availability { display:flex; align-items:center; gap:5px; color:#536678; font-size:10px; margin-top:10px; }
 .sf-reference { font-size:10px; color:#536678; margin:7px 0 14px; }
-.sf-add-button { border:1px solid #ff8000; border-radius:7px; background:transparent; color:#ff8000; min-height:44px; font-size:12px; font-weight:700; gap:7px; padding:8px; line-height:1.35; transition:background .15s,color .15s,border-color .15s; }
-.sf-add-button:is(:hover,:focus-visible,.is-added):not(:disabled) { background:#ff8000; border-color:#ff8000; color:#fff; }
+.sf-add-button { border:1px solid var(--sf-orange); border-radius:7px; background:transparent; color:var(--sf-orange); min-height:44px; font-size:12px; font-weight:700; gap:7px; padding:8px; line-height:1.35; transition:background .15s,color .15s,border-color .15s; }
+.sf-add-button:is(:hover,:focus-visible,.is-added):not(:disabled) { background:var(--sf-orange); border-color:var(--sf-orange); color:#fff; }
 .sf-add-button:disabled { background:#e9eef3; border-color:#dce5ed; color:#536678; }
 .storefront .sf-catalog-photo { object-fit:contain; width:100%; height:168px; }
 .sf-drawer-overlay { position:fixed; inset:0; background:#001c37a6; z-index:70; backdrop-filter:blur(3px); }

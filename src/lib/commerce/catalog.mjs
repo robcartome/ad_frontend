@@ -24,15 +24,23 @@ export function normalizeProduct(raw) {
     id: String(raw.id),
     name: raw.name,
     brand: text(raw.brand?.name ?? raw.brand),
+    brandId: raw.brand?.id == null ? '' : String(raw.brand.id),
     category: String(raw.category?.id ?? raw.category ?? ""),
+    categoryName: text(raw.category?.name),
     sku: text(raw.sku),
     price,
     originalPrice: price !== null && previous > price ? previous : null,
     unit: text(raw.unit?.name ?? raw.unit) || "unidad",
+    unitId: raw.unitId == null ? '' : String(raw.unitId),
+    currency: /^[A-Z]{3}$/.test(raw.currency) ? raw.currency : 'PEN',
     description: text(raw.description),
-    image: text(raw.image) || "drill",
+    image: text(raw.image) || "package",
     imageUrl: imageUrl(raw.imageUrl ?? raw.image_url),
     imageAlt: text(raw.imageAlt ?? raw.image_alt) || raw.name,
+    images: Array.isArray(raw.images) ? raw.images.map(imageUrl).filter(Boolean) : [],
+    saleUnits: Array.isArray(raw.saleUnits) ? raw.saleUnits.map(unit => ({ unitId: String(unit.unitId), unit: text(unit.unit), price: amount(unit.price), availability: ['available', 'unavailable'].includes(unit.availability) ? unit.availability : 'unknown' })) : [],
+    seoTitle: text(raw.seoTitle),
+    seoDescription: text(raw.seoDescription),
     badge: text(raw.badge),
     availability: ["available", "unavailable"].includes(raw.availability)
       ? raw.availability
@@ -49,7 +57,15 @@ export function normalizeCategory(raw) {
     icon: text(raw.icon) || "drill",
     imageUrl: imageUrl(raw.imageUrl ?? raw.image_url),
     parentId: raw.parent_id == null ? null : String(raw.parent_id),
+    productCount: Number.isInteger(raw.productCount) && raw.productCount >= 0 ? raw.productCount : 0,
   };
+}
+export function normalizeBrand(raw) {
+  if (!raw || raw.id == null || !text(raw.name).trim()) throw new Error('Marca pública inválida');
+  return { id: String(raw.id), name: raw.name, productCount: Number.isInteger(raw.productCount) && raw.productCount >= 0 ? raw.productCount : 0 };
+}
+export function formatPublicMoney(value, currency = 'PEN') {
+  return new Intl.NumberFormat('es-PE', { style: 'currency', currency }).format(value);
 }
 export function productOffer(product) {
   const price = amount(product.price),

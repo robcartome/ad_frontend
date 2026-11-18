@@ -24,7 +24,7 @@ export default function StoreFooter({ store, categories }) {
   const networks = socialLinks(store);
   const email = emailHref(store.email);
   const whatsapp =
-    store.mode !== "demo" && /^\d{8,15}$/.test(store.whatsapp ?? "")
+    store.commerceEnabled !== false && store.mode !== "demo" && /^\d{8,15}$/.test(store.whatsapp ?? "")
       ? `https://wa.me/${store.whatsapp}`
       : null;
 
@@ -119,7 +119,7 @@ export default function StoreFooter({ store, categories }) {
                       {store.whatsapp}
                     </a>
                   ) : (
-                    <span>{store.whatsapp} · No activo en demo</span>
+                    <span>{store.whatsapp} · Información de contacto</span>
                   )}
                 </div>
               </li>
@@ -134,7 +134,7 @@ export default function StoreFooter({ store, categories }) {
           <Link href="/about">Nosotros</Link>
           <Link href="/contact">Contacto y atención</Link>
           <Link href="/shop">Todos los productos</Link>
-          <Link href="/cart">Mi cotización</Link>
+          {store.commerceEnabled !== false && <Link href="/cart">Mi cotización</Link>}
           <h2 className="sf-footer-subheading">Para tu proyecto</h2>
           {categories.slice(0, 3).map((category) => (
             <Link

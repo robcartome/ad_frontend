@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getProductDetail, getPrivateProductDetail } from "@/services/productsService";
+import { isRequestCancellation } from '@/services/http/jsonRequest.mjs';
 
 
 
@@ -33,7 +34,7 @@ export default function ProductDetailModal({ productId, onClose, isAdmin = false
     load(productId, { signal: controller.signal }).then(data => {
       if (active) setDetail(data);
     }).catch(cause => {
-      if (active) setError(cause.status === 403 ? 'No tienes permiso para consultar este detalle.' : cause.message);
+      if (active && !isRequestCancellation(cause, controller.signal)) setError(cause.status === 403 ? 'No tienes permiso para consultar este detalle.' : cause.message);
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; controller.abort(); };
   }, [productId, isAdmin]);

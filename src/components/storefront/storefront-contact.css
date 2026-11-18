@@ -179,9 +179,9 @@
   background: #fff;
 }
 .storefront .sf-social-links a:hover {
-  background: #ff8000;
+  background: var(--sf-orange);
   color: #fff;
-  border-color: #ff8000;
+  border-color: var(--sf-orange);
 }
 .sf-social-placeholders > span {
   opacity: .5;

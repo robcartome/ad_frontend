@@ -33,7 +33,7 @@ export default function StoreHeader({ store, categories }) {
       {searchLoading && (
         <LoadingIndicator fullScreen label="Buscando productos…" />
       )}
-      <div className="sf-demo">{store.mode === 'demo' ? 'Vista de demostracion' : 'Sitio informativo. Catalogo y cotizaciones aun no disponibles.'}</div>
+      <div className="sf-demo">{store.mode === 'demo' ? 'Vista de demostración' : 'Consulta nuestro catálogo. Los pedidos aún no están habilitados.'}</div>
       <div className="sf-top">
         <div className="sf-container">
           <span>
@@ -72,7 +72,7 @@ export default function StoreHeader({ store, categories }) {
               </span>
             )}
             <span>
-              <small>FERRETERÍA</small>
+              <small>{store.name}</small>
               <strong>{store.shortName}</strong>
               <em>{store.location}</em>
             </span>
@@ -92,9 +92,8 @@ export default function StoreHeader({ store, categories }) {
               placeholder="¿Qué necesitas para tu proyecto?"
               type="search"
               maxLength={120}
-              disabled={store.commerceEnabled === false}
             />
-            <button type="submit" aria-label="Buscar" disabled={store.commerceEnabled === false}>
+            <button type="submit" aria-label="Buscar">
               <Search size={21} />
             </button>
           </form>
@@ -152,7 +151,7 @@ export default function StoreHeader({ store, categories }) {
       </nav>
       <Dialog.Portal>
         <Dialog.Overlay className="sf-drawer-overlay" />
-        <Dialog.Content className="storefront sf-category-drawer">
+        <Dialog.Content className="storefront sf-category-drawer" style={{ '--sf-orange': store.colors.primary }}>
           <div className="sf-drawer-heading">
             <div>
               <span className="sf-eyebrow">TODO PARA TU PROYECTO</span>

@@ -16,7 +16,7 @@ import {
 import { heroSliderSettings, nextSlide } from "@/lib/website/slider.mjs";
 import ProductArt from "./ProductArt";
 
-export default function StoreHero({ banners, settings }) {
+export default function StoreHero({ banners, settings, commerceEnabled = false }) {
   const active = banners.filter((banner) => banner.enabled);
   const { autoplay, intervalMs } = heroSliderSettings(settings);
   const [selected, setSelected] = useState(0);
@@ -181,7 +181,7 @@ export default function StoreHero({ banners, settings }) {
                       <span className="sf-art-circle" />
                       <ProductArt type={banner.art} />
                       <span className="sf-art-footnote">
-                        Ilustración de demostración
+                        Imagen ilustrativa
                       </span>
                     </>
                   )}
@@ -254,10 +254,10 @@ export default function StoreHero({ banners, settings }) {
           <br />
           Nuestra asesoría.
         </h2>
-        <p>Prepara tu cotización en pocos pasos.</p>
+        <p>{commerceEnabled ? 'Prepara tu cotización en pocos pasos.' : 'Consulta los productos y precios publicados por la empresa.'}</p>
         <ClipboardList className="sf-side-icon" strokeWidth={1} />
-        <Link href="/cart">
-          Armar mi cotización <ArrowUpRight size={19} />
+        <Link href={commerceEnabled ? '/cart' : '/shop'}>
+          {commerceEnabled ? 'Armar mi cotización' : 'Explorar el catálogo'} <ArrowUpRight size={19} />
         </Link>
       </div>
     </section>

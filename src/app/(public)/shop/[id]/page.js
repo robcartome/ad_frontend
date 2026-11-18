@@ -4,29 +4,34 @@ import {
   getStorefrontProduct,
   getStorefrontProducts,
   getStorefrontCategories,
+  getPublicWebsite,
 } from "@/lib/storefront/store";
-import { hasPrice, money } from "@/lib/commerce/cart.mjs";
 import CatalogImage from "@/components/storefront/CatalogImage";
-import { productOffer } from "@/lib/commerce/catalog.mjs";
 import ProductPurchase from "@/components/commerce/ProductPurchase";
 import ProductCard from "@/components/commerce/ProductCard";
 export async function generateMetadata({ params }) {
-  const product = getStorefrontProduct((await params).id);
+  const site = await getPublicWebsite();
+  let product;
+  try { product = await getStorefrontProduct((await params).id); }
+  catch { return { title: 'Producto no disponible', robots: { index: false, follow: false } }; }
   return {
-    title: product?.name ?? "Producto no encontrado",
-    description: product?.description,
+    title: product?.seoTitle || product?.name || "Producto no encontrado",
+    description: product?.seoDescription || product?.description,
+    alternates: product ? { canonical: `https://${site.canonicalHostname}/shop/${product.id}` } : undefined,
+    openGraph: product ? { title: product.seoTitle || product.name, description: product.seoDescription || product.description, images: product.images } : undefined,
   };
 }
 export default async function ProductPage({ params }) {
-  const product = getStorefrontProduct((await params).id);
+  await getPublicWebsite();
+  let product;
+  try { product = await getStorefrontProduct((await params).id); }
+  catch { return <section className="sf-container sf-page sf-empty" role="alert"><h1>No pudimos cargar el producto</h1><p>Intenta nuevamente en unos momentos.</p><Link className="sf-button sf-button-orange" href="/shop">Volver al catálogo</Link></section>; }
   if (!product) notFound();
-  const category = getStorefrontCategories().find(
+  const category = (await getStorefrontCategories()).find(
     (item) => item.id === product.category,
   );
-  const offer = productOffer(product);
-  const related = getStorefrontProducts().filter(
-    (item) => item.category === product.category && item.id !== product.id,
-  );
+  const relatedPage = await getStorefrontProducts({ category: product.category ? [product.category] : [], limit: 5 });
+  const related = relatedPage.results.filter(item => item.id !== product.id).slice(0, 4);
   return (
     <div className="sf-container sf-page">
       <nav className="sf-breadcrumb" aria-label="Ruta de navegación">
@@ -40,7 +45,6 @@ export default async function ProductPage({ params }) {
       </nav>
       <section className="sf-product-detail">
         <div className="sf-detail-image">
-          <span className="sf-product-tag">DEMOSTRACIÓN</span>
           <CatalogImage
             src={product.imageUrl}
             alt={product.imageAlt}
@@ -49,6 +53,7 @@ export default async function ProductPage({ params }) {
           {!product.imageUrl && (
             <span>Imagen ilustrativa · Fotografía comercial pendiente</span>
           )}
+          {product.images.slice(1).map((src, index) => <CatalogImage key={src} src={src} alt={`${product.imageAlt}, vista ${index + 2}`} type={product.image}/>)}
         </div>
         <div className="sf-detail-copy">
           <span className="sf-eyebrow">{product.brand}</span>
@@ -56,26 +61,13 @@ export default async function ProductPage({ params }) {
           <p className="sf-unit">
             SKU: {product.sku} · Venta por {product.unit}
           </p>
-          {offer && (
-            <p className="sf-previous-price">
-              <span className="sf-sr-only">Precio anterior </span>
-              <del>{money(product.originalPrice)}</del>{" "}
-              <span className="sf-discount">−{offer.percent}%</span>
-            </p>
-          )}
-          <div className="sf-detail-price">
-            {hasPrice(product) ? money(product.price) : "Consultar precio"}
-          </div>
-          {offer && <p className="sf-saving">Ahorras {money(offer.savings)}</p>}
           <p className="sf-reference">
-            {hasPrice(product)
-              ? "Precio de demostración. Sujeto a confirmación."
-              : "Consulta el precio comercial con un asesor."}
+            Precio final y disponibilidad según la unidad seleccionada.
           </p>
           <p>{product.description}</p>
           <ProductPurchase product={product} />
           <p className="sf-unit">
-            Disponibilidad por confirmar. No se reserva stock al agregar.
+            Consulta la disponibilidad indicada para cada unidad. Los pedidos aún no están habilitados.
           </p>
         </div>
       </section>

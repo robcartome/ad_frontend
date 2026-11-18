@@ -3,6 +3,7 @@ import Link from "@/components/feedback/LoadingLink";
 import { useState } from "react";
 import { Plus, Check, MessageCircle } from "lucide-react";
 import { useCart } from "./CartProvider";
+import ProductUnitOffer from './ProductUnitOffer';
 import {
   MAX_QUANTITY,
   validQuantity,
@@ -12,6 +13,7 @@ export default function ProductPurchase({ product }) {
   const { add, ready, store, products } = useCart();
   const [quantity, setQuantity] = useState("1");
   const [added, setAdded] = useState(false);
+  if (store.commerceEnabled === false) return <ProductUnitOffer product={product}/>;
   const valid = validQuantity(Number(quantity));
   const url = valid
     ? quotationUrl(

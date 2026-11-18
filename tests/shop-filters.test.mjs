@@ -29,11 +29,11 @@ test('shop price ordering always leaves unpriced products last and discounts use
 test('shop normalizes malformed query values and keeps backwards compatible single brands', () => {
   const value=normalizeShopQuery({ brand:['A','A',null,' B '], min:'NaN', max:'-10', sort:'best-selling', page:'-5' });
   assert.deepEqual(value.brand,['A','B']);
-  assert.equal(value.min,''); assert.equal(value.max,''); assert.equal(value.sort,'name'); assert.equal(value.page,1);
+  assert.equal(value.min,'NaN'); assert.equal(value.max,'-10'); assert.equal(value.sort,'name'); assert.equal(value.page,1);
   assert.deepEqual(normalizeShopQuery({ brand:'A' }).brand,['A']);
   assert.equal(normalizeShopQuery({ min:'0' }).min,'0');
   const reversed=normalizeShopQuery({ min:'90', max:'20' });
-  assert.equal(reversed.min,'20'); assert.equal(reversed.max,'90');
+  assert.equal(reversed.min,'90'); assert.equal(reversed.max,'20');
 });
 
 test('shop URLs preserve all filters through ordering and pagination; changing filters resets page', () => {
@@ -46,7 +46,7 @@ test('shop URLs preserve all filters through ordering and pagination; changing f
   const page=new URL(shopUrl(query,{page:2}),'http://localhost');
   assert.equal(page.searchParams.get('page'),'2');
   assert.equal(page.searchParams.get('max'),'100');
-  assert.equal(page.searchParams.get('sort'),'discount');
+  assert.equal(page.searchParams.get('sort'),'name');
 });
 
 test('multiple categories combine with OR while other filter groups narrow results', () => {

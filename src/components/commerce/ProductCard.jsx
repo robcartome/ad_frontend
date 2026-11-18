@@ -2,14 +2,15 @@
 import Link from "@/components/feedback/LoadingLink";
 import { ShoppingCart, Check, Package } from "lucide-react";
 import CatalogImage from "@/components/storefront/CatalogImage";
-import { productOffer } from "@/lib/commerce/catalog.mjs";
+import { formatPublicMoney, productOffer } from "@/lib/commerce/catalog.mjs";
 import { useCart } from "./CartProvider";
-import { hasPrice, money } from "@/lib/commerce/cart.mjs";
+import { hasPrice } from "@/lib/commerce/cart.mjs";
 export default function ProductCard({ product }) {
   const { add, ready, store, items } = useCart();
   const added = items.some((item) => item.id === product.id);
   const offer = productOffer(product);
   const unavailable = product.availability === "unavailable";
+  const money = value => formatPublicMoney(value, product.currency);
   return (
     <article className="sf-product-card">
       <Link
@@ -64,7 +65,7 @@ export default function ProductCard({ product }) {
           {unavailable
             ? "No disponible"
             : product.availability === "available"
-              ? "Disponible para cotizar"
+              ? "Disponible"
               : "Consultar disponibilidad"}
         </span>
         <span className="sf-reference">
@@ -72,7 +73,7 @@ export default function ProductCard({ product }) {
             ? "Precio de demostración"
             : "Precio por " + product.unit}
         </span>
-        <button
+        {store.commerceEnabled === false ? <Link className="sf-add-button" href={`/shop/${product.id}`} aria-label={`Ver detalles: ${product.name}`}>Ver producto</Link> : <button
           disabled={!ready || unavailable}
           aria-label={`${unavailable ? "No disponible" : added ? "Agregar otro a cotización" : "Agregar al carrito de cotización"}: ${product.name}`}
           className={`sf-add-button${added ? " is-added" : ""}`}
@@ -93,7 +94,7 @@ export default function ProductCard({ product }) {
           <span className="sf-add-label-short">
             {unavailable ? "No disponible" : added ? "Agregar otro" : "Cotizar"}
           </span>
-        </button>
+        </button>}
       </div>
     </article>
   );

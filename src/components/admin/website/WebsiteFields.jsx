@@ -119,6 +119,7 @@ export function CollectionEditor({ type, items, onChange, errors, products }) {
             <input type="checkbox" checked={item.productIds.includes(product.id)} onChange={event => update(index, 'productIds', event.target.checked ? [...item.productIds, product.id] : item.productIds.filter(id => id !== product.id))}/>
             <span>{product.name}</span>
           </label>)}
+          {item.productIds.filter(id => !products.some(product => product.id === id)).map(id => <p key={id}>Producto no disponible: {id} <button type="button" onClick={() => update(index, 'productIds', item.productIds.filter(value => value !== id))}>Quitar referencia</button></p>)}
         </fieldset>
           {errors[`${path}.productIds`] && <p className="we-field-error">{errors[`${path}.productIds`]}</p>}
         

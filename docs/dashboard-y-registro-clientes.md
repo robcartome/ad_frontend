@@ -1,5 +1,7 @@
 # Dashboard APUDIG Web y futura cuenta de cliente
 
+Actualización B4-B17/11/2026: el dashboard actual se conserva. La auditoría backend20 (`docs/architecture/website-integration/20-arquitectura-cuentas-comerciales.md`) recomienda /cuenta para el contexto comercial reutilizando la presentación APUDIG Web; /admin sigue laboral/CMS. Es una propuesta posterior a este diseño inicial, sin cambiar rutas o crear registro comercial. Backend K0–K7 está listo para revisión, pero Next B4-C y comercio continúan pendientes.
+
 Fecha: 17/11/2026. Rama `mvp_website`, conservando cambios locales anteriores. Esta actualización corrige el dashboard; no habilita comercio ni registro comercial.
 
 ## Dashboard implementado

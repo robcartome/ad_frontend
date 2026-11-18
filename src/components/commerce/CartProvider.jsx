@@ -19,6 +19,7 @@ export function CartProvider({ store, products, children }) {
         setCartOpen(true);
     }
     useEffect(() => {
+        if (store.commerceEnabled === false) { setReady(true); return; }
         try {
             setItems(restoreCart(localStorage.getItem(cartKey(store.id)), store.id, products));
         }
@@ -26,9 +27,9 @@ export function CartProvider({ store, products, children }) {
             setStorageError(true);
         }
         setReady(true);
-    }, [store.id, products]);
+    }, [store.id, store.commerceEnabled, products]);
     useEffect(() => {
-        if (!ready)
+        if (!ready || store.commerceEnabled === false)
             return;
         try {
             localStorage.setItem(cartKey(store.id), serializeCart(items, store.id));
@@ -36,15 +37,16 @@ export function CartProvider({ store, products, children }) {
         catch {
             setStorageError(true);
         }
-    }, [items, ready, store.id]);
+    }, [items, ready, store.id, store.commerceEnabled]);
     useEffect(() => {
+        if (store.commerceEnabled === false) return;
         const sync = event => {
             if (event.key === cartKey(store.id) || event.key === null)
                 setItems(restoreCart(event.newValue, store.id, products));
         };
         window.addEventListener('storage', sync);
         return () => window.removeEventListener('storage', sync);
-    }, [store.id, products]);
+    }, [store.id, store.commerceEnabled, products]);
     function add(id, quantity = 1) {
         if (store.commerceEnabled === false || !ready || !validQuantity(quantity) || !products.some(product => product.id === id))
             return;

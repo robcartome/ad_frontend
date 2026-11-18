@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { validateWebsite, previewStore } from '@/lib/website/content.mjs';
 import { djangoWebsiteRepository } from './useWebsiteAccess';
+import { apiFetch } from '@/services/api';
+import { createWebsiteCatalogRepository } from '@/services/websiteCatalogRepository.mjs';
 const editorialCategories = [], editorialProducts = [];
 import { CartProvider } from '@/components/commerce/CartProvider';
 import StoreHome from '@/components/storefront/StoreHome';
@@ -23,9 +25,13 @@ export default function WebsitePreview({ company, discovery }) {
   useEffect(() => {
     const scope = ({ companyId: company.id, websiteId: discovery.id });
     let active = true;
+    let referenceIds = [];
     async function load() {
       try {
         const record = source === 'published' ? await djangoWebsiteRepository.load(scope) : { draft: (await djangoWebsiteRepository.preview(scope)).content };
+        // Preview remains informational; references are validated against the
+        // authenticated catalog, not IDs supplied by the postMessage sender.
+        try { referenceIds = (await createWebsiteCatalogRepository(apiFetch, discovery.id).publishedReferences()).map(product => product.id); } catch { referenceIds = []; }
         if (!active) return;
         setDocument(source === 'published' ? record.published : record.draft);
         setError(source === 'published' && !record.published ? 'Aun no hay una revision publicada. Guarda y publica desde el editor.' : '');
@@ -34,7 +40,7 @@ export default function WebsitePreview({ company, discovery }) {
     }
     function message(event) {
       if (!embedded || source !== 'draft' || event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== 'apudig:website-preview' || event.data.companyId !== company.id) return;
-      if (!Object.keys(validateWebsite(event.data.document, editorialProducts.map(product => product.id))).length) {
+      if (!Object.keys(validateWebsite(event.data.document, referenceIds)).length) {
         setDocument(event.data.document);
         setError('');
         setNow(Date.now());

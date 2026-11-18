@@ -2,6 +2,7 @@
 import { parseApiError } from "./errors/parseError";
 import { TOKEN_KEY, refreshAccessToken } from "@/services/authService";
 import { API_URL } from "@/lib/apiConfig";
+import { isRequestCancellation, jsonRequest, readJsonResponse } from './http/jsonRequest.mjs';
 
 export { API_URL };
 
@@ -61,21 +62,7 @@ export async function apiFetch(endpoint, options = {}) {
     headers: await buildHeaders(options),
   };
 
-  try {
-    const res = await fetch(`${API_URL}${normalizedEndpoint}`, config);
-
-    if (!res.ok) {
-      const errorData = await safeJson(res);
-      const msg = parseApiError(errorData);
-      throw Object.assign(new Error(errorData.message || msg), { status: res.status, code: errorData.code || "API_ERROR", fields: errorData.fields || {}, etag: res.headers.get("ETag"), retryAfter: res.headers.get("Retry-After") });
-    }
-
-    const data = await safeJson(res);
-    return options.withResponse ? { data, etag: res.headers.get("ETag"), status: res.status } : data;
-  } catch (err) {
-    console.error("API Error:", err);
-    throw err;
-  }
+  return jsonRequest(`${API_URL}${normalizedEndpoint}`, config, { parseError: parseApiError });
 }
 
 export async function apiFetchBlob(endpoint, options = {}) {
@@ -89,7 +76,7 @@ export async function apiFetchBlob(endpoint, options = {}) {
     const res = await fetch(`${API_URL}${normalizedEndpoint}`, config);
 
     if (!res.ok) {
-      const errorData = await safeJson(res);
+      const errorData = await readJsonResponse(res, config.signal);
       const msg = parseApiError(errorData);
       throw Object.assign(new Error(errorData.message || msg), { status: res.status, code: errorData.code || "API_ERROR", fields: errorData.fields || {}, etag: res.headers.get("ETag"), retryAfter: res.headers.get("Retry-After") });
     }
@@ -103,15 +90,7 @@ export async function apiFetchBlob(endpoint, options = {}) {
       filename: filenameMatch?.[1] || "documento.pdf",
     };
   } catch (err) {
-    console.error("API Error:", err);
+    if (!isRequestCancellation(err, config.signal)) console.error("API Error:", err);
     throw err;
-  }
-}
-
-async function safeJson(res) {
-  try {
-    return await res.json();
-  } catch {
-    return {};
   }
 }

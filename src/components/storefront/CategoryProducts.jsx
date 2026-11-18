@@ -13,11 +13,12 @@ export default function CategoryProducts({
   categories,
   products,
   demo = false,
+  serverSelection = false,
   cta,
 }) {
   const [categoryId, setCategoryId] = useState(null);
   const selected = categories.find((category) => category.id === categoryId);
-  const visible = categoryProducts(products, categoryId);
+  const visible = serverSelection ? products : categoryProducts(products, categoryId);
 
   return (
     <section
@@ -49,15 +50,15 @@ export default function CategoryProducts({
         role="group"
         aria-label="Filtrar productos por categoría"
       >
-        <button
+        {serverSelection ? <Link href="/shop"><Grid2X2 size={18}/> Todos los productos</Link> : <button
           type="button"
           aria-pressed={categoryId === null}
           onClick={() => setCategoryId(null)}
         >
           <Grid2X2 size={18} /> Todos
-        </button>
+        </button>}
         {categories.map((category) => (
-          <button
+          serverSelection ? <Link key={category.id} href={`/shop?category=${encodeURIComponent(category.id)}`}><CategoryIcon type={category.icon} size={18}/>{category.name}</Link> : <button
             key={category.id}
             type="button"
             aria-pressed={categoryId === category.id}

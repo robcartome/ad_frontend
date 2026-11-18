@@ -14,14 +14,13 @@ import {
   X,
 } from "lucide-react";
 import {
-  filterShopProducts,
   shopUrl,
   SHOP_SORT_OPTIONS,
 } from "@/lib/commerce/shop-filters.mjs";
 import ProductCard from "./ProductCard";
 import FilterRange from "./FilterRange";
 
-function SelectedFilters({ query, categories }) {
+function SelectedFilters({ query, categories, brands = [], currency = 'PEN' }) {
   const chips = [
     ...(query.q ? [{ label: `Búsqueda: ${query.q}`, patch: { q: "" } }] : []),
     ...query.category.map((id) => ({
@@ -29,14 +28,14 @@ function SelectedFilters({ query, categories }) {
       patch: { category: query.category.filter((item) => item !== id) },
     })),
     ...query.brand.map((brand) => ({
-      label: brand,
+      label: brands.find(item => item.id === brand)?.name || brand,
       patch: { brand: query.brand.filter((item) => item !== brand) },
     })),
     ...(query.min !== ""
-      ? [{ label: `Desde S/ ${query.min}`, patch: { min: "" } }]
+      ? [{ label: `Desde ${currency} ${query.min}`, patch: { min: "" } }]
       : []),
     ...(query.max !== ""
-      ? [{ label: `Hasta S/ ${query.max}`, patch: { max: "" } }]
+      ? [{ label: `Hasta ${currency} ${query.max}`, patch: { max: "" } }]
       : []),
   ];
   if (!chips.length) return null;
@@ -73,16 +72,10 @@ function SelectedFilters({ query, categories }) {
   );
 }
 
-function Filters({ query, products, categories, onApply }) {
+function Filters({ query, categories, brands, facets, currency, onApply }) {
   const [draft, setDraft] = useState(query);
   const [brandSearch, setBrandSearch] = useState("");
   const id = useId();
-  const brands = [
-    ...new Set(products.map((product) => product.brand).filter(Boolean)),
-  ].sort((a, b) => a.localeCompare(b, "es"));
-  const ceiling = Math.ceil(
-    Math.max(0, ...products.map((product) => product.price ?? 0)),
-  );
   const invalid =
     (draft.min !== "" &&
       (!Number.isFinite(Number(draft.min)) || Number(draft.min) < 0)) ||
@@ -94,7 +87,6 @@ function Filters({ query, products, categories, onApply }) {
   function update(patch) {
     setDraft((previous) => ({ ...previous, ...patch }));
   }
-  const count = filterShopProducts(products, draft).length;
   return (
     <form
       className="sf-shop-filter-form"
@@ -104,7 +96,7 @@ function Filters({ query, products, categories, onApply }) {
       }}
     >
       <div className="sf-shop-filter-body">
-        <SelectedFilters query={query} categories={categories} />
+        <SelectedFilters query={query} categories={categories} brands={brands} currency={currency}/>
         <label className="sf-shop-search-label" htmlFor={`${id}-search`}>
           Nombre o SKU
         </label>
@@ -163,12 +155,7 @@ function Filters({ query, products, categories, onApply }) {
                   />
                   <span>{category.name}</span>
                   <small>
-                    {
-                      products.filter(
-                        (product) =>
-                          !category.id || product.category === category.id,
-                      ).length
-                    }
+                    {category.id ? facets.categories.find(item => item.id === category.id)?.productCount ?? 0 : ''}
                   </small>
                 </label>
               ),
@@ -194,32 +181,29 @@ function Filters({ query, products, categories, onApply }) {
             <legend className="sf-sr-only">Seleccionar marcas</legend>
             {brands
               .filter((brand) =>
-                brand
+                brand.name
                   .toLocaleLowerCase("es")
                   .includes(brandSearch.toLocaleLowerCase("es")),
               )
               .map((brand) => (
                 <label
-                  key={brand}
-                  className={draft.brand.includes(brand) ? "is-selected" : ""}
+                  key={brand.id}
+                  className={draft.brand.includes(brand.id) ? "is-selected" : ""}
                 >
                   <input
                     type="checkbox"
-                    checked={draft.brand.includes(brand)}
+                    checked={draft.brand.includes(brand.id)}
                     onChange={(event) =>
                       update({
                         brand: event.target.checked
-                          ? [...draft.brand, brand]
-                          : draft.brand.filter((item) => item !== brand),
+                          ? [...draft.brand, brand.id]
+                          : draft.brand.filter((item) => item !== brand.id),
                       })
                     }
                   />
-                  <span>{brand}</span>
+                  <span>{brand.name}</span>
                   <small>
-                    {
-                      products.filter((product) => product.brand === brand)
-                        .length
-                    }
+                    {facets.brands.find(item => item.id === brand.id)?.productCount ?? 0}
                   </small>
                 </label>
               ))}
@@ -233,11 +217,11 @@ function Filters({ query, products, categories, onApply }) {
           <FilterRange
             min={draft.min}
             max={draft.max}
-            ceiling={ceiling}
+            currency={currency}
             onChange={update}
           />
           <p className="sf-filter-hint">
-            Precios en soles. Al filtrar por precio se omiten los productos sin
+            Precios en {currency}. Al filtrar por precio se omiten los productos sin
             precio publicado.
           </p>
         </details>
@@ -248,7 +232,7 @@ function Filters({ query, products, categories, onApply }) {
           disabled={invalid}
           className="sf-button sf-button-orange"
         >
-          Ver {count} resultados
+          Aplicar filtros
           <Check size={17} />
         </button>
         <button
@@ -273,7 +257,7 @@ function Filters({ query, products, categories, onApply }) {
   );
 }
 
-export default function StoreCatalog({ products, categories, query }) {
+export default function StoreCatalog({ pageData, categories, brands, query, currency, primaryColor }) {
   const router = useRouter();
   const toolbarMarker = useRef(null);
   useEffect(() => {
@@ -297,10 +281,9 @@ export default function StoreCatalog({ products, categories, query }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [sort, setSort] = useState(query.sort);
-  const sorted = filterShopProducts(products, query);
-  const pageSize = 24;
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const page = Math.min(query.page, totalPages);
+  const products = pageData.results;
+  const totalPages = Math.max(1, Math.ceil(pageData.count / pageData.limit));
+  const page = query.page;
   const category =
     query.category.length === 1
       ? categories.find((item) => item.id === query.category[0])
@@ -336,7 +319,7 @@ export default function StoreCatalog({ products, categories, query }) {
               ? "Productos de tus categorías"
               : "Encuentra tu próximo aliado.")}
         </h1>
-        <p>Explora el catálogo de demostración y prepara tu cotización.</p>
+        <p>Explora los productos y precios publicados por la empresa. Los pedidos aún no están habilitados.</p>
       </div>
       <div className="sf-catalog-layout">
         <aside className="sf-shop-sidebar" aria-label="Filtrar productos">
@@ -346,7 +329,9 @@ export default function StoreCatalog({ products, categories, query }) {
           <Filters
             query={query}
             categories={categories}
-            products={products}
+            brands={brands}
+            facets={pageData.facets}
+            currency={currency}
             onApply={apply}
           />
         </aside>
@@ -394,7 +379,7 @@ export default function StoreCatalog({ products, categories, query }) {
               </Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="sf-shop-overlay" />
-                <Dialog.Content className="storefront sf-shop-drawer sf-shop-sort-drawer">
+                <Dialog.Content className="storefront sf-shop-drawer sf-shop-sort-drawer" style={{ '--sf-orange': primaryColor }}>
                   <div className="sf-shop-drawer-heading">
                     <Dialog.Title>Ordenar por</Dialog.Title>
                     <Dialog.Close asChild>
@@ -464,7 +449,7 @@ export default function StoreCatalog({ products, categories, query }) {
               </Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="sf-shop-overlay" />
-                <Dialog.Content className="storefront sf-shop-drawer sf-shop-filter-drawer">
+                <Dialog.Content className="storefront sf-shop-drawer sf-shop-filter-drawer" style={{ '--sf-orange': primaryColor }}>
                   <div className="sf-shop-drawer-heading">
                     <Dialog.Title>Filtrar productos</Dialog.Title>
                     <Dialog.Close asChild>
@@ -479,7 +464,9 @@ export default function StoreCatalog({ products, categories, query }) {
                   </Dialog.Description>
                   <Filters
                     query={query}
-                    products={products}
+                    brands={brands}
+                    facets={pageData.facets}
+                    currency={currency}
                     categories={categories}
                     onApply={apply}
                   />
@@ -487,29 +474,28 @@ export default function StoreCatalog({ products, categories, query }) {
               </Dialog.Portal>
             </Dialog.Root>
             <span className="sf-shop-result-count" role="status">
-              <strong>+{sorted.length}</strong> Resultados
+              <strong>{pageData.count}</strong> Resultados
             </span>
             <div className="sf-shop-active-filters">
-              <SelectedFilters query={query} categories={categories} />
+              <SelectedFilters query={query} categories={categories} brands={brands} currency={currency}/>
             </div>
           </div>
-          {sorted.length ? (
+          {products.length ? (
             <>
               <div className="sf-product-grid sf-catalog-grid">
-                {sorted
-                  .slice((page - 1) * pageSize, page * pageSize)
+                {products
                   .map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
               </div>
               <nav className="sf-pagination" aria-label="Páginas de productos">
-                {Array.from({ length: totalPages }, (_, index) => (
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, index) => Math.max(1, Math.min(page - 3, totalPages - 6)) + index).map(pageNumber => (
                   <Link
-                    key={index}
-                    href={shopUrl(query, { page: index + 1 })}
-                    aria-current={page === index + 1 ? "page" : undefined}
+                    key={pageNumber}
+                    href={shopUrl(query, { page: pageNumber })}
+                    aria-current={page === pageNumber ? "page" : undefined}
                   >
-                    {index + 1}
+                    {pageNumber}
                   </Link>
                 ))}
               </nav>

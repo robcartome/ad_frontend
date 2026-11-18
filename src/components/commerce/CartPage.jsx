@@ -20,6 +20,7 @@ import {
 export default function CartPage() {
   const { store, products, items, lines, count, ready, storageError, clear } =
     useCart();
+  if (store.commerceEnabled === false) return <section className="sf-container sf-page sf-empty"><ShoppingBag size={44}/><h1>Los pedidos aún no están habilitados</h1><p>Puedes consultar los productos y precios publicados por la empresa.</p><Link href="/shop" className="sf-button sf-button-orange">Ver catálogo</Link></section>;
   const { subtotal, savings, beforeDiscount, unpriced } = cartTotals(lines);
   const url = quotationUrl(store, items, products);
   const suggestions = products

@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/AuthContext";
 import AuthGuard from "@/components/auth/AuthGuard";
 import ProductCard from "@/components/admin/ProductCard";
 import ProductDetailModal from "@/components/admin/ProductDetailModal";
+import { isRequestCancellation } from '@/services/http/jsonRequest.mjs';
 
 export default function CatalogPage({isAdmin = false}) {
   const { user, selectedCompany, selectedStore } = useAuth();
@@ -64,12 +65,12 @@ function CatalogWorkspace({isAdmin}) {
     if (page === 1) { setProducts([]); setSelectedProduct(null); }
     const load = isAdmin ? getCatalogProductsPrivate : getCatalogProducts;
     load(page, 50, debouncedSearch, { signal: controller.signal }).then(res => {
-      if (!active) return;
+      if (!active || controller.signal.aborted) return;
       const rows = res.results.map(product => ({ ...product, brand: product.brand || 'Sin marca', category: product.category || 'Sin categoria', sku: product.sku || '', name: product.name || '' }));
       setProducts(previous => page === 1 ? rows : [...previous, ...rows]);
       setHasMore(res.offset + rows.length < res.total);
     }).catch(cause => {
-      if (!active) return;
+      if (!active || isRequestCancellation(cause, controller.signal)) return;
       setProducts([]);
       setHasMore(false);
       setSelectedProduct(null);

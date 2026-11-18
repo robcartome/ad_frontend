@@ -21,6 +21,7 @@ export default function StoreHome({
   store,
   categories,
   products,
+  featuredProducts = products,
   content = createWebsiteDocument(
     store.name,
     products.map((product) => product.id),
@@ -30,7 +31,7 @@ export default function StoreHome({
   const promotions = visiblePromotions(content, now);
   return (
     <>
-      <StoreHero banners={content.banners} settings={content.heroSlider} />
+      <StoreHero banners={content.banners} settings={content.heroSlider} commerceEnabled={store.commerceEnabled}/>
       {content.sections
         .filter((section) => section.enabled)
         .map((section) => {
@@ -49,8 +50,8 @@ export default function StoreHome({
                   ],
                   [
                     ClipboardList,
-                    "Cotiza a tu medida",
-                    "Una lista, muchas soluciones",
+                    "Consulta nuestros productos",
+                    "Precios y disponibilidad publicados",
                   ],
                   [
                     PackageCheck,
@@ -97,8 +98,9 @@ export default function StoreHome({
                 key={section.type}
                 title={section.title}
                 categories={categories}
-                products={products}
+                products={featuredProducts}
                 demo={store.mode === "demo"}
+                serverSelection={store.mode !== "demo"}
                 cta={content.announcements}
               />
             );
