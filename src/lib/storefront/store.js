@@ -19,7 +19,7 @@ export const getPublicWebsite = cache(async () => {
 });
 export const getStore = cache(async () => {
   const site = await getPublicWebsite();
-  return { ...previewStore({ id: site.websiteId, colors: { background: '#F5F5F6', muted: '#F2F2F2' } }, site.content), mode: 'catalog', currency: site.currency, commerceEnabled: site.commerceEnabled };
+  return { ...previewStore({ id: site.websiteId, colors: { background: '#F5F5F6', muted: '#F2F2F2' } }, site.content), hostname: site.hostname, mode: 'catalog', currency: site.currency, commerceEnabled: site.commerceEnabled };
 });
 const getCatalog = cache(async () => {
   const site = await getPublicWebsite();

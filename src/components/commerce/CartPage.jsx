@@ -12,7 +12,7 @@ import CartItem from "./CartItem";
 import ProductCard from "./ProductCard";
 import {
   cartTotals,
-  money,
+  money as formatMoney,
   quotationUrl,
   buildQuotationMessage,
 } from "@/lib/commerce/cart.mjs";
@@ -20,9 +20,12 @@ import {
 export default function CartPage() {
   const { store, products, items, lines, count, ready, storageError, clear } =
     useCart();
+  const money = value => formatMoney(value, store.currency || 'PEN');
   if (store.commerceEnabled === false) return <section className="sf-container sf-page sf-empty"><ShoppingBag size={44}/><h1>Los pedidos aún no están habilitados</h1><p>Puedes consultar los productos y precios publicados por la empresa.</p><Link href="/shop" className="sf-button sf-button-orange">Ver catálogo</Link></section>;
   const { subtotal, savings, beforeDiscount, unpriced } = cartTotals(lines);
-  const url = quotationUrl(store, items, products);
+  // A real request must come from an authenticated, server-confirmed offer.
+  // Never activate the old browser-generated WhatsApp link for a real site.
+  const url = store.mode === 'demo' ? quotationUrl(store, items, products) : null;
   const suggestions = products
     .filter(
       (product) =>
@@ -88,7 +91,7 @@ export default function CartPage() {
                 </button>
               </div>
               {lines.map((line) => (
-                <CartItem line={line} key={line.id} />
+                <CartItem line={line} key={line.cartLineId || line.id} />
               ))}
             </section>
             <aside
@@ -133,8 +136,8 @@ export default function CartPage() {
                     <MessageCircle size={19} /> WhatsApp no disponible
                   </button>
                   <p className="sf-callout">
-                    El envío se habilitará cuando la tienda tenga un número de
-                    WhatsApp verificado y salga del modo demo.
+                    El envío de solicitudes aún no está habilitado. Requerirá
+                    una cuenta con contacto verificado y la confirmación de la oferta actualizada.
                   </p>
                 </>
               )}
@@ -143,10 +146,10 @@ export default function CartPage() {
                 Entrega, disponibilidad y precios finales por confirmar con un
                 asesor.
               </p>
-              <details>
+              {store.mode === 'demo' && <details>
                 <summary>Ver mensaje del pedido</summary>
                 <pre>{buildQuotationMessage(store, items, products)}</pre>
-              </details>
+              </details>}
               <small>
                 Enviar esta solicitud no confirma un pedido, pago ni reserva de
                 stock.

@@ -77,7 +77,7 @@ export default function ProductCard({ product }) {
           disabled={!ready || unavailable}
           aria-label={`${unavailable ? "No disponible" : added ? "Agregar otro a cotización" : "Agregar al carrito de cotización"}: ${product.name}`}
           className={`sf-add-button${added ? " is-added" : ""}`}
-          onClick={() => add(product.id)}
+          onClick={() => add(product)}
         >
           {added ? (
             <Check size={18} aria-hidden="true" />

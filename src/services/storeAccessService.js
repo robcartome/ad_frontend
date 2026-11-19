@@ -55,7 +55,7 @@ function authHeaders() {
  * @returns {Promise<{ store_ids: string[] }>}
  */
 export async function getMyAccessibleStores() {
-  const res = await fetch(`${BASE}/stores/me`, {
+  const res = await fetch(`${BASE}/stores/me/`, {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error("Error obteniendo sucursales accesibles");
@@ -70,7 +70,8 @@ export async function getMyAccessibleStores() {
  */
 export async function getMyStoresDetail() {
   // 1. Obtener IDs permitidos
-  const { store_ids } = await getMyAccessibleStores();
+  const { store_ids, stores } = await getMyAccessibleStores();
+  if (Array.isArray(stores)) return stores;
   if (!store_ids || store_ids.length === 0) return [];
 
   // 2. Obtener detalle de cada store

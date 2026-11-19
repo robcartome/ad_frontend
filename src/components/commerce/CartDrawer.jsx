@@ -4,12 +4,13 @@ import { useEffect, useRef } from 'react';
 import Link from '@/components/feedback/LoadingLink';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowRight, CheckCircle2, ShoppingBag, X } from 'lucide-react';
-import { cartTotals, money, prioritizeCartLines } from '@/lib/commerce/cart.mjs';
+import { cartTotals, money as formatMoney, prioritizeCartLines } from '@/lib/commerce/cart.mjs';
 import { useCart } from './CartProvider';
 import CartItem from './CartItem';
 
 export default function CartDrawer({ open, onOpenChange, addedId, opener }) {
-    const { lines, count, ready, storageError } = useCart();
+    const { lines, count, ready, storageError, store } = useCart();
+    const money = value => formatMoney(value, store.currency || 'PEN');
     const { subtotal, unpriced } = cartTotals(lines);
     const added = lines.some(line => line.id === addedId);
     const visibleLines = prioritizeCartLines(lines, addedId);
@@ -31,7 +32,7 @@ export default function CartDrawer({ open, onOpenChange, addedId, opener }) {
                 <Dialog.Description className="sf-cart-drawer-description">{count} {count === 1 ? 'unidad' : 'unidades'} · Revisa las cantidades y los detalles de tu pedido.</Dialog.Description>
                 <div className="sf-cart-drawer-body" ref={body}>
                     {storageError && <p className="sf-callout" role="alert">No se puede guardar el carrito en este navegador. Puedes usarlo durante esta visita.</p>}
-                    {!ready ? <LoadingIndicator label="Recuperando tu carrito…"/> : !lines.length ? <div className="sf-cart-drawer-empty"><ShoppingBag size={48}/><h3>Tu carrito está vacío</h3><p>Encuentra los materiales para tu próximo proyecto.</p><Link href="/shop" className="sf-button sf-button-orange" onClick={close}>Explorar productos <ArrowRight size={17}/></Link></div> : visibleLines.map(line => <CartItem key={line.id} line={line} onNavigate={close}/>)}
+                    {!ready ? <LoadingIndicator label="Recuperando tu carrito…"/> : !lines.length ? <div className="sf-cart-drawer-empty"><ShoppingBag size={48}/><h3>Tu carrito está vacío</h3><p>Encuentra los materiales para tu próximo proyecto.</p><Link href="/shop" className="sf-button sf-button-orange" onClick={close}>Explorar productos <ArrowRight size={17}/></Link></div> : visibleLines.map(line => <CartItem key={line.cartLineId || line.id} line={line} onNavigate={close}/>)}
                 </div>
                 {ready && lines.length > 0 && <footer className="sf-cart-drawer-footer">
                     <div><span>Subtotal referencial{unpriced ? ' parcial' : ''}</span><strong>{money(subtotal)}</strong></div>

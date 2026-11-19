@@ -6,7 +6,7 @@ import CatalogImage from "@/components/storefront/CatalogImage";
 import { productOffer } from "@/lib/commerce/catalog.mjs";
 import {
   hasPrice,
-  money,
+  money as formatMoney,
   MAX_QUANTITY,
   MAX_ITEM_NOTES,
   validQuantity,
@@ -15,6 +15,8 @@ import { useCart } from "./CartProvider";
 
 export default function CartItem({ line, onNavigate }) {
   const { update, updateNotes, remove } = useCart();
+  const lineId = line.cartLineId || line.id;
+  const money = value => formatMoney(value, line.currency || 'PEN');
   const [value, setValue] = useState(String(line.quantity));
   const notesId = useId();
   const errorId = useId();
@@ -23,7 +25,7 @@ export default function CartItem({ line, onNavigate }) {
   const offer = productOffer(line);
   function changeQuantity(quantity) {
     setValue(String(quantity));
-    if (validQuantity(Number(quantity))) update(line.id, Number(quantity));
+    if (validQuantity(Number(quantity))) update(lineId, Number(quantity));
   }
   return (
     <article className="sf-cart-item">
@@ -50,6 +52,7 @@ export default function CartItem({ line, onNavigate }) {
         </Link>
         <small>SKU: {line.sku || "Por confirmar"}</small>
         <small>Venta por {line.unit}</small>
+        {line.requiresReview && <small role="status">Revisa este producto: su oferta no está disponible.</small>}
       </div>
       <div className="sf-cart-price">
         <div>
@@ -113,7 +116,7 @@ export default function CartItem({ line, onNavigate }) {
         type="button"
         className="sf-remove"
         aria-label={`Eliminar ${line.name}`}
-        onClick={() => remove(line.id)}
+        onClick={() => remove(lineId)}
       >
         <Trash2 size={18} />
       </button>
@@ -132,7 +135,7 @@ export default function CartItem({ line, onNavigate }) {
           maxLength={MAX_ITEM_NOTES}
           value={line.notes || ""}
           placeholder="Ej. Medida de 1/2 pulgada, color blanco…"
-          onChange={(event) => updateNotes(line.id, event.target.value)}
+          onChange={(event) => updateNotes(lineId, event.target.value)}
         />
         <small>
           El asesor confirmará las características y la disponibilidad.

@@ -13,8 +13,8 @@ export const hasPrice = (product) =>
   typeof product.price === "number" &&
   Number.isFinite(product.price) &&
   product.price >= 0;
-export const money = (value) =>
-  new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(
+export const money = (value, currency = "PEN") =>
+  new Intl.NumberFormat("es-PE", { style: "currency", currency }).format(
     value,
   );
 export function validateItems(items, products) {
@@ -109,8 +109,8 @@ export function quotationUrl(store, items, products) {
 
 // Present the newly added product first without changing stored cart order/data.
 export function prioritizeCartLines(lines, addedId) {
-  const selected = lines.find((line) => line.id === addedId);
-  return selected
-    ? [selected, ...lines.filter((line) => line.id !== addedId)]
+  const selected = lines.filter((line) => line.id === addedId);
+  return selected.length
+    ? [...selected, ...lines.filter((line) => line.id !== addedId)]
     : lines;
 }
