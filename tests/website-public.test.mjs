@@ -42,6 +42,16 @@ test('SSR public reads are anonymous no-store and never fall back to demo', asyn
   assert.deepEqual(result, fixture);
   await assert.rejects(fetchPublicWebsite('http://localhost/api', 'unknown.test', async () => ({ ok: false, status: 404 })), error => error.status === 404);
 });
+
+test('public commerce capability accepts server booleans and rejects coercion or a missing gate', async () => {
+  for (const commerceEnabled of [false, true]) {
+    const fixture = { hostname: 'a.test', commerceEnabled, content: { schemaVersion: 3 } };
+    assert.equal((await fetchPublicWebsite('https://api.example.test', 'a.test', async () => ({ ok: true, json: async () => fixture }))).commerceEnabled, commerceEnabled);
+  }
+  for (const commerceEnabled of [undefined, 'true', 1, null]) {
+    await assert.rejects(fetchPublicWebsite('https://api.example.test', 'a.test', async () => ({ ok: true, json: async () => ({ hostname: 'a.test', commerceEnabled, content: { schemaVersion: 3 } }) })));
+  }
+});
 test('repository preserves ETag, HTTP errors and uses discovered UUID for every operation', async () => {
   const scope = { companyId: 'company-a', websiteId: 'a-uuid' };
   const calls = [];

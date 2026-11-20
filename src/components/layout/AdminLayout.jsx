@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import { canAccessAdministrationRoute, getAdministrationAccess } from "@/lib/admin/access.mjs";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import DashboardFrame from "./DashboardFrame";
 import AuthGuard from "@/components/auth/AuthGuard";
 import ErpModuleNotice from "@/components/admin/ErpModuleNotice";
 import { isErpRoute } from "@/lib/admin/routes.mjs";
 
 export default function AdminLayout({ children }) {
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const pathname = usePathname();
   const { user, selectedCompany } = useAuth();
   const access = getAdministrationAccess(user, selectedCompany);
@@ -27,42 +25,14 @@ export default function AdminLayout({ children }) {
 
   return (
     <AuthGuard>
-      <div className="flex min-h-screen bg-gray-100">
-        {/* Sidebar */}
-        <Sidebar
-          mobileOpen={mobileSidebarOpen}
-          setMobileOpen={setMobileSidebarOpen}
-          desktopOpen={desktopSidebarOpen}
-        />
-
-        {mobileSidebarOpen && (
-          <button
-            type="button"
-            className="fixed inset-0 z-30 lg:hidden bg-black/20"
-            onClick={() => setMobileSidebarOpen(false)}
-            aria-label="Cerrar sidebar"
-          />
-        )}
-
-        {/* Contenido principal */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Topbar */}
-          <Topbar
-            onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-            desktopSidebarOpen={desktopSidebarOpen}
-            onDesktopSidebarToggle={() =>
-              setDesktopSidebarOpen(!desktopSidebarOpen)
-            }
-          />
-
-          {/* Contenido */}
-          <main className="flex-1 py-3 overflow-y-auto">{!canAccess ? <section className="mx-auto max-w-xl space-y-4 px-6 py-12">
+      <DashboardFrame
+        sidebar={({ mobileOpen, setMobileOpen, desktopOpen }) => <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} desktopOpen={desktopOpen}/>}
+        topbar={({ onMenuClick, desktopOpen, onDesktopToggle }) => <Topbar onMenuClick={onMenuClick} desktopSidebarOpen={desktopOpen} onDesktopSidebarToggle={onDesktopToggle}/>}
+      >{!canAccess ? <section className="mx-auto max-w-xl space-y-4 px-6 py-12">
             <h1 className="text-2xl font-semibold">Acceso no disponible</h1>
             <p className="text-gray-600">Tu cuenta no tiene permisos para esta sección.</p>
             <Link href="/admin" className="inline-flex rounded-md bg-green-700 px-4 py-3 text-white">Volver al inicio</Link>
-          </section> : isErpRoute(pathname) ? <ErpModuleNotice /> : children}</main>
-        </div>
-      </div>
+          </section> : isErpRoute(pathname) ? <ErpModuleNotice /> : children}</DashboardFrame>
     </AuthGuard>
   );
 }

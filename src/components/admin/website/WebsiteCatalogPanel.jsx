@@ -22,7 +22,7 @@ export default function WebsiteCatalogPanel({ websiteId, canEdit, canPublish, on
     setBusy(true);
     try {
       const data = await repository.load(query);
-      if (active()) setState({ ...data, draft: emptyPublication(), original: null, policy: data.settings.canManagePolicy ? { defaultPriceListId: data.settings.defaultPriceListId, warehouseIds: data.settings.warehouseIds, productsPerPage: data.settings.productsPerPage, showOutOfStock: data.settings.showOutOfStock } : null, dirty: false, policyDirty: false, conflict: false, error: null });
+      if (active()) setState({ ...data, draft: emptyPublication(), original: null, policy: data.settings.canManagePolicy ? { defaultPriceListId: data.settings.defaultPriceListId, warehouseIds: data.settings.warehouseIds, productsPerPage: data.settings.productsPerPage, showOutOfStock: data.settings.showOutOfStock, commerceEnabled: data.settings.commerceEnabled } : null, dirty: false, policyDirty: false, conflict: false, error: null });
     } catch (error) { if (active()) fail(error); }
     finally { if (active()) setBusy(false); }
   }, [repository, query, fail]);
@@ -65,7 +65,7 @@ export default function WebsiteCatalogPanel({ websiteId, canEdit, canPublish, on
         if (kind !== 'remove') rows.unshift(response.data);
         return { ...next, page: { ...previous.page, results: rows.slice(0, previous.page.limit), count: previous.page.count + (!draft.id ? 1 : kind === 'remove' ? -1 : 0) }, draft: kind === 'remove' ? emptyPublication() : response.data, original: kind === 'remove' ? null : response.data, dirty: false };
       });
-      setNotice('Cambios comerciales guardados. Los pedidos continúan deshabilitados.');
+      setNotice('Cambios comerciales guardados. La autorización de solicitudes depende de la política vigente.');
       if (kind !== 'policy') onPublicationChange?.();
     } catch (error) { fail(error); }
     finally { setBusy(false); }
@@ -75,7 +75,7 @@ export default function WebsiteCatalogPanel({ websiteId, canEdit, canPublish, on
   const field = (key, label, props = {}) => <Field label={label} path={`catalog.${key}`} value={state.draft[key]} onChange={value => update(key, props.type === 'number' ? (value === '' ? '' : Number(value)) : value)} errors={Object.fromEntries(Object.entries(state.error?.fields || {}).map(([key, value]) => [`catalog.${key}`, String(value)]))} {...props}/>;
   return <section className="we-catalog" aria-busy={busy}>
     <div className="we-section-intro"><div><h2>Catálogo del Website</h2><p>Publica productos existentes de APUDIG. Los precios y la disponibilidad se consultan al visitar la tienda.</p></div></div>
-    <p className="we-note">Consultar productos está disponible. Carrito y pedidos aún no están habilitados. Estos cambios son independientes del borrador de la página.</p>
+    <p className="we-note">El catálogo y la selección en carrito son públicos. Preparar solicitudes requiere una cuenta verificada y autorización de la empresa. Estos cambios son independientes del borrador de la página.</p>
     {busy && <LoadingIndicator compact label="Consultando catálogo…"/>}
     {state.error && <div role="alert" className="we-validation"><p>{state.conflict ? 'El catálogo cambió o falta una revisión válida. Tus campos se conservaron. Recarga para revisar la versión actual antes de guardar.' : websiteErrorMessage(state.error)}</p>{Object.entries(state.error.fields || {}).map(([key, value]) => <p key={key}>{key}: {String(value)}</p>)}</div>}
     {notice && <p role="status">{notice}</p>}
@@ -105,6 +105,9 @@ export default function WebsiteCatalogPanel({ websiteId, canEdit, canPublish, on
         </fieldset>
       </form>}
       {state.settings.canManagePolicy ? <form className="we-item" onSubmit={event => { event.preventDefault(); write('policy'); }}><h3>Política comercial autorizada</h3><p>Moneda: {state.settings.currency}. Selecciona expresamente las listas y los almacenes que se podrán consultar.</p><fieldset className="we-form-fieldset" disabled={disabled}>
+        <label className="we-toggle"><input type="checkbox" checked={state.policy.commerceEnabled === true} onChange={event => setState(previous => ({ ...previous, policyDirty: true, policy: { ...previous.policy, commerceEnabled: event.target.checked } }))}/> Autorizar preparación de solicitudes con cuenta verificada</label>
+        <p>Esta autorización no habilita el registro ni crea ventas o reservas. Guarda la política solo después de aceptar el piloto.</p>
+        {state.settings.commerceBlockers?.length > 0 && <ul aria-label="Pendientes de preparación comercial">{state.settings.commerceBlockers.map(item => <li key={item.code}>{item.message}</li>)}</ul>}
         <label className="we-field">Lista pública predeterminada<select value={state.policy.defaultPriceListId || ''} onChange={event => setState(previous => ({ ...previous, policyDirty: true, policy: { ...previous.policy, defaultPriceListId: event.target.value || null } }))}><option value="">Sin precio público</option>{state.policy.defaultPriceListId && !state.settings.priceListOptions.some(row => row.id === state.policy.defaultPriceListId) && <option value={state.policy.defaultPriceListId}>Selección no disponible (sin precio)</option>}{state.settings.priceListOptions.map(row => <option key={row.id} value={row.id}>{row.name} · {row.pricesIncludeTax ? 'Impuestos incluidos' : 'Impuestos según APUDIG'}</option>)}</select></label>
         <fieldset><legend>Almacenes autorizados</legend>{state.settings.warehouseOptions.map(row => <label className="we-toggle" key={row.id}><input type="checkbox" checked={state.policy.warehouseIds.includes(row.id)} onChange={event => setState(previous => ({ ...previous, policyDirty: true, policy: { ...previous.policy, warehouseIds: event.target.checked ? [...previous.policy.warehouseIds, row.id] : previous.policy.warehouseIds.filter(id => id !== row.id) } }))}/>{row.name}</label>)}{state.policy.warehouseIds.some(id => !state.settings.warehouseOptions.some(row => row.id === id)) && <p>Hay almacenes seleccionados que ya no están disponibles; recarga y revisa la política antes de guardar.</p>}</fieldset>
         <Field label="Productos por página predeterminada" path="catalog.productsPerPage" type="number" required min={1} max={60} value={state.policy.productsPerPage} onChange={value => setState(previous => ({ ...previous, policyDirty: true, policy: { ...previous.policy, productsPerPage: value === '' ? '' : Number(value) } }))}/>

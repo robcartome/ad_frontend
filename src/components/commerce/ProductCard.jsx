@@ -6,7 +6,7 @@ import { formatPublicMoney, productOffer } from "@/lib/commerce/catalog.mjs";
 import { useCart } from "./CartProvider";
 import { hasPrice } from "@/lib/commerce/cart.mjs";
 export default function ProductCard({ product }) {
-  const { add, ready, store, items } = useCart();
+  const { add, ready, store, items, enabled } = useCart();
   const added = items.some((item) => item.id === product.id);
   const offer = productOffer(product);
   const unavailable = product.availability === "unavailable";
@@ -73,7 +73,7 @@ export default function ProductCard({ product }) {
             ? "Precio de demostración"
             : "Precio por " + product.unit}
         </span>
-        {store.commerceEnabled === false ? <Link className="sf-add-button" href={`/shop/${product.id}`} aria-label={`Ver detalles: ${product.name}`}>Ver producto</Link> : <button
+        {!enabled ? <Link className="sf-add-button" href={`/shop/${product.id}`} aria-label={`Ver detalles: ${product.name}`}>Ver producto</Link> : <button
           disabled={!ready || unavailable}
           aria-label={`${unavailable ? "No disponible" : added ? "Agregar otro a cotización" : "Agregar al carrito de cotización"}: ${product.name}`}
           className={`sf-add-button${added ? " is-added" : ""}`}

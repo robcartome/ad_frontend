@@ -101,6 +101,8 @@ export default function StoreHome({
                 products={featuredProducts}
                 demo={store.mode === "demo"}
                 serverSelection={store.mode !== "demo"}
+                hostname={store.hostname}
+                websiteId={store.id}
                 cta={content.announcements}
               />
             );

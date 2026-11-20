@@ -21,6 +21,6 @@ export async function fetchPublicWebsite(apiUrl, hostname, fetcher = fetch) {
   const response = await fetcher(`${apiUrl.replace(/\/$/, '')}/storefront/sites/${encodeURIComponent(hostname)}/content/`, { cache: 'no-store', headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10000) });
   if (!response.ok) throw Object.assign(new Error(response.status === 404 ? 'Website inexistente.' : 'No se pudo cargar el Website.'), { status: response.status });
   const data = await response.json();
-  if (data.hostname !== hostname || data.content?.schemaVersion !== 3 || data.commerceEnabled !== false) throw new Error('Contrato público incompatible.');
+  if (data.hostname !== hostname || data.content?.schemaVersion !== 3 || typeof data.commerceEnabled !== 'boolean') throw new Error('Contrato público incompatible.');
   return data;
 }

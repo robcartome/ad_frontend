@@ -21,7 +21,6 @@ export default function CartPage() {
   const { store, products, items, lines, count, ready, storageError, clear } =
     useCart();
   const money = value => formatMoney(value, store.currency || 'PEN');
-  if (store.commerceEnabled === false) return <section className="sf-container sf-page sf-empty"><ShoppingBag size={44}/><h1>Los pedidos aún no están habilitados</h1><p>Puedes consultar los productos y precios publicados por la empresa.</p><Link href="/shop" className="sf-button sf-button-orange">Ver catálogo</Link></section>;
   const { subtotal, savings, beforeDiscount, unpriced } = cartTotals(lines);
   // A real request must come from an authenticated, server-confirmed offer.
   // Never activate the old browser-generated WhatsApp link for a real site.
@@ -130,6 +129,13 @@ export default function CartPage() {
                 >
                   <MessageCircle size={19} /> Enviar pedido por WhatsApp
                 </a>
+              ) : store.mode !== 'demo' ? (
+                <>
+                  <Link href="/cuenta/carrito" className="sf-button sf-button-orange">Continuar con mi pedido <ArrowRight size={19}/></Link>
+                  <p className="sf-callout">Inicia sesión o consulta el registro para continuar. Tu selección se conserva en este navegador. En tu cuenta podrás incorporarla y revisar los precios actualizados antes de enviar.</p>
+                  <Link href="/registro" className="sf-text-button">Registrarme</Link>
+                  {store.commerceEnabled === false && <p>El envío de pedidos todavía no está habilitado por la empresa.</p>}
+                </>
               ) : (
                 <>
                   <button disabled className="sf-button sf-button-orange">

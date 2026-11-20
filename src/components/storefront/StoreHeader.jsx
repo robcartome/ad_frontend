@@ -14,6 +14,7 @@ import {
   ChevronRight,
   UsersRound,
   Headphones,
+  UserRound,
 } from "lucide-react";
 import { useCart } from "@/components/commerce/CartProvider";
 import CategoryIcon from "./CategoryIcon";
@@ -98,6 +99,7 @@ export default function StoreHeader({ store, categories }) {
             </button>
           </form>
           <div className="sf-header-actions">
+            <Link href="/cuenta" className="sf-header-quick-link"><UserRound size={22} aria-hidden="true"/><span>Mi cuenta</span></Link>
             <Link href="/about" className="sf-header-quick-link">
               <UsersRound size={22} aria-hidden="true" />
               <span>Nosotros</span>
@@ -109,7 +111,6 @@ export default function StoreHeader({ store, categories }) {
             <button
               type="button"
               className="sf-cart-link"
-              disabled={store.commerceEnabled === false}
               aria-label={`Mi carrito, ${count} unidades`}
               aria-haspopup="dialog"
               aria-expanded={cartOpen}
@@ -172,6 +173,7 @@ export default function StoreHeader({ store, categories }) {
               [ChevronRight, "/cart", "Mi cotización"],
               [UsersRound, "/about", "Nosotros"],
               [Headphones, "/contact", "Contacto"],
+              [UserRound, "/cuenta", "Mi cuenta"],
             ].map(([Icon, href, label]) => (
               <Link key={href} href={href} onClick={() => setOpen(false)}>
                 <span>

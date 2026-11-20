@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addWebsiteCartItem, cartLineId, cartQuoteItems, restoreWebsiteCart, resolveWebsiteCart, serializeWebsiteCart, websiteCartKey } from '../src/lib/commerce/website-cart.mjs';
+import { addWebsiteCartItem, cartLineId, cartQuoteItems, mergeWebsiteCarts, restoreWebsiteCart, resolveWebsiteCart, serializeWebsiteCart, websiteCartKey } from '../src/lib/commerce/website-cart.mjs';
 import { prioritizeCartLines } from '../src/lib/commerce/cart.mjs';
 
 const id = '00000000-0000-4000-8000-000000000001';
@@ -47,4 +47,25 @@ test('capacity and quantities fail explicitly rather than truncating selections'
   assert.throws(() => addWebsiteCartItem([], product, base, true));
   assert.throws(() => addWebsiteCartItem([], product, 'bad', 1));
   assert.equal(addWebsiteCartItem([], product)[0].quantity, 1, 'zero is a valid authorized price');
+});
+
+test('an anonymous selection without a published price survives reload without inventing an offer', () => {
+  const unpriced = { ...product, price: null, saleUnits: [{ ...product.saleUnits[0], price: null }] };
+  const items = addWebsiteCartItem([], unpriced, base, 2);
+  const restored = restoreWebsiteCart(serializeWebsiteCart(items, 'A'), 'A');
+  assert.equal(resolveWebsiteCart(restored, [unpriced])[0].price, null);
+  assert.deepEqual(cartQuoteItems(restored), [{ productId: id, unitId: base, quantity: 2 }]);
+  assert.throws(() => addWebsiteCartItem([], { ...unpriced, saleUnits: [{ ...unpriced.saleUnits[0], availability: 'unavailable' }] }));
+});
+
+test('explicit guest handoff preserves both sources, merges quantities and rejects overflow atomically', () => {
+  const account = [{ id, unitId: base, quantity: 2 }];
+  const guest = [{ id, unitId: base, quantity: 3, price: 0.01 }, { id, unitId: pack, quantity: 1 }];
+  const result = mergeWebsiteCarts(account, guest);
+  assert.deepEqual(result, [{ id, unitId: base, quantity: 5 }, { id, unitId: pack, quantity: 1 }]);
+  assert.equal(account[0].quantity, 2);
+  assert.equal(guest[0].quantity, 3);
+  assert.throws(() => mergeWebsiteCarts(account, [{ id, unitId: base, quantity: 999 }]));
+  assert.equal(account[0].quantity, 2);
+  assert.throws(() => restoreWebsiteCart(serializeWebsiteCart(guest, 'B'), 'A'));
 });

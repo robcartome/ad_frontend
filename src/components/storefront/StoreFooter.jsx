@@ -134,7 +134,7 @@ export default function StoreFooter({ store, categories }) {
           <Link href="/about">Nosotros</Link>
           <Link href="/contact">Contacto y atención</Link>
           <Link href="/shop">Todos los productos</Link>
-          {store.commerceEnabled !== false && <Link href="/cart">Mi cotización</Link>}
+          <Link href="/cart">Mi carrito</Link>
           <h2 className="sf-footer-subheading">Para tu proyecto</h2>
           {categories.slice(0, 3).map((category) => (
             <Link

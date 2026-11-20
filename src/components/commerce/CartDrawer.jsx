@@ -37,7 +37,7 @@ export default function CartDrawer({ open, onOpenChange, addedId, opener }) {
                 {ready && lines.length > 0 && <footer className="sf-cart-drawer-footer">
                     <div><span>Subtotal referencial{unpriced ? ' parcial' : ''}</span><strong>{money(subtotal)}</strong></div>
                     {unpriced && <p>Hay productos con precio por confirmar.</p>}
-                    <Link href="/cart" className="sf-button sf-button-orange" onClick={close}>Ir al carrito <ArrowRight size={18}/></Link>
+                    <Link href={store.cartReviewEnabled ? '/cuenta/carrito' : '/cart'} className="sf-button sf-button-orange" onClick={close}>Ir al carrito <ArrowRight size={18}/></Link>
                     <button type="button" className="sf-cart-continue" onClick={close}>Seguir comprando</button>
                 </footer>}
             </Dialog.Content>

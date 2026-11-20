@@ -87,8 +87,8 @@ await check('authorized zero and missing price are distinct', async () => {
   assert.ok(zero.body.includes('0.00'));
   assert.ok(unknown.body.includes('Consultar precio'));
 });
-await check('cart/orders remain disabled and worker catalog remains protected', async () => {
-  assert.ok((await front('/cart')).body.includes('Los pedidos aún no están habilitados'));
+await check('anonymous cart selection is available while orders and worker catalog stay protected', async () => {
+  assert.ok((await front('/cart')).body.includes('sf-cart-page'));
   const labor = await front('/catalog');
   assert.equal(labor.status, 200);
   assert.ok(labor.body.includes('Verificando sesi'));

@@ -2,17 +2,18 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { CART_VERSION, MAX_QUANTITY, MAX_ITEM_NOTES, cartKey, restoreCart, resolveCart, serializeCart, validQuantity } from '@/lib/commerce/cart.mjs';
 import CartDrawer from './CartDrawer';
-import { WEBSITE_CART_VERSION, addWebsiteCartItem, cartLineId, restoreWebsiteCart, resolveWebsiteCart, serializeWebsiteCart, websiteCartKey } from '@/lib/commerce/website-cart.mjs';
+import { WEBSITE_CART_VERSION, addWebsiteCartItem, cartLineId, mergeWebsiteCarts, restoreWebsiteCart, resolveWebsiteCart, serializeWebsiteCart, websiteCartKey } from '@/lib/commerce/website-cart.mjs';
 import { createStorefrontProductsService } from '@/services/storefrontProductsService.mjs';
 import { API_URL } from '@/lib/apiConfig';
 import './cart.css';
 const CartContext = createContext(null);
 export function CartProvider({ store, products, children }) {
     const real = store.mode !== 'demo';
-    const enabled = real ? store.commerceEnabled === true : store.commerceEnabled !== false;
+    // Selecting products is anonymous; creating a request remains server-gated.
+    const enabled = real || store.commerceEnabled !== false;
     const [productCache, setProductCache] = useState({});
     const [storageBlocked, setStorageBlocked] = useState(false);
-    const storageKey = real ? websiteCartKey(store.id) : cartKey(store.id);
+    const storageKey = real ? websiteCartKey(store.cartStorageScope || store.id) : cartKey(store.id);
     const [items, setItems] = useState([]);
     const [ready, setReady] = useState(false);
     const [notice, setNotice] = useState('');
@@ -114,8 +115,15 @@ export function CartProvider({ store, products, children }) {
         setStorageBlocked(false);
         setItems([]);
     }
+    function importGuestCart() {
+        if (!real || !store.cartStorageScope || !ready) return 0;
+        const guest = restoreWebsiteCart(localStorage.getItem(websiteCartKey(store.id)), store.id);
+        const merged = mergeWebsiteCarts(items, guest);
+        setItems(merged);
+        return guest.length;
+    }
     const value = {
-        store, products, items, ready, storageError,
+        store, products, items, ready, storageError, enabled, importGuestCart,
         add, update, updateNotes, openCart, cartOpen, remove, clear,
         lines: real ? resolveWebsiteCart(items, Object.values(productCache).filter(Boolean)) : resolveCart(items, products),
         count: items.reduce((sum, item) => sum + item.quantity, 0),

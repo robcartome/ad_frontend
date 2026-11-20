@@ -75,3 +75,24 @@ test('Product details validate identity and categories support paginated respons
   const categories = createStorefrontCategoriesService({ ...config, fetchImpl: async () => ({ ok: true, json: async () => ({ websiteId: 'a', count: 1, limit: 100, offset: 0, results: [{ id: 3, name: 'Herramientas' }] }) }) });
   assert.equal((await categories.list()).results[0].id, '3');
 });
+
+test('Home category selection requests featured products from that tenant and category rather than filtering the initial page', async () => {
+  const requested = [];
+  const service = createStorefrontProductsService({ baseUrl: 'https://example.com/api/v1', hostname: 'a.example.com', websiteId: 'A', fetchImpl: async (url, options) => {
+    requested.push({ url, options });
+    const category = url.searchParams.get('category');
+    return { ok: true, json: async () => ({ websiteId: 'A', count: 1, limit: 12, offset: 0, results: [{ id: category + '-featured', name: 'Featured', unitId: 'unit', currency: 'PEN', price: null }], facets: { categories: [], brands: [] } }) };
+  } });
+  for (const category of ['tools', 'paint']) {
+    const page = await service.list({ category: [category], featured: true, ordering: 'featured', limit: 12 });
+    assert.equal(page.results[0].id, category + '-featured');
+    assert.equal(page.results[0].price, null);
+  }
+  for (const { url, options } of requested) {
+    assert.equal(url.pathname, '/api/v1/storefront/sites/a.example.com/products/');
+    assert.equal(url.searchParams.get('featured'), 'true');
+    assert.equal(url.searchParams.get('limit'), '12');
+    assert.equal(options.credentials, 'omit');
+    assert.equal(options.headers.Authorization, undefined);
+  }
+});

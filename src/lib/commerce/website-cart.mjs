@@ -1,6 +1,6 @@
 // Persistent selections only. Prices, stock and customer identity are never
 // trusted from browser storage. Missing products remain visible for review.
-import { MAX_QUANTITY, MAX_ITEM_NOTES, hasPrice, validQuantity } from './cart.mjs';
+import { MAX_QUANTITY, MAX_ITEM_NOTES, validQuantity } from './cart.mjs';
 
 export const WEBSITE_CART_VERSION = 2;
 export const MAX_CART_LINES = 200;
@@ -34,7 +34,7 @@ export function addWebsiteCartItem(items, product, unitId = product.unitId, quan
   const candidate = { id: product.id, unitId, quantity };
   validateWebsiteCart([candidate]);
   const unit = product.saleUnits?.find(row => row.unitId === unitId) || (product.unitId === unitId ? product : null);
-  if (!unit || unit.availability === 'unavailable' || !hasPrice(unit)) throw new Error('La unidad no tiene una oferta disponible.');
+  if (!unit || unit.availability === 'unavailable') throw new Error('La unidad no está disponible para seleccionar.');
   const existing = items.find(item => cartLineId(item) === cartLineId(candidate));
   if (existing) {
     if (existing.quantity + quantity > MAX_QUANTITY) throw new Error('La cantidad máxima por línea es 999.');
@@ -42,6 +42,18 @@ export function addWebsiteCartItem(items, product, unitId = product.unitId, quan
   }
   if (items.length >= MAX_CART_LINES) throw new Error('El carrito admite hasta 200 líneas. Conserva tus selecciones y prepara otra solicitud.');
   return [...items, candidate];
+}
+
+// Merge selections only, never browser-supplied commercial values. Validate the
+// entire result before replacing the account cart so an error keeps both carts.
+export function mergeWebsiteCarts(current, incoming) {
+  const merged = new Map(validateWebsiteCart(current).map(item => [cartLineId(item), item]));
+  for (const item of validateWebsiteCart(incoming)) {
+    const key = cartLineId(item);
+    const previous = merged.get(key);
+    merged.set(key, previous ? { ...previous, quantity: previous.quantity + item.quantity } : item);
+  }
+  return validateWebsiteCart([...merged.values()]);
 }
 
 export function resolveWebsiteCart(items, products) {

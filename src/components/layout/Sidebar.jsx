@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ExternalLink, Globe, LayoutDashboard, Notebook, ShoppingBag, X } from "lucide-react";
+import { ExternalLink, Globe, LayoutDashboard, Notebook, ShoppingBag, UsersRound, X } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { getAdministrationAccess } from "@/lib/admin/access.mjs";
 
@@ -12,6 +12,7 @@ const menuItems = [
   { name: "Inicio", href: "/admin", icon: LayoutDashboard },
   { name: "Administrar página web", href: "/admin/website", icon: Globe },
   { name: "Catálogo interno", href: "/admin/catalog_admin", icon: Notebook },
+  { name: "Cuentas comerciales", href: "/admin/cuentas-comerciales", icon: UsersRound },
 ];
 const publicLinks = [
   { name: "Ver página web", href: "/", icon: ExternalLink },

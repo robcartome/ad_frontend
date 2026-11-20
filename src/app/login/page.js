@@ -4,21 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
-import { LogIn, Eye, EyeOff, Building2 } from "lucide-react";
+import CredentialsForm from "@/components/auth/CredentialsForm";
+import { Building2 } from "lucide-react";
 
 export default function LoginPage() {
   const { login, selectCompany } = useAuth();
   const router = useRouter();
 
   const [step, setStep] = useState("login"); // "login" | "select-company"
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
 
-  async function handleLogin(e) {
-    e.preventDefault();
+  async function handleLogin(email, password) {
     setLoading(true);
     try {
       const data = await login(email, password);
@@ -71,59 +68,7 @@ export default function LoginPage() {
         {step === "login" && (
           <>
             <h2 className="text-lg font-semibold text-gray-700 mb-6">Iniciar sesión</h2>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">
-                  Correo electrónico
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  placeholder="usuario@empresa.com"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">
-                  Contraseña
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPass ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                    placeholder="••••••••"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPass(!showPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors"
-              >
-                {loading ? (
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <LogIn size={16} />
-                )}
-                Entrar
-              </button>
-            </form>
+            <CredentialsForm onSubmit={handleLogin} busy={loading}/>
           </>
         )}
 

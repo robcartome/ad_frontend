@@ -13,7 +13,7 @@ export default function ProductPurchase({ product }) {
   const { add, ready, store, products } = useCart();
   const [quantity, setQuantity] = useState("1");
   const [added, setAdded] = useState(false);
-  if (store.commerceEnabled === false) return <ProductUnitOffer product={product}/>;
+  if (store.mode !== 'demo' || store.commerceEnabled === false) return <ProductUnitOffer product={product}/>;
   const valid = validQuantity(Number(quantity));
   const url = valid
     ? quotationUrl(
